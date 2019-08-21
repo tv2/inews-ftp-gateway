@@ -2,10 +2,7 @@ import { EventEmitter } from 'events'
 import * as request from 'request-promise'
 import * as dotenv from 'dotenv'
 import { SheetRundown } from './Rundown'
-import { OAuth2Client } from 'googleapis-common'
-import { google, drive_v3 } from 'googleapis'
 import { SheetsManager, SheetUpdate } from './SheetManager'
-import { GaxiosResponse } from 'gaxios'
 import * as _ from 'underscore'
 import { SheetSegment } from './Segment'
 import { SheetPart } from './Part'
@@ -45,7 +42,6 @@ export class RunningOrderWatcher extends EventEmitter {
 	private slowinterval: NodeJS.Timer | undefined
 	private mediaPollInterval: NodeJS.Timer | undefined
 
-	private drive: drive_v3.Drive
 	private currentlyChecking: boolean = false
 	private sheetManager: SheetsManager
 	private pageToken?: string
@@ -56,12 +52,15 @@ export class RunningOrderWatcher extends EventEmitter {
 	 * A Running Order watcher which will poll Google Drive for changes and emit events
 	 * whenever a change occurs.
 	 *
-	 * @param authClient Google OAuth2Clint containing connection information
+	 * @param userName iNews username
+	 * @param passWord iNews password
 	 * @param coreHandler Handler for Sofie Core
+	 * @param gatewayVersion Set version of gateway
 	 * @param delayStart (Optional) Set to a falsy value to prevent the watcher to start watching immediately.
 	 */
 	constructor (
-		private authClient: OAuth2Client,
+		private userName: string,
+		private passWord: string,
 		private coreHandler: CoreHandler,
 		private gatewayVersion: string,
 		delayStart?: boolean

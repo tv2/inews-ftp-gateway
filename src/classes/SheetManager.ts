@@ -1,5 +1,3 @@
-import { google, sheets_v4 } from 'googleapis'
-import { OAuth2Client } from 'googleapis-common'
 import { SheetRundown } from './Rundown'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 const sheets = google.sheets('v4')

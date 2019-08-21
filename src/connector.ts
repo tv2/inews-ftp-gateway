@@ -1,5 +1,5 @@
 
-import { SpreadsheetHandler, SpreadsheetConfig } from './spreadsheetHandler'
+import { InewsFTPHandler, InewsFTPConfig } from './inewsftpHandler'
 import { CoreHandler, CoreConfig } from './coreHandler'
 import * as Winston from 'winston'
 import { Process } from './process'
@@ -8,7 +8,7 @@ export interface Config {
 	process: ProcessConfig
 	device: DeviceConfig
 	core: CoreConfig
-	spreadsheet: SpreadsheetConfig
+	spreadsheet: InewsFTPConfig
 }
 export interface ProcessConfig {
 	/** Will cause the Node applocation to blindly accept all certificates. Not recommenced unless in local, controlled networks. */
@@ -22,7 +22,7 @@ export interface DeviceConfig {
 }
 export class Connector {
 
-	private spreadsheetHandler: SpreadsheetHandler
+	private iNewsFTPHandler: InewsFTPHandler
 	private coreHandler: CoreHandler
 	private _config: Config
 	private _logger: Winston.LoggerInstance
@@ -33,7 +33,7 @@ export class Connector {
 		this._config = config
 		this._process = new Process(this._logger)
 		this.coreHandler = new CoreHandler(this._logger, this._config.device)
-		this.spreadsheetHandler = new SpreadsheetHandler(this._logger, this._config, this.coreHandler)
+		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this._config, this.coreHandler)
 	}
 
 	init (): Promise<void> {
@@ -48,8 +48,8 @@ export class Connector {
 			return this.initCore()
 		})
 		.then(() => {
-			this._logger.info('Initializing Spreadsheet-monitor...')
-			return this.initSpreadsheetHandler()
+			this._logger.info('Initializing iNews-FTP-monitor...')
+			return this.initInewsFTPHandler()
 		})
 		.then(() => {
 			this._logger.info('Initialization done')
@@ -82,14 +82,14 @@ export class Connector {
 	initCore () {
 		return this.coreHandler.init(this._config.device, this._config.core, this._process)
 	}
-	initSpreadsheetHandler (): Promise<void> {
-		return this.spreadsheetHandler.init(this.coreHandler)
+	initInewsFTPHandler (): Promise<void> {
+		return this.iNewsFTPHandler.init(this.coreHandler)
 
 	}
 	dispose (): Promise<void> {
 		return (
-			this.spreadsheetHandler ?
-			this.spreadsheetHandler.dispose()
+			this.iNewsFTPHandler ?
+			this.iNewsFTPHandler.dispose()
 			: Promise.resolve()
 		)
 		.then(() => {

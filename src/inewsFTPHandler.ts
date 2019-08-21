@@ -8,7 +8,6 @@ import {
 import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { mutateRundown, mutateSegment, mutatePart } from './mutate'
-import { resolve } from 'bluebird';
 
 export interface InewsFTPConfig {
 	// Todo: add settings here?
@@ -69,7 +68,8 @@ export class InewsFTPHandler {
 		this._coreHandler = coreHandler
 
 		coreHandler.doReceiveAuthToken = (authToken: string) => {
-			console.log(authToken) // Just a dummy
+			// A dummy for using spreadsheetconnection as FTP (until Core has ADDED this)
+			console.log(authToken)
 			return new Promise((resolve) => { resolve() })
 		}
 	}

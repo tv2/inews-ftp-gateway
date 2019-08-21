@@ -40,12 +40,12 @@ jobs:
           at: ~/project
       - run:
           name: Build Docker Image
-          command: docker build -f Dockerfile . -t superflytv/sofie-spreadsheet-gateway:$CIRCLE_TAG
+          command: docker build -f Dockerfile . -t olzzon/tv2-inews-ftp-gateway:$CIRCLE_TAG
       - run:
            name: Publish Docker Image to Docker Hub
            command: |
              echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-             docker push superflytv/sofie-spreadsheet-gateway:$CIRCLE_BRANCH
+             docker push olzzon/tv2-inews-ftp-gateway:$CIRCLE_BRANCH
   Build (branch):
     <<: *defaults
     steps:
@@ -56,12 +56,12 @@ jobs:
           at: ~/project
       - run:
           name: Build Docker Image
-          command: docker build -f Dockerfile . -t superflytv/sofie-spreadsheet-gateway:$CIRCLE_BRANCH
+          command: docker build -f Dockerfile . -t olzzon/tv2-inews-ftp-gateway:$CIRCLE_BRANCH
       - run:
            name: Publish Docker Image to Docker Hub
            command: |
              echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-             docker push superflytv/sofie-spreadsheet-gateway:$CIRCLE_BRANCH
+             docker push olzzon/tv2-inews-ftp-gateway:$CIRCLE_BRANCH
   Test:
     <<: *defaults
     steps:
@@ -99,8 +99,8 @@ jobs:
       - run:
           name: Keyscan Github
           command: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-      - run: git config --global user.email "info@superfly.tv"
-      - run: git config --global user.name "superflytvab"
+      - run: git config --global user.email "github@olzzon.dk"
+      - run: git config --global user.name "olzzon"
       - run: yarn release
       - run: git push --follow-tags origin HEAD
       - persist_to_workspace:

@@ -1,0 +1,6 @@
+dist
+node_modules
+downloads
+credentials.json
+token.json
+.env

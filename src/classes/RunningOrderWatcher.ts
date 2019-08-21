@@ -10,6 +10,9 @@ import * as clone from 'clone'
 import { CoreHandler } from '../coreHandler'
 import { MediaDict } from './media'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
+import inews from '@johnsand/inews';
+import * as DEFAULTS from '../DEFAULTS'
+
 dotenv.config()
 
 export class RunningOrderWatcher extends EventEmitter {
@@ -47,9 +50,10 @@ export class RunningOrderWatcher extends EventEmitter {
 	private pageToken?: string
 	private _lastMedia: MediaDict = {}
 	private _lastOutputLayers: IOutputLayer[] = []
+	private iNewsConnection: any;
 	// private _lastOutputLayers: Array<ISourceLayer> = []
 	/**
-	 * A Running Order watcher which will poll Google Drive for changes and emit events
+	 * A Running Order watcher which will poll iNews FTP server for changes and emit events
 	 * whenever a change occurs.
 	 *
 	 * @param userName iNews username
@@ -59,6 +63,7 @@ export class RunningOrderWatcher extends EventEmitter {
 	 * @param delayStart (Optional) Set to a falsy value to prevent the watcher to start watching immediately.
 	 */
 	constructor (
+		// IP, Username and Password is taken from the DEFAULTS.ts file until CORE integration is made
 		private userName: string,
 		private passWord: string,
 		private coreHandler: CoreHandler,
@@ -66,22 +71,26 @@ export class RunningOrderWatcher extends EventEmitter {
 		delayStart?: boolean
 	) {
 		super()
-		this.drive = google.drive({ version: 'v3', auth: this.authClient })
+		this.iNewsConnection = inews({
+			'hosts': DEFAULTS.SERVERS,
+			'user': DEFAULTS.USERNAME,
+			'password': DEFAULTS.PASSWORD
+		})
 
 		/*if (!process.env.MEDIA_URL) {
 			this.pollIntervalMedia = (24 * 3600) / 45 // Use Google API to update, rate limit to 45 updates per day.
 		}*/
 
-		this.sheetManager = new SheetsManager(this.authClient)
+		this.sheetManager = new SheetsManager(this.iNewsConnection)
 		if (!delayStart) {
 			this.startWatcher()
 		}
 	}
 
 	/**
-	 * Add a Running Order from Google Sheets ID
+	 * Add a Running Order from iNews Queue
 	 *
-	 * @param runningOrderId Id of Running Order Sheet on Google Sheets
+	 * @param runningOrderId Queue name of Running Order in iNews
 	 */
 	async checkRunningOrderById (runningOrderId: string): Promise<SheetRundown> {
 		const runningOrder = await this.sheetManager.downloadRunningOrder(runningOrderId, this.coreHandler.GetOutputLayers())

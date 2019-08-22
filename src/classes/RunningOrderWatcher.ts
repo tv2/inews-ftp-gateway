@@ -3,12 +3,10 @@ import * as dotenv from 'dotenv'
 import { InewsRundown } from './Rundown'
 import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
-import { SheetSegment } from './Segment'
+import { RundownSegment } from './Segment'
 import { IRundownPart } from './Part'
 import * as clone from 'clone'
 import { CoreHandler } from '../coreHandler'
-import { IMediaDict } from './Media'
-import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import inews from '@johnsand/inews'
 import * as DEFAULTS from '../DEFAULTS'
 
@@ -26,8 +24,8 @@ export class RunningOrderWatcher extends EventEmitter {
 		((event: 'rundown_update', listener: (runningOrderId: string, runningOrder: InewsRundown) => void) => this) &
 
 		((event: 'segment_delete', listener: (runningOrderId: string, sectionId: string) => void) => this) &
-		((event: 'segment_create', listener: (runningOrderId: string, sectionId: string, newSection: SheetSegment) => void) => this) &
-		((event: 'segment_update', listener: (runningOrderId: string, sectionId: string, newSection: SheetSegment) => void) => this) &
+		((event: 'segment_create', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this) &
+		((event: 'segment_update', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this) &
 
 		((event: 'part_delete', listener: (runningOrderId: string, sectionId: string, storyId: string) => void) => this) &
 		((event: 'part_create', listener: (runningOrderId: string, sectionId: string, storyId: string, newStory: IRundownPart) => void) => this) &
@@ -46,10 +44,7 @@ export class RunningOrderWatcher extends EventEmitter {
 
 	private currentlyChecking: boolean = false
 	private rundownManager: RundownManager
-	private _lastMedia: IMediaDict = {}
-	private _lastOutputLayers: IOutputLayer[] = []
 	private iNewsConnection: any
-	// private _lastOutputLayers: Array<ISourceLayer> = []
 	/**
 	 * A Running Order watcher which will poll iNews FTP server for changes and emit events
 	 * whenever a change occurs.
@@ -71,8 +66,8 @@ export class RunningOrderWatcher extends EventEmitter {
 		super()
 		this.iNewsConnection = inews({
 			'hosts': DEFAULTS.SERVERS,
-			'user': DEFAULTS.USERNAME,
-			'password': DEFAULTS.PASSWORD
+			'user': DEFAULTS.USERNAME || this.userName,
+			'password': DEFAULTS.PASSWORD || this.passWord
 		})
 
 		this.rundownManager = new RundownManager(this.iNewsConnection)
@@ -103,39 +98,6 @@ export class RunningOrderWatcher extends EventEmitter {
 	async setDriveFolder (sheetFolderName: string): Promise<InewsRundown[]> {
 		this.sheetFolderName = sheetFolderName
 		return this.checkDriveFolder()
-	}
-
-	/**
-	 * Adds all available media to all running orders.
-	 */
-	updateAvailableMedia (): Promise<void> {
-		let newMedia = this.coreHandler.GetMedia()
-
-		if (_.isEqual(this._lastMedia, newMedia)) {
-			// No need to update
-			return Promise.resolve()
-		}
-		this._lastMedia = newMedia
-		/*
-		this.sendMediaAsCSV().catch(console.log)
-		*/
-		return Promise.resolve()
-	}
-
-	/**
-	 * Adds all all available outputs to all running orders.
-	 */
-	updateAvailableOutputs (): Promise<void> {
-		let outputLayers = this.coreHandler.GetOutputLayers()
-
-		if (_.isEqual(this._lastOutputLayers, outputLayers)) {
-			return Promise.resolve()
-		}
-		this._lastOutputLayers = outputLayers
-
-		// this.sendOutputLayersViaGAPI().catch(console.log)
-
-		return Promise.resolve()
 	}
 
 	/**
@@ -179,28 +141,6 @@ export class RunningOrderWatcher extends EventEmitter {
 			}).catch(console.error)
 
 		}, this.pollIntervalSlow)
-
-		this.mediaPollInterval = setInterval(() => {
-			if (this.currentlyChecking) {
-				return
-			}
-			this.currentlyChecking = true
-			this.updateAvailableMedia()
-			.catch(error => {
-				console.log('Something went wrong during siper slow check', error, error.stack)
-			})
-			.then(() => {
-				this.updateAvailableOutputs()
-				.catch(error => {
-					console.log('Something went wrong during super slow check', error, error.stack)
-				})
-				.then(() => {
-					this.currentlyChecking = false
-				})
-				.catch(console.error)
-			})
-			.catch(console.error)
-		}, this.pollIntervalMedia)
 	}
 
 	/**
@@ -250,8 +190,8 @@ export class RunningOrderWatcher extends EventEmitter {
 					oldRundown.segments.map(segment => segment.externalId).concat(
 					newRundown.segments.map(segment => segment.externalId))
 				).forEach((segmentId: string) => {
-					const oldSection: SheetSegment = oldRundown.segments.find(segment => segment.externalId === segmentId) as SheetSegment // TODO: handle better
-					const newSection: SheetSegment = rundown.segments.find(segment => segment.externalId === segmentId) as SheetSegment
+					const oldSection: RundownSegment = oldRundown.segments.find(segment => segment.externalId === segmentId) as RundownSegment // TODO: handle better
+					const newSection: RundownSegment = rundown.segments.find(segment => segment.externalId === segmentId) as RundownSegment
 
 					if (!newSection && oldSection) {
 						this.emit('segment_delete', rundownId, segmentId)

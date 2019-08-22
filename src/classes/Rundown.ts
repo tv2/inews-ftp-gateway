@@ -1,5 +1,5 @@
 import { v4 as uuidV4 } from 'uuid'
-import { SheetSegment } from './Segment'
+import { RundownSegment } from './Segment'
 import { IRundownPart } from './Part'
 import { RundownPiece } from './Piece'
 import { IRundownUpdate, RundownManager } from './RundownManager'
@@ -61,7 +61,7 @@ export class InewsRundown implements IRundown {
 		public gatewayVersion: string,
 		public expectedStart: number,
 		public expectedEnd: number,
-		public segments: SheetSegment[] = []
+		public segments: RundownSegment[] = []
 	) {}
 
 	serialize (): IRundown {
@@ -72,7 +72,7 @@ export class InewsRundown implements IRundown {
 			expectedEnd:	this.expectedEnd
 		}
 	}
-	addSegments (segments: SheetSegment[]) {
+	addSegments (segments: RundownSegment[]) {
 		segments.forEach(segment => this.segments.push(segment))
 	}
 
@@ -249,10 +249,10 @@ export class InewsRundown implements IRundown {
 		return letter
 	}
 
-	private static parsedRowsIntoSegments (sheetId: string, parsedRows: IParsedRow[]): {segments: SheetSegment[], sheetUpdates: IRundownUpdate[]} {
-		let segments: SheetSegment[] = []
+	private static parsedRowsIntoSegments (sheetId: string, parsedRows: IParsedRow[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
+		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
-		let segment = new SheetSegment(sheetId,implicitId, 0,'Implicit First Section', false)
+		let segment = new RundownSegment(sheetId,implicitId, 0,'Implicit First Section', false)
 		let part: IRundownPart | undefined
 		let sheetUpdates: IRundownUpdate[] = []
 
@@ -337,7 +337,7 @@ export class InewsRundown implements IRundown {
 						segments.push(segment)
 					}
 
-					segment = new SheetSegment(sheetId, id, segments.length, row.data.name || '', row.data.float === 'TRUE')
+					segment = new RundownSegment(sheetId, id, segments.length, row.data.name || '', row.data.float === 'TRUE')
 					break
 				case '':
 				case undefined:
@@ -412,6 +412,7 @@ export class InewsRundown implements IRundown {
 	  * @param sheetManager Optional; Will be used to update the sheet if changes, such as ID-updates, needs to be done.
 	  */
 	static fromSheetCells (sheetId: string, name: string, cells: any[][], outputLayers: IOutputLayer[], sheetManager?: RundownManager): InewsRundown {
+		console.log('DUMMY LOG : ' + sheetManager)
 		let parsedData = InewsRundown.parseRawData(cells, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
 		let results = InewsRundown.parsedRowsIntoSegments(sheetId, parsedData.rows)

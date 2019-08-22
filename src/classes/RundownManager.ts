@@ -10,7 +10,6 @@ export interface IRundownUpdate {
 }
 
 export class RundownManager {
-	private currentFolder = ''
 
 	constructor (private inewsConnection: any) {
 		this.inewsConnection = inewsConnection
@@ -24,8 +23,8 @@ export class RundownManager {
 	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
 		return this.downloadSheet(rundownSheetId)
 		.then(data => {
-			const runningOrderTitle = data.meta.properties ? data.meta.properties.title || 'unknown' : 'unknown'
-			return InewsRundown.fromSheetCells(rundownSheetId, runningOrderTitle, data.values.values || [], outputLayers, this)
+			console.log('DUMMY LOG : ' + data)
+			return InewsRundown.fromSheetCells(rundownSheetId, 'unknown', [], outputLayers, this)
 		})
 	}
 
@@ -43,9 +42,10 @@ export class RundownManager {
 			range: SHEET_NAME // Get all cells in Rundown sheet
 
 		}
+		console.log('DUMMY LOG :' + request)
 		return Promise.all([
-			console.log('OK'),
-			console.log('ToDo')])
+			console.log('DUMMY1'),
+			console.log('DUMMY2')])
 			.then(([meta, values]) => {
 				return {
 					meta: meta,
@@ -56,17 +56,7 @@ export class RundownManager {
 	}
 
 	async getSheetsInDriveFolder (folderName: string): Promise<string[]> {
-		console.log(folderName)
-		return DEFAULTS.INEWS_QUEUE
-
-	}
-	/**
-	 * Returns a list of ids of Google Spreadsheets in provided folder.
-	 *
-	 * @param folderId Id of Google Drive folder to retrieve spreadsheets from
-	 * @param nextPageToken Google drive nextPageToken pagination token.
-	 */
-	async getSheetsInDriveFolderId (folderId: string, nextPageToken?: string): Promise<string[]> {
+		console.log('DUMMY LOG : ' + folderName)
 		return DEFAULTS.INEWS_QUEUE
 	}
 
@@ -75,6 +65,7 @@ export class RundownManager {
 	 * @param {string} sheetid Id of the sheet to check.
 	 */
 	async checkSheetIsValid (sheetid: string): Promise<boolean> {
+		console.log('DUMMY LOG : ' + sheetid)
 		return Promise.resolve(true)
 	}
 }

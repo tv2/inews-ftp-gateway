@@ -8,7 +8,7 @@ export interface Segment {
 	float: boolean
 }
 
-export class SheetSegment implements Segment {
+export class RundownSegment implements Segment {
 	constructor (
 		public rundownId: string,
 		public externalId: string,

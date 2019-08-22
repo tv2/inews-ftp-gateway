@@ -7,3 +7,4 @@ export interface IMediaInfo {
 	path: string
 	duration: string
 }
+

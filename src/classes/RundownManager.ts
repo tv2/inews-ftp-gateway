@@ -2,8 +2,6 @@ import { InewsRundown } from './Rundown'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import * as DEFAULTS from '../DEFAULTS'
 
-const SHEET_NAME = process.env.SHEET_NAME || 'Rundown'
-
 export interface IRundownUpdate {
 	value: string | number
 	cellPosition: string
@@ -21,7 +19,7 @@ export class RundownManager {
 	 * @param rundownSheetId Id of the iNews rundown containing the Running Order
 	 */
 	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
-		return this.downloadSheet(rundownSheetId)
+		return this.downloadQueue(rundownSheetId)
 		.then(data => {
 			console.log('DUMMY LOG : ' + data)
 			return InewsRundown.fromSheetCells(rundownSheetId, 'unknown', [], outputLayers, this)
@@ -31,28 +29,40 @@ export class RundownManager {
 	/**
 	 * Downloads raw data from google spreadsheets
 	 *
-	 * @param spreadsheetId Id of the google spreadsheet to download
+	 * @param queueId Id of the google spreadsheet to download
 	 */
-	downloadSheet (spreadsheetId: string) {
-		const request = {
-			// The spreadsheet to request.
-			auth: this.inewsConnection,
-			spreadsheetId,
-			// The ranges to retrieve from the spreadsheet.
-			range: SHEET_NAME // Get all cells in Rundown sheet
+	downloadQueue (queueName: string) {
 
-		}
-		console.log('DUMMY LOG :' + request)
-		return Promise.all([
-			console.log('DUMMY1'),
-			console.log('DUMMY2')])
-			.then(([meta, values]) => {
-				return {
-					meta: meta,
-					values: values
+		let stories = this.getInewsData(queueName)
+		.then((data: any) => {
+			return data
+		})
 
+		return Promise.resolve(stories)
+	}
+
+	async getInewsData (queueName: string): Promise<Array<any>> {
+		return new Promise((resolve, reject) => {
+			let stories: Array<any> = []
+			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
+				if (!error) {
+					console.log('File list readed')
+					dirList.map((storyFile: any, index: number) => {
+						this.inewsConnection.storyNsml(queueName, storyFile.file, (error: any, storyNsml: any) => {
+							stories.push({ 'storyName': storyFile.storyName, 'story': storyNsml })
+							if (index === dirList.length - 1) {
+								resolve(stories)
+							}
+							console.log('DUMMY LOG : ' + error)
+						})
+					})
+				} else {
+					console.log('Error connetiong iNews :', error)
+					reject(error)
 				}
 			})
+			console.log('Stories recieved')
+		})
 	}
 
 	async getSheetsInDriveFolder (folderName: string): Promise<string[]> {

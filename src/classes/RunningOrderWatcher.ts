@@ -7,7 +7,7 @@ import { RundownSegment } from './Segment'
 import { IRundownPart } from './Part'
 import * as clone from 'clone'
 import { CoreHandler } from '../coreHandler'
-import inews from '@johnsand/inews'
+import * as inews from '@johnsand/inews'
 import * as DEFAULTS from '../DEFAULTS'
 
 dotenv.config()
@@ -63,10 +63,11 @@ export class RunningOrderWatcher extends EventEmitter {
 		delayStart?: boolean
 	) {
 		super()
+		console.log('DUMMY LOG : ' + this.userName + this.passWord)
 		this.iNewsConnection = inews({
 			'hosts': DEFAULTS.SERVERS,
-			'user': DEFAULTS.USERNAME || this.userName,
-			'password': DEFAULTS.PASSWORD || this.passWord
+			'user': DEFAULTS.USERNAME, // this.userName,
+			'password': DEFAULTS.PASSWORD // this.passWord
 		})
 
 		this.rundownManager = new RundownManager(this.iNewsConnection)

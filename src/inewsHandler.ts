@@ -196,76 +196,59 @@ export class InewsFTPHandler {
 					return
 				}
 
-				// At this point we're authorized and good to go!
+				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 
-				if (
-					!this.iNewsWatcher ||
-					this.iNewsWatcher.sheetFolderName !== settings.folderPath
-				) {
+				// this._logger.info('GO!')
 
-					this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-
-					// this._logger.info('GO!')
-
-					if (this.iNewsWatcher) {
-						this.iNewsWatcher.dispose()
-						delete this.iNewsWatcher
-					}
-
-					const userName = String(secretSettings.credentials)
-					const passWord = String(secretSettings.accessToken)
-
-					const watcher = new RunningOrderWatcher(userName, passWord, this._coreHandler, 'v0.2')
-					this.iNewsWatcher = watcher
-
-					watcher
-					.on('info', (message: any) => {
-						this._logger.info(message)
-					})
-					.on('error', (error: any) => {
-						this._logger.error(error)
-					})
-					.on('warning', (warning: any) => {
-						this._logger.error(warning)
-					})
-					// TODO - these event types should operate on the correct types and with better parameters
-					.on('rundown_delete', (rundownExternalId) => {
-						this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
-					})
-					.on('rundown_create', (_rundownExternalId, rundown) => {
-						this._coreHandler.core.callMethod(P.methods.dataRundownCreate, [mutateRundown(rundown)]).catch(this._logger.error)
-					})
-					.on('rundown_update', (_rundownExternalId, rundown) => {
-						this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)]).catch(this._logger.error)
-					})
-					.on('segment_delete', (rundownExternalId, sectionId) => {
-						this._coreHandler.core.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, sectionId]).catch(this._logger.error)
-					})
-					.on('segment_create', (rundownExternalId, _sectionId, newSection) => {
-						this._coreHandler.core.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
-					})
-					.on('segment_update', (rundownExternalId, _sectionId, newSection) => {
-						this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
-					})
-					.on('part_delete', (rundownExternalId, sectionId, storyId) => {
-						this._coreHandler.core.callMethod(P.methods.dataPartDelete, [rundownExternalId, sectionId, storyId]).catch(this._logger.error)
-					})
-					.on('part_create', (rundownExternalId, sectionId, _storyId, newStory) => {
-						this._coreHandler.core.callMethod(P.methods.dataPartCreate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
-					})
-					.on('part_update', (rundownExternalId, sectionId, _storyId, newStory) => {
-						this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
-					})
-
-					if (settings.folderPath) {
-						this._logger.info(`Starting watch of folder "${settings.folderPath}"`)
-						watcher.setDriveFolder(settings.folderPath)
-						.then(() => this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching folder '${settings.folderPath}'`]))
-						.catch(e => {
-							console.log('Error in addSheetsFolderToWatch', e)
-						})
-					}
+				if (this.iNewsWatcher) {
+					this.iNewsWatcher.dispose()
+					delete this.iNewsWatcher
 				}
+
+				const userName = String(secretSettings.credentials)
+				const passWord = String(secretSettings.accessToken)
+
+				const watcher = new RunningOrderWatcher(userName, passWord, this._coreHandler, 'v0.2')
+				this.iNewsWatcher = watcher
+
+				watcher
+				.on('info', (message: any) => {
+					this._logger.info(message)
+				})
+				.on('error', (error: any) => {
+					this._logger.error(error)
+				})
+				.on('warning', (warning: any) => {
+					this._logger.error(warning)
+				})
+				// TODO - these event types should operate on the correct types and with better parameters
+				.on('rundown_delete', (rundownExternalId) => {
+					this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
+				})
+				.on('rundown_create', (_rundownExternalId, rundown) => {
+					this._coreHandler.core.callMethod(P.methods.dataRundownCreate, [mutateRundown(rundown)]).catch(this._logger.error)
+				})
+				.on('rundown_update', (_rundownExternalId, rundown) => {
+					this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)]).catch(this._logger.error)
+				})
+				.on('segment_delete', (rundownExternalId, sectionId) => {
+					this._coreHandler.core.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, sectionId]).catch(this._logger.error)
+				})
+				.on('segment_create', (rundownExternalId, _sectionId, newSection) => {
+					this._coreHandler.core.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
+				})
+				.on('segment_update', (rundownExternalId, _sectionId, newSection) => {
+					this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
+				})
+				.on('part_delete', (rundownExternalId, sectionId, storyId) => {
+					this._coreHandler.core.callMethod(P.methods.dataPartDelete, [rundownExternalId, sectionId, storyId]).catch(this._logger.error)
+				})
+				.on('part_create', (rundownExternalId, sectionId, _storyId, newStory) => {
+					this._coreHandler.core.callMethod(P.methods.dataPartCreate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
+				})
+				.on('part_update', (rundownExternalId, sectionId, _storyId, newStory) => {
+					this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
+				})
 			}
 			return Promise.resolve()
 		})

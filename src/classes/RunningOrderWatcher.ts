@@ -13,7 +13,6 @@ import * as DEFAULTS from '../DEFAULTS'
 dotenv.config()
 
 export class RunningOrderWatcher extends EventEmitter {
-	public sheetFolderName?: string
 
 	on: ((event: 'info', listener: (message: string) => void) => this) &
 		((event: 'error', listener: (error: any, stack?: any) => void) => this) &
@@ -86,18 +85,10 @@ export class RunningOrderWatcher extends EventEmitter {
 		return runningOrder
 	}
 
-	async checkDriveFolder (): Promise<InewsRundown[]> {
-		if (!this.sheetFolderName) return []
-
-		const runningOrderIds = await this.rundownManager.getSheetsInDriveFolder(this.sheetFolderName)
-		return Promise.all(runningOrderIds.map(roId => {
+	async checkInewsRundown (): Promise<InewsRundown[]> {
+		return Promise.all(DEFAULTS.INEWS_QUEUE.map(roId => {
 			return this.checkRunningOrderById(roId)
 		}))
-	}
-
-	async setDriveFolder (sheetFolderName: string): Promise<InewsRundown[]> {
-		this.sheetFolderName = sheetFolderName
-		return this.checkDriveFolder()
 	}
 
 	/**
@@ -122,7 +113,8 @@ export class RunningOrderWatcher extends EventEmitter {
 				this.currentlyChecking = false
 			}).catch(console.error)
 
-		}, this.pollIntervalFast)
+		}, this.pollIntervalSlow)
+
 
 		this.slowinterval = setInterval(() => {
 			if (this.currentlyChecking) {
@@ -131,7 +123,7 @@ export class RunningOrderWatcher extends EventEmitter {
 			console.log('Running slow check')
 			this.currentlyChecking = true
 
-			this.checkDriveFolder()
+			this.checkInewsRundown()
 			.catch(error => {
 				console.error('Something went wrong during slow check', error, error.stack)
 			})

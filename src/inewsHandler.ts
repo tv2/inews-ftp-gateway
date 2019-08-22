@@ -178,23 +178,7 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 
 			if (peripheralDevice) {
-				let settings: InewsFTPDeviceSettings = peripheralDevice.settings || {}
 				let secretSettings: InewsFTPDeviceSecretSettings = peripheralDevice.secretSettings || {}
-
-				if (!secretSettings.credentials) {
-					this._coreHandler.setStatus(P.StatusCode.BAD, ['Not set up: Credentials missing'])
-					return
-				}
-
-				if (!secretSettings.accessToken) {
-					this._coreHandler.setStatus(P.StatusCode.BAD, ['Not set up: AccessToken missing'])
-					return
-				}
-
-				if (!settings.folderPath) {
-					this._coreHandler.setStatus(P.StatusCode.BAD, ['Not set up: FolderPath missing'])
-					return
-				}
 
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 

@@ -1,8 +1,8 @@
-export interface MediaDict {
-	[id: string]: MediaInfo
+export interface IMediaDict {
+	[id: string]: IMediaInfo
 }
 
-export interface MediaInfo {
+export interface IMediaInfo {
 	name: string
 	path: string
 	duration: string

@@ -1,7 +1,7 @@
-import { Piece, SheetPiece } from './Piece'
+import { IPiece, RundownPiece } from './Piece'
 // import { hasChangeType } from './hasChangeType';
 
-export interface Part {
+export interface IPart {
 	segmentId: string
 	externalId: string // unique within the parent section
 	rank: number
@@ -11,10 +11,10 @@ export interface Part {
 	float: boolean
 	script: string
 
-	pieces: Piece[]
+	pieces: IPiece[]
 }
 
-export class SheetPart implements Part {
+export class IRundownPart implements IPart {
 
 	constructor (
 		public type: string,
@@ -24,7 +24,7 @@ export class SheetPart implements Part {
 		public name: string,
 		public float: boolean,
 		public script: string,
-		public pieces: SheetPiece[] = []) { }
+		public pieces: RundownPiece[] = []) { }
 
 	serialize () {
 		return {
@@ -38,10 +38,10 @@ export class SheetPart implements Part {
 			pieces: 				this.pieces
 		}
 	}
-	addPieces (piece: SheetPiece[]) {
+	addPieces (piece: RundownPiece[]) {
 		this.pieces = this.pieces.concat(piece)
 	}
-	addPiece (piece: SheetPiece) {
+	addPiece (piece: RundownPiece) {
 		this.pieces.push(piece)
 	}
 }

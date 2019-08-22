@@ -1,4 +1,4 @@
-import { SheetPart } from './Part'
+import { IRundownPart } from './Part'
 // import { hasChangeType } from './hasChangeType';
 export interface Segment {
 	rundownId: string
@@ -15,7 +15,7 @@ export class SheetSegment implements Segment {
 		public rank: number,
 		public name: string,
 		public float: boolean,
-		public parts: SheetPart[] = []
+		public parts: IRundownPart[] = []
 	) {}
 	serialize (): Segment {
 		return {
@@ -26,10 +26,10 @@ export class SheetSegment implements Segment {
 			float:				this.float
 		}
 	}
-	addPart (part: SheetPart) {
+	addPart (part: IRundownPart) {
 		this.parts.push(part)
 	}
-	addParts (parts: SheetPart[]) {
+	addParts (parts: IRundownPart[]) {
 		parts.forEach(story => this.addPart(story))
 	}
 }

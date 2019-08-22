@@ -1,4 +1,4 @@
-export interface Piece {
+export interface IPiece {
 	id: string
 	objectType: string
 	objectTime: number
@@ -10,11 +10,8 @@ export interface Piece {
 	script?: string,
 	transition?: string
 }
-export interface SheetsPiece extends Piece {
-	position: string // A3:A9
-}
 
-export class SheetPiece implements Piece {
+export class RundownPiece implements IPiece {
 	constructor (
 		public id: string,
 		public objectType: string,

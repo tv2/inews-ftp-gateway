@@ -1,5 +1,5 @@
 
-import { InewsFTPHandler, InewsFTPConfig } from './inewsftpHandler'
+import { InewsFTPHandler, InewsFTPConfig } from './inewsHandler'
 import { CoreHandler, CoreConfig } from './coreHandler'
 import * as Winston from 'winston'
 import { Process } from './process'

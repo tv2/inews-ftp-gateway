@@ -10,7 +10,7 @@ import { Process } from './process'
 import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
-import { MediaDict } from './classes/media'
+import { IMediaDict } from './classes/Media'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
@@ -48,7 +48,7 @@ export class CoreHandler {
 	private _coreConfig?: CoreConfig
 	private _process?: Process
 	private _studioId: string
-	private _mediaPaths: MediaDict = {}
+	private _mediaPaths: IMediaDict = {}
 	private _outputLayers: IOutputLayer[] = []
 
 	constructor (logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
@@ -524,7 +524,7 @@ export class CoreHandler {
 	/**
 	 * Returns the available media.
 	 */
-	public GetMedia (): MediaDict {
+	public GetMedia (): IMediaDict {
 		return this._mediaPaths
 	}
 

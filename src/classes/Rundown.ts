@@ -1,18 +1,18 @@
 import { v4 as uuidV4 } from 'uuid'
 import { SheetSegment } from './Segment'
-import { SheetPart } from './Part'
-import { SheetPiece } from './Piece'
-import { SheetUpdate, SheetsManager } from './SheetManager'
+import { IRundownPart } from './Part'
+import { RundownPiece } from './Piece'
+import { IRundownUpdate, RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 
-interface RundownMetaData {
+interface IRundownMetaData {
 	version: string
 	startTime: number
 	endTime: number
 }
 
-interface ParsedRow {
+interface IParsedRow {
 	meta: {
 		rowPosition: number,
 		propColPosition: {
@@ -35,21 +35,21 @@ interface ParsedRow {
 	}
 }
 
-interface ShowTime {
+interface IShowTime {
 	hour: number
 	minute: number
 	second: number
 	millis: number
 }
 
-export interface Rundown {
+export interface IRundown {
 	externalId: string
 	name: string // namnet på sheeten
 	expectedStart: number // unix time
 	expectedEnd: number // unix time
 }
 
-export class SheetRundown implements Rundown {
+export class InewsRundown implements IRundown {
 	// id: string
 	// name: string // namnet på sheeten
 	// expectedStart: number // unix time
@@ -64,7 +64,7 @@ export class SheetRundown implements Rundown {
 		public segments: SheetSegment[] = []
 	) {}
 
-	serialize (): Rundown {
+	serialize (): IRundown {
 		return {
 			externalId:				this.externalId,
 			name:			this.name,
@@ -80,7 +80,7 @@ export class SheetRundown implements Rundown {
 	 * Converts a 12/24 hour date string to a ShowTime
 	 * @param {string} timeString Time in the form `HH:MM:SS (AM|PM)`
 	 */
-	private static showTimeFromString (timeString: string): ShowTime {
+	private static showTimeFromString (timeString: string): IShowTime {
 		let [time, mod] = timeString.split(' ')
 		let [hours, mins, seconds] = (time.includes('.')) ? time.split('.') : time.split(':')
 		let h: number
@@ -116,8 +116,8 @@ export class SheetRundown implements Rundown {
 		let startDay = new Date()
 		let endDay = new Date()
 
-		let startTime: ShowTime
-		let endTime: ShowTime
+		let startTime: IShowTime
+		let endTime: IShowTime
 
 		startTime = this.showTimeFromString(startString)
 		endTime = this.showTimeFromString(endString)
@@ -144,7 +144,7 @@ export class SheetRundown implements Rundown {
 		return id
 	}
 
-	private static parseRawData (cells: any[][], outputLayers: IOutputLayer[]): {rows: ParsedRow[], meta: RundownMetaData} {
+	private static parseRawData (cells: any[][], outputLayers: IOutputLayer[]): {rows: IParsedRow[], meta: IRundownMetaData} {
 		let metaRow = cells[0] || []
 		let rundownStartTime = metaRow[2]
 		let rundownEndTime = metaRow[4]
@@ -157,12 +157,12 @@ export class SheetRundown implements Rundown {
 				inverseTablePositions[columnNumber] = cell
 			}
 		})
-		let parsedRows: ParsedRow[] = []
+		let parsedRows: IParsedRow[] = []
 		for (let rowNumber = 3; rowNumber < cells.length; rowNumber++) {
 
 			let row = cells[rowNumber]
 			if (row) {
-				let rowItem: ParsedRow = {
+				let rowItem: IParsedRow = {
 					meta: {
 						rowPosition: rowNumber,
 						propColPosition: {}
@@ -249,12 +249,12 @@ export class SheetRundown implements Rundown {
 		return letter
 	}
 
-	private static parsedRowsIntoSegments (sheetId: string, parsedRows: ParsedRow[]): {segments: SheetSegment[], sheetUpdates: SheetUpdate[]} {
+	private static parsedRowsIntoSegments (sheetId: string, parsedRows: IParsedRow[]): {segments: SheetSegment[], sheetUpdates: IRundownUpdate[]} {
 		let segments: SheetSegment[] = []
 		const implicitId = 'implicitFirst'
 		let segment = new SheetSegment(sheetId,implicitId, 0,'Implicit First Section', false)
-		let part: SheetPart | undefined
-		let sheetUpdates: SheetUpdate[] = []
+		let part: IRundownPart | undefined
+		let sheetUpdates: IRundownUpdate[] = []
 
 		function timeFromRawData (time: string | undefined): number {
 			if (time === undefined) {
@@ -315,7 +315,7 @@ export class SheetRundown implements Rundown {
 
 		parsedRows.forEach(row => {
 			let id = row.data.id
-			let currentSheetUpdate: SheetUpdate | undefined
+			let currentSheetUpdate: IRundownUpdate | undefined
 			if (!id) {
 				id = uuidV4()
 				// Update sheet with new ids
@@ -348,7 +348,7 @@ export class SheetRundown implements Rundown {
 					} else {
 						if (row.data.objectType) {
 							let attr = { ...row.data.attributes || {}, ...{ adlib: isAdlib(row.data.objectTime).toString() } }
-							part.addPiece(new SheetPiece(id, row.data.objectType, timeFromRawData(row.data.objectTime), timeFromRawData(row.data.duration), row.data.clipName || '', attr, 'TBA', row.data.script || '', row.data.transition || ''))
+							part.addPiece(new RundownPiece(id, row.data.objectType, timeFromRawData(row.data.objectTime), timeFromRawData(row.data.duration), row.data.clipName || '', attr, 'TBA', row.data.script || '', row.data.transition || ''))
 						} else {
 							currentSheetUpdate = undefined
 						}
@@ -365,10 +365,10 @@ export class SheetRundown implements Rundown {
 						segment.addPart(part)
 						part = undefined
 					}
-					part = new SheetPart(row.data.type, segment.externalId, id, _.keys(segment.parts).length, row.data.name || '', row.data.float === 'TRUE', row.data.script || '')
+					part = new IRundownPart(row.data.type, segment.externalId, id, _.keys(segment.parts).length, row.data.name || '', row.data.float === 'TRUE', row.data.script || '')
 					if (row.data.objectType) {
 						let attr = { ...row.data.attributes || {}, ...{ adlib: isAdlib(row.data.objectTime).toString() } }
-						const firstItem = new SheetPiece(id + '_item', row.data.objectType, timeFromRawData(row.data.objectTime), timeFromRawData(row.data.duration), row.data.clipName || '', attr, 'TBA', '', row.data.transition || '')
+						const firstItem = new RundownPiece(id + '_item', row.data.objectType, timeFromRawData(row.data.objectTime), timeFromRawData(row.data.duration), row.data.clipName || '', attr, 'TBA', '', row.data.transition || '')
 						part.addPiece(firstItem)
 					}
 					// TODO: ID issue. We can probably do "id + `_item`, or some shit"
@@ -389,10 +389,11 @@ export class SheetRundown implements Rundown {
 		return { segments: segments, sheetUpdates }
 	}
 	/**
+	 *  KEEEP THIS EXPLANATION UNTIL TRANSFORMING INTO INEWS IS COMPLETED
 	 * Data attributes
 	 *
 	 * Row 1: Meta data about the running order;
-	 *  A1: Spreadsheet gateway version
+	 *  A1: iNews gateway version
 	 *  C1: Expected start
 	 *  E1: Expected end
 	 * Row 2: table names
@@ -410,15 +411,12 @@ export class SheetRundown implements Rundown {
 	  * @param cells Cells of the sheet
 	  * @param sheetManager Optional; Will be used to update the sheet if changes, such as ID-updates, needs to be done.
 	  */
-	static fromSheetCells (sheetId: string, name: string, cells: any[][], outputLayers: IOutputLayer[], sheetManager?: SheetsManager): SheetRundown {
-		let parsedData = SheetRundown.parseRawData(cells, outputLayers)
-		let rundown = new SheetRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
-		let results = SheetRundown.parsedRowsIntoSegments(sheetId, parsedData.rows)
+	static fromSheetCells (sheetId: string, name: string, cells: any[][], outputLayers: IOutputLayer[], sheetManager?: RundownManager): InewsRundown {
+		let parsedData = InewsRundown.parseRawData(cells, outputLayers)
+		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
+		let results = InewsRundown.parsedRowsIntoSegments(sheetId, parsedData.rows)
 		rundown.addSegments(results.segments)
 
-		if (sheetManager && results.sheetUpdates && results.sheetUpdates.length > 0) {
-			sheetManager.updateSheetWithSheetUpdates(sheetId, 'Rundown', results.sheetUpdates).catch(console.error)
-		}
 		return rundown
 	}
 }

@@ -20,16 +20,16 @@ export class RundownManager {
 	 */
 	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
 		return this.downloadQueue(rundownSheetId)
-		.then(data => {
-			console.log('DUMMY LOG : ' + data)
-			return InewsRundown.fromSheetCells(rundownSheetId, 'unknown', [], outputLayers, this)
+		.then(rundownNSML => {
+			console.log('DUMMY LOG : ' + rundownNSML)
+			return InewsRundown.fromNSMLdata(rundownSheetId, 'unknown', rundownNSML, outputLayers, this)
 		})
 	}
 
 	/**
-	 * Downloads raw data from google spreadsheets
+	 * Downloads NSML data from iNEWS FTP SERVER
 	 *
-	 * @param queueId Id of the google spreadsheet to download
+	 * @param queueId Queue Id of the iNews queue to download
 	 */
 	downloadQueue (queueName: string) {
 
@@ -71,7 +71,7 @@ export class RundownManager {
 	}
 
 	/**
-	 * Checks if a sheet contains the 'Rundown' range.
+	 * validates a Rundown.
 	 * @param {string} sheetid Id of the sheet to check.
 	 */
 	async checkSheetIsValid (sheetid: string): Promise<boolean> {

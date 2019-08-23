@@ -12,7 +12,7 @@ interface IRundownMetaData {
 	endTime: number
 }
 
-interface IParsedRow {
+interface IParsedElement {
 	meta: {
 		rowPosition: number,
 		propColPosition: {
@@ -33,13 +33,6 @@ interface IParsedRow {
 		transition?: string
 		attributes?: {[key: string]: string}
 	}
-}
-
-interface IShowTime {
-	hour: number
-	minute: number
-	second: number
-	millis: number
 }
 
 export interface IRundown {
@@ -76,165 +69,65 @@ export class InewsRundown implements IRundown {
 		segments.forEach(segment => this.segments.push(segment))
 	}
 
-	/**
-	 * Converts a 12/24 hour date string to a ShowTime
-	 * @param {string} timeString Time in the form `HH:MM:SS (AM|PM)`
-	 */
-	private static showTimeFromString (timeString: string): IShowTime {
-		let [time, mod] = timeString.split(' ')
-		let [hours, mins, seconds] = (time.includes('.')) ? time.split('.') : time.split(':')
-		let h: number
-		let m: number = Number(mins)
-		let s: number = Number(seconds)
-
-		if (hours === '12') {
-			hours = '00'
-		}
-
-		if (mod === 'PM') {
-			h = parseInt(hours, 10) + 12
-		} else {
-			h = parseInt(hours, 10)
-		}
-
-		let mil = 1000
-
-		return {
-			hour: h,
-			minute: m,
-			second: s,
-			millis: (s * mil) + (m * 60 * mil) + (h * 3600 * mil)
-		}
-	}
-
-	/**
-	 * Converts the start and end times to milliseconds
-	 * @param {string} startString Start time in the form `HH:MM:SS (AM|PM)`
-	 * @param {string} endString End time in the form `HH:MM:SS (AM|PM)`
-	 */
-	private static showTimesToMillis (startString: string, endString: string): [number, number] {
-		let startDay = new Date()
-		let endDay = new Date()
-
-		let startTime: IShowTime
-		let endTime: IShowTime
-
-		startTime = this.showTimeFromString(startString)
-		endTime = this.showTimeFromString(endString)
-
-		if (startTime.millis > endTime.millis) {
-			endDay.setDate(startDay.getDate() + 1)
-		}
-
-		// Assume the show is happening today
-		let targetStart = new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDate(), startTime.hour, startTime.minute, startTime.second)
-		let targetEnd = new Date(endDay.getFullYear(), endDay.getMonth(), endDay.getDate(), endTime.hour, endTime.minute, endTime.second)
-		return [
-			targetStart.getTime(),
-			targetEnd.getTime()
-		]
-	}
-
-	private static getLayerByName (name: string, outputLayers: IOutputLayer[]): string {
-		let id = ''
-		outputLayers.forEach(layer => {
-			if (layer.name === name) id = layer._id
-		})
-
-		return id
-	}
-
-	private static parseRawData (cells: any[][], outputLayers: IOutputLayer[]): {rows: IParsedRow[], meta: IRundownMetaData} {
-		let metaRow = cells[0] || []
-		let rundownStartTime = metaRow[2]
-		let rundownEndTime = metaRow[4]
-		let tablesRow = cells[1] || []
-		let tablePositions: any = {}
+	private static parseRawData (rundownNSML: any[], outputLayers: IOutputLayer[]): {rows: IParsedElement[], meta: IRundownMetaData} {
 		let inverseTablePositions: {[key: number]: string} = {}
-		tablesRow.forEach((cell, columnNumber) => {
-			if (typeof cell === 'string' && cell !== '') {
-				tablePositions[cell] = columnNumber
-				inverseTablePositions[columnNumber] = cell
+
+		console.log('DUMMY LOG : ', outputLayers)
+		rundownNSML.forEach((story, index) => {
+			const attr = inverseTablePositions[index]
+			if (story === undefined || story === '') { index++; return }
+			switch (attr) {
+				case 'id':
+				case 'name':
+				case 'type':
+				case 'float':
+				case 'script':
+				case 'objectType':
+				case 'objectTime':
+				case 'duration':
+				case 'clipName':
+				case 'feedback':
+				case 'transition':
+					break
+				case 'screen':
+					break
+				case '':
+				case undefined:
+					break
+				default:
+					break
 			}
+			index++
 		})
-		let parsedRows: IParsedRow[] = []
-		for (let rowNumber = 3; rowNumber < cells.length; rowNumber++) {
 
-			let row = cells[rowNumber]
-			if (row) {
-				let rowItem: IParsedRow = {
-					meta: {
-						rowPosition: rowNumber,
-						propColPosition: {}
-					},
-					data: {
-						float: 'FALSE'
-					}
-				}
-				let index = 0
-				row.forEach((cell, columnNumber) => {
-					const attr = inverseTablePositions[columnNumber]
-					rowItem.meta.propColPosition[attr] = columnNumber
-					if (cell === undefined || cell === '') { index++; return }
-					switch (attr) {
-						case 'id':
-						case 'name':
-						case 'type':
-						case 'float':
-						case 'script':
-						case 'objectType':
-						case 'objectTime':
-						case 'duration':
-						case 'clipName':
-						case 'feedback':
-						case 'transition':
-							rowItem.data[attr] = cell
-							break
-						case 'screen':
-							if (!rowItem.data.attributes) {
-								rowItem.data.attributes = {}
-							}
-
-							rowItem.data.attributes['screen'] = this.getLayerByName(cell, outputLayers)
-							break
-						case '':
-						case undefined:
-							break
-						default:
-							if (attr.match(/attr\d/i)) {
-								if (!rowItem.data.attributes) {
-									rowItem.data.attributes = {}
-								}
-								if (row[index - 1]) {
-									rowItem.data.attributes[String(row[index - 1]).toLowerCase()] = cell
-								} else {
-									rowItem.data.attributes[attr] = cell
-								}
-							}
-							break
-					}
-					index++
-				})
-
-				if (// Only add non-empty rows:
-					rowItem.data.name ||
-					rowItem.data.type ||
-					rowItem.data.objectType
-				) {
-					parsedRows.push(rowItem)
-				}
-
-			}
-		}
-
-		let [parsedStartTime, parsedEndTime] = this.showTimesToMillis(rundownStartTime, rundownEndTime)
 		return {
-			rows: parsedRows,
 			meta: {
-				version: metaRow[0].replace(/blueprint gateway /i, ''),
-				startTime: parsedStartTime, // runningOrderStartTime,
-				endTime: parsedEndTime // runningOrderEndTime
-			}
+				version: 'v0.2',
+				startTime: 0,
+				endTime: 1
+			},
+			rows: [{
+				meta: {
+					rowPosition: 3,
+					propColPosition: {
+						['string']: 0
+					}
+				},
+				data: {
+					id: 'string',
+					name: 'string',
+					type: 'string',
+					float: 'string',
+					script: 'string',
+					objectType: 'string',
+					objectTime: 'string',
+					duration: 'string',
+					clipName: 'string',
+					feedback: 'string',
+					transition: 'string',
+					attributes: { ['string']: 'string' }
+				}
+			}]
 		}
 	}
 
@@ -249,7 +142,7 @@ export class InewsRundown implements IRundown {
 		return letter
 	}
 
-	private static parsedRowsIntoSegments (sheetId: string, parsedRows: IParsedRow[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
+	private static parsedRowsIntoSegments (sheetId: string, parsedRows: IParsedElement[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
 		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
 		let segment = new RundownSegment(sheetId,implicitId, 0,'Implicit First Section', false)
@@ -408,12 +301,12 @@ export class InewsRundown implements IRundown {
 	  *
 	  * @param sheetId Id of the sheet
 	  * @param name Name of the sheet (often the title)
-	  * @param cells Cells of the sheet
+	  * @param rundownNSML Cells of the sheet
 	  * @param sheetManager Optional; Will be used to update the sheet if changes, such as ID-updates, needs to be done.
 	  */
-	static fromSheetCells (sheetId: string, name: string, cells: any[][], outputLayers: IOutputLayer[], sheetManager?: RundownManager): InewsRundown {
+	static fromNSMLdata (sheetId: string, name: string, rundownNSML: any[][], outputLayers: IOutputLayer[], sheetManager?: RundownManager): InewsRundown {
 		console.log('DUMMY LOG : ' + sheetManager)
-		let parsedData = InewsRundown.parseRawData(cells, outputLayers)
+		let parsedData = InewsRundown.parseRawData(rundownNSML, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
 		let results = InewsRundown.parsedRowsIntoSegments(sheetId, parsedData.rows)
 		rundown.addSegments(results.segments)

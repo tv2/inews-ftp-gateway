@@ -8,6 +8,7 @@ import {
 import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { mutateRundown, mutateSegment, mutatePart } from './mutate'
+import * as DEFAULTS from './DEFAULTS'
 
 export interface InewsFTPConfig {
 	// Todo: add settings here?
@@ -15,17 +16,17 @@ export interface InewsFTPConfig {
 }
 export interface InewsFTPDeviceSettings {
 	/** Path / Name to the Drive folder */
-	folderPath: string  /* iNews Queue */
+	folderPath: string
 	debugLogging: boolean
 
 	/** Set to true when secret value exists */
-	secretCredentials: boolean /* For now Ip address */
-	secretAccessToken: boolean /* For now Password */
+	secretCredentials: boolean
+	secretAccessToken: boolean
 }
 
 export interface InewsFTPDeviceSecretSettings {
-	credentials?: Credentials /* For now Ip address */
-	accessToken?: AccessToken /* For now Password */
+	credentials?: Credentials
+	accessToken?: AccessToken
 }
 
 export interface Credentials {
@@ -66,12 +67,6 @@ export class InewsFTPHandler {
 		this._logger = logger
 		this.options = config
 		this._coreHandler = coreHandler
-
-		coreHandler.doReceiveAuthToken = (authToken: string) => {
-			// A dummy for using spreadsheetconnection as FTP (until Core has ADDED this)
-			console.log(authToken)
-			return new Promise((resolve) => { resolve() })
-		}
 	}
 	init (coreHandler: CoreHandler): Promise<void> {
 		return coreHandler.core.getPeripheralDevice()
@@ -157,6 +152,8 @@ export class InewsFTPHandler {
 		}, 20)
 	}
 	private async _initInewsFTPConnection (): Promise<void> {
+
+		// ToDo: Move Init inewConnection for RunningOrderWatcher constructor to here:
 		if (this._disposed) return Promise.resolve()
 		if (!this._settings) throw Error('iNews-Settings are not set')
 
@@ -178,7 +175,6 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 
 			if (peripheralDevice) {
-				let secretSettings: InewsFTPDeviceSecretSettings = peripheralDevice.secretSettings || {}
 
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 
@@ -189,8 +185,8 @@ export class InewsFTPHandler {
 					delete this.iNewsWatcher
 				}
 
-				const userName = String(secretSettings.credentials)
-				const passWord = String(secretSettings.accessToken)
+				const userName = DEFAULTS.USERNAME
+				const passWord = DEFAULTS.PASSWORD
 
 				const watcher = new RunningOrderWatcher(userName, passWord, this._coreHandler, 'v0.2')
 				this.iNewsWatcher = watcher
@@ -233,6 +229,14 @@ export class InewsFTPHandler {
 				.on('part_update', (rundownExternalId, sectionId, _storyId, newStory) => {
 					this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
 				})
+				// if (true) {
+				this._logger.info(`Starting watch of ` + DEFAULTS.INEWS_QUEUE[0])
+				watcher.setInewsQueues(DEFAULTS.INEWS_QUEUE[0])
+					.then(() => this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${DEFAULTS.INEWS_QUEUE[0]}'`]))
+					.catch(e => {
+						console.log('Error in iNews Rundown list', e)
+					})
+				// }
 			}
 			return Promise.resolve()
 		})

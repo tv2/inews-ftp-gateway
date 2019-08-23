@@ -63,11 +63,10 @@ export class RunningOrderWatcher extends EventEmitter {
 		delayStart?: boolean
 	) {
 		super()
-		console.log('DUMMY LOG : ' + this.userName + this.passWord)
 		this.iNewsConnection = inews({
 			'hosts': DEFAULTS.SERVERS,
-			'user': DEFAULTS.USERNAME, // this.userName,
-			'password': DEFAULTS.PASSWORD // this.passWord
+			'user': this.userName,
+			'password': this.passWord
 		})
 
 		this.rundownManager = new RundownManager(this.iNewsConnection)
@@ -86,10 +85,21 @@ export class RunningOrderWatcher extends EventEmitter {
 		return runningOrder
 	}
 
-	async checkInewsRundown (): Promise<InewsRundown[]> {
+	async checkInewsRundowns (): Promise<InewsRundown[]> {
 		return Promise.all(DEFAULTS.INEWS_QUEUE.map(roId => {
 			return this.checkRunningOrderById(roId)
 		}))
+	}
+
+	/**
+ 	* Will add all currently available Running Orders from the first drive folder
+ 	* matching the provided name
+ 	*
+ 	* @param iNewsQueues Name of folder to add Running Orders from. Eg. "My Running Orders"
+	 */
+	async setInewsQueues (iNewsQueues: string): Promise<InewsRundown[]> {
+		console.log('DUMMY LOG : ', iNewsQueues)
+		return this.checkInewsRundowns()
 	}
 
 	/**
@@ -117,23 +127,23 @@ export class RunningOrderWatcher extends EventEmitter {
 		}, this.pollIntervalSlow)
 
 
-		this.slowinterval = setInterval(() => {
+		this.mediaPollInterval = setInterval(() => {
 			if (this.currentlyChecking) {
 				return
 			}
-			console.log('Running slow check')
+			console.log('Running check')
 			this.currentlyChecking = true
 
-			this.checkInewsRundown()
+			this.checkInewsRundowns()
 			.catch(error => {
-				console.error('Something went wrong during slow check', error, error.stack)
+				console.error('Something went wrong during check', error, error.stack)
 			})
 			.then(() => {
 				// console.log('slow check done')
 				this.currentlyChecking = false
 			}).catch(console.error)
 
-		}, this.pollIntervalSlow)
+		}, this.pollIntervalMedia)
 	}
 
 	/**
@@ -159,10 +169,10 @@ export class RunningOrderWatcher extends EventEmitter {
 
 	private processUpdatedRunningOrder (rundownId: string, rundown: InewsRundown | null) {
 
+		/*
 		const oldRundown = this.runningOrders[rundownId]
 
 		// Check if runningOrders have changed:
-
 		if (!rundown && oldRundown) {
 			this.emit('rundown_delete', rundownId)
 
@@ -227,6 +237,7 @@ export class RunningOrderWatcher extends EventEmitter {
 				})
 			}
 		}
+*/
 		// Update the stored data:
 		if (rundown) {
 			this.runningOrders[rundownId] = clone(rundown)

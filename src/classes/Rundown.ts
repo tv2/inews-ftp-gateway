@@ -107,8 +107,8 @@ export class InewsRundown implements IRundown {
 					}
 				},
 				data: {
-					id: 'string',
-					name: 'string',
+					id: convertedStory.head.storyid[0],
+					name: convertedStory.head.formname[0],
 					type: 'string',
 					float: 'string',
 					script: 'string',

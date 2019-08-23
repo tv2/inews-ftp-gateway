@@ -5,6 +5,7 @@ import { RundownPiece } from './Piece'
 import { IRundownUpdate, RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
+import { NsmlToJson } from './NsmlToJson'
 
 interface IRundownMetaData {
 	version: string
@@ -73,8 +74,11 @@ export class InewsRundown implements IRundown {
 
 		console.log('DUMMY LOG : ', outputLayers)
 		let elements: IParsedElement[] = rundownNSML.map((story) => {
-			const convertedStory = convertNsmlToJson(story)
-			switch (convertedStory) {
+			const convertedStory = NsmlToJson.convert(story)
+			console.log('DUMMY LOG : ', convertedStory)
+
+			let dummy = ''
+			switch (dummy) {
 				case 'id':
 				case 'name':
 				case 'type':
@@ -306,7 +310,7 @@ export class InewsRundown implements IRundown {
 		console.log('DUMMY LOG : ' + sheetManager)
 		let parsedData = InewsRundown.parseRawData(rundownNSML, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
-		let results = InewsRundown.parsedRowsIntoSegments(sheetId, parsedData.rows)
+		let results = InewsRundown.parsedRowsIntoSegments(sheetId, parsedData.elements)
 		rundown.addSegments(results.segments)
 
 		return rundown

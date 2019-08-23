@@ -1,6 +1,6 @@
 import { IRundownPart } from './Part'
 // import { hasChangeType } from './hasChangeType';
-export interface Segment {
+export interface ISegment {
 	rundownId: string
 	externalId: string // unique within the parent runningOrder
 	rank: number
@@ -8,7 +8,7 @@ export interface Segment {
 	float: boolean
 }
 
-export class RundownSegment implements Segment {
+export class RundownSegment implements ISegment {
 	constructor (
 		public rundownId: string,
 		public externalId: string,
@@ -17,7 +17,7 @@ export class RundownSegment implements Segment {
 		public float: boolean,
 		public parts: IRundownPart[] = []
 	) {}
-	serialize (): Segment {
+	serialize (): ISegment {
 		return {
 			rundownId:		this.rundownId,
 			externalId:					this.externalId,

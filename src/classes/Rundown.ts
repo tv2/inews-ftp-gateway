@@ -69,14 +69,12 @@ export class InewsRundown implements IRundown {
 		segments.forEach(segment => this.segments.push(segment))
 	}
 
-	private static parseRawData (rundownNSML: any[], outputLayers: IOutputLayer[]): {rows: IParsedElement[], meta: IRundownMetaData} {
-		let inverseTablePositions: {[key: number]: string} = {}
+	private static parseRawData (rundownNSML: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData} {
 
 		console.log('DUMMY LOG : ', outputLayers)
-		rundownNSML.forEach((story, index) => {
-			const attr = inverseTablePositions[index]
-			if (story === undefined || story === '') { index++; return }
-			switch (attr) {
+		let elements: IParsedElement[] = rundownNSML.map((story) => {
+			const convertedStory = convertNsmlToJson(story)
+			switch (convertedStory) {
 				case 'id':
 				case 'name':
 				case 'type':
@@ -97,16 +95,7 @@ export class InewsRundown implements IRundown {
 				default:
 					break
 			}
-			index++
-		})
-
-		return {
-			meta: {
-				version: 'v0.2',
-				startTime: 0,
-				endTime: 1
-			},
-			rows: [{
+			return ({
 				meta: {
 					rowPosition: 3,
 					propColPosition: {
@@ -127,7 +116,16 @@ export class InewsRundown implements IRundown {
 					transition: 'string',
 					attributes: { ['string']: 'string' }
 				}
-			}]
+			})
+		})
+
+		return {
+			meta: {
+				version: 'v0.2',
+				startTime: 0,
+				endTime: 1
+			},
+			elements: elements
 		}
 	}
 

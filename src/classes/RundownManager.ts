@@ -21,7 +21,6 @@ export class RundownManager {
 	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
 		return this.downloadQueue(rundownSheetId)
 		.then(rundownNSML => {
-			console.log('DUMMY LOG : ' + rundownNSML)
 			return InewsRundown.fromNSMLdata(rundownSheetId, 'unknown', rundownNSML, outputLayers, this)
 		})
 	}
@@ -32,9 +31,11 @@ export class RundownManager {
 	 * @param queueId Queue Id of the iNews queue to download
 	 */
 	downloadQueue (queueName: string) {
-
+		let now = new Date().getTime()
 		let stories = this.getInewsData(queueName)
 		.then((data: any) => {
+			let timeSpend = (new Date().getTime() - now) / 1000
+			console.log('FTP read time : ', timeSpend)
 			return data
 		})
 

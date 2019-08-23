@@ -172,71 +172,63 @@ export class InewsFTPHandler {
 			Promise.resolve()
 		)
 		.then(async () => {
-			let peripheralDevice = this.getThisPeripheralDevice()
+			if (!this.iNewsWatcher) {
+				let peripheralDevice = this.getThisPeripheralDevice()
+				if (peripheralDevice) {
+					this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
+					const userName = DEFAULTS.USERNAME
+					const passWord = DEFAULTS.PASSWORD
 
-			if (peripheralDevice) {
+					const watcher = new RunningOrderWatcher(userName, passWord, this._coreHandler, 'v0.2')
+					this.iNewsWatcher = watcher
 
-				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-
-				// this._logger.info('GO!')
-
-				if (this.iNewsWatcher) {
-					this.iNewsWatcher.dispose()
-					delete this.iNewsWatcher
-				}
-
-				const userName = DEFAULTS.USERNAME
-				const passWord = DEFAULTS.PASSWORD
-
-				const watcher = new RunningOrderWatcher(userName, passWord, this._coreHandler, 'v0.2')
-				this.iNewsWatcher = watcher
-
-				watcher
-				.on('info', (message: any) => {
-					this._logger.info(message)
-				})
-				.on('error', (error: any) => {
-					this._logger.error(error)
-				})
-				.on('warning', (warning: any) => {
-					this._logger.error(warning)
-				})
-				// TODO - these event types should operate on the correct types and with better parameters
-				.on('rundown_delete', (rundownExternalId) => {
-					this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
-				})
-				.on('rundown_create', (_rundownExternalId, rundown) => {
-					this._coreHandler.core.callMethod(P.methods.dataRundownCreate, [mutateRundown(rundown)]).catch(this._logger.error)
-				})
-				.on('rundown_update', (_rundownExternalId, rundown) => {
-					this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)]).catch(this._logger.error)
-				})
-				.on('segment_delete', (rundownExternalId, sectionId) => {
-					this._coreHandler.core.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, sectionId]).catch(this._logger.error)
-				})
-				.on('segment_create', (rundownExternalId, _sectionId, newSection) => {
-					this._coreHandler.core.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
-				})
-				.on('segment_update', (rundownExternalId, _sectionId, newSection) => {
-					this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
-				})
-				.on('part_delete', (rundownExternalId, sectionId, storyId) => {
-					this._coreHandler.core.callMethod(P.methods.dataPartDelete, [rundownExternalId, sectionId, storyId]).catch(this._logger.error)
-				})
-				.on('part_create', (rundownExternalId, sectionId, _storyId, newStory) => {
-					this._coreHandler.core.callMethod(P.methods.dataPartCreate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
-				})
-				.on('part_update', (rundownExternalId, sectionId, _storyId, newStory) => {
-					this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
-				})
-				// if (true) {
-				this._logger.info(`Starting watch of ` + DEFAULTS.INEWS_QUEUE[0])
-				watcher.setInewsQueues(DEFAULTS.INEWS_QUEUE[0])
-					.then(() => this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${DEFAULTS.INEWS_QUEUE[0]}'`]))
-					.catch(e => {
-						console.log('Error in iNews Rundown list', e)
+					watcher
+					.on('info', (message: any) => {
+						this._logger.info(message)
 					})
-				// }
+					.on('error', (error: any) => {
+						this._logger.error(error)
+					})
+					.on('warning', (warning: any) => {
+						this._logger.error(warning)
+					})
+					// TODO - these event types should operate on the correct types and with better parameters
+					.on('rundown_delete', (rundownExternalId) => {
+						this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
+					})
+					.on('rundown_create', (_rundownExternalId, rundown) => {
+						this._coreHandler.core.callMethod(P.methods.dataRundownCreate, [mutateRundown(rundown)]).catch(this._logger.error)
+					})
+					.on('rundown_update', (_rundownExternalId, rundown) => {
+						this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)]).catch(this._logger.error)
+					})
+					.on('segment_delete', (rundownExternalId, sectionId) => {
+						this._coreHandler.core.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, sectionId]).catch(this._logger.error)
+					})
+					.on('segment_create', (rundownExternalId, _sectionId, newSection) => {
+						this._coreHandler.core.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
+					})
+					.on('segment_update', (rundownExternalId, _sectionId, newSection) => {
+						this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
+					})
+					.on('part_delete', (rundownExternalId, sectionId, storyId) => {
+						this._coreHandler.core.callMethod(P.methods.dataPartDelete, [rundownExternalId, sectionId, storyId]).catch(this._logger.error)
+					})
+					.on('part_create', (rundownExternalId, sectionId, _storyId, newStory) => {
+						this._coreHandler.core.callMethod(P.methods.dataPartCreate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
+					})
+					.on('part_update', (rundownExternalId, sectionId, _storyId, newStory) => {
+						this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
+					})
+					// if (true) {
+						this._logger.info(`Starting watch of ` + DEFAULTS.INEWS_QUEUE[0])
+						watcher.setInewsQueues(DEFAULTS.INEWS_QUEUE[0])
+						.then(() => this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${DEFAULTS.INEWS_QUEUE[0]}'`]))
+						.catch(e => {
+							console.log('Error in iNews Rundown list', e)
+						})
+						// }
+					}
 			}
 			return Promise.resolve()
 		})

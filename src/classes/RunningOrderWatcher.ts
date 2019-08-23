@@ -109,24 +109,6 @@ export class RunningOrderWatcher extends EventEmitter {
 		console.log('Starting Watcher')
 		this.stopWatcher()
 
-		this.fastInterval = setInterval(() => {
-			if (this.currentlyChecking) {
-				return
-			}
-			// console.log('Running fast check')
-			this.currentlyChecking = true
-			this.checkForChanges()
-			.catch(error => {
-				console.error('Something went wrong during fast check', error, error.stack)
-			})
-			.then(() => {
-				// console.log('fast check done')
-				this.currentlyChecking = false
-			}).catch(console.error)
-
-		}, this.pollIntervalSlow)
-
-
 		this.mediaPollInterval = setInterval(() => {
 			if (this.currentlyChecking) {
 				return
@@ -246,9 +228,4 @@ export class RunningOrderWatcher extends EventEmitter {
 		}
 	}
 
-	private async checkForChanges (): Promise<any> {
-
-		// ToDo: Get latest queue and compare it with existing
-		return
-	}
 }

@@ -1,4 +1,3 @@
-import { v4 as uuidV4 } from 'uuid'
 import { RundownSegment } from './Segment'
 import { IRundownPart } from './Part'
 import { RundownPiece } from './Piece'
@@ -144,12 +143,13 @@ export class InewsRundown implements IRundown {
 		return letter
 	}
 
-	private static parsedRowsIntoSegments (sheetId: string, parsedRows: IParsedElement[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
+	private static parsedFormsIntoSegments (sheetId: string, parsedElements: IParsedElement[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
 		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
 		let segment = new RundownSegment(sheetId,implicitId, 0,'Implicit First Section', false)
 		let part: IRundownPart | undefined
 		let sheetUpdates: IRundownUpdate[] = []
+
 
 		function timeFromRawData (time: string | undefined): number {
 			if (time === undefined) {
@@ -208,21 +208,11 @@ export class InewsRundown implements IRundown {
 			return false
 		}
 
-		parsedRows.forEach(row => {
-			let id = row.data.id
+		parsedElements.forEach(element => {
+			let id = element.data.id || ''
 			let currentSheetUpdate: IRundownUpdate | undefined
-			if (!id) {
-				id = uuidV4()
-				// Update sheet with new ids
-				let rowPosition = row.meta.rowPosition + 1
-				let colPosition = this.columnToLetter(row.meta.propColPosition['id'] + 1)
 
-				currentSheetUpdate = {
-					value: id,
-					cellPosition: colPosition + rowPosition
-				}
-			}
-			switch (row.data.type) {
+			switch (element.data.type) {
 				case 'SECTION':
 					if (part) {
 						segment.addPart(part)
@@ -232,7 +222,7 @@ export class InewsRundown implements IRundown {
 						segments.push(segment)
 					}
 
-					segment = new RundownSegment(sheetId, id, segments.length, row.data.name || '', row.data.float === 'TRUE')
+					segment = new RundownSegment(sheetId, id, segments.length, element.data.name || '', element.data.float === 'TRUE')
 					break
 				case '':
 				case undefined:
@@ -240,13 +230,6 @@ export class InewsRundown implements IRundown {
 					if (!part) {
 						// Then what?!
 						currentSheetUpdate = undefined
-					} else {
-						if (row.data.objectType) {
-							let attr = { ...row.data.attributes || {}, ...{ adlib: isAdlib(row.data.objectTime).toString() } }
-							part.addPiece(new RundownPiece(id, row.data.objectType, timeFromRawData(row.data.objectTime), timeFromRawData(row.data.duration), row.data.clipName || '', attr, 'TBA', row.data.script || '', row.data.transition || ''))
-						} else {
-							currentSheetUpdate = undefined
-						}
 					}
 					break
 				case 'SPLIT':
@@ -260,10 +243,10 @@ export class InewsRundown implements IRundown {
 						segment.addPart(part)
 						part = undefined
 					}
-					part = new IRundownPart(row.data.type, segment.externalId, id, _.keys(segment.parts).length, row.data.name || '', row.data.float === 'TRUE', row.data.script || '')
-					if (row.data.objectType) {
-						let attr = { ...row.data.attributes || {}, ...{ adlib: isAdlib(row.data.objectTime).toString() } }
-						const firstItem = new RundownPiece(id + '_item', row.data.objectType, timeFromRawData(row.data.objectTime), timeFromRawData(row.data.duration), row.data.clipName || '', attr, 'TBA', '', row.data.transition || '')
+					part = new IRundownPart(element.data.type, segment.externalId, id, _.keys(segment.parts).length, element.data.name || '', element.data.float === 'TRUE', element.data.script || '')
+					if (element.data.objectType) {
+						let attr = { ...element.data.attributes || {}, ...{ adlib: isAdlib(element.data.objectTime).toString() } }
+						const firstItem = new RundownPiece(id + '_item', element.data.objectType, timeFromRawData(element.data.objectTime), timeFromRawData(element.data.duration), element.data.clipName || '', attr, 'TBA', '', element.data.transition || '')
 						part.addPiece(firstItem)
 					}
 					// TODO: ID issue. We can probably do "id + `_item`, or some shit"
@@ -310,7 +293,7 @@ export class InewsRundown implements IRundown {
 		console.log('DUMMY LOG : ' + sheetManager)
 		let parsedData = InewsRundown.parseRawData(rundownNSML, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
-		let results = InewsRundown.parsedRowsIntoSegments(sheetId, parsedData.elements)
+		let results = InewsRundown.parsedFormsIntoSegments(sheetId, parsedData.elements)
 		rundown.addSegments(results.segments)
 
 		return rundown

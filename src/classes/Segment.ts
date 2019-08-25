@@ -1,4 +1,4 @@
-import { IRundownPart } from './Part'
+import { RundownPart } from './Part'
 // import { hasChangeType } from './hasChangeType';
 export interface ISegment {
 	rundownId: string
@@ -15,7 +15,7 @@ export class RundownSegment implements ISegment {
 		public rank: number,
 		public name: string,
 		public float: boolean,
-		public parts: IRundownPart[] = []
+		public parts: RundownPart[] = []
 	) {}
 	serialize (): ISegment {
 		return {
@@ -26,10 +26,10 @@ export class RundownSegment implements ISegment {
 			float:				this.float
 		}
 	}
-	addPart (part: IRundownPart) {
+	addPart (part: RundownPart) {
 		this.parts.push(part)
 	}
-	addParts (parts: IRundownPart[]) {
+	addParts (parts: RundownPart[]) {
 		parts.forEach(story => this.addPart(story))
 	}
 }

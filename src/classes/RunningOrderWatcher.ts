@@ -4,7 +4,7 @@ import { InewsRundown } from './Rundown'
 import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { RundownSegment } from './Segment'
-import { IRundownPart } from './Part'
+import { RundownPart } from './Part'
 import * as clone from 'clone'
 import { CoreHandler } from '../coreHandler'
 import * as inews from '@johnsand/inews'
@@ -27,8 +27,8 @@ export class RunningOrderWatcher extends EventEmitter {
 		((event: 'segment_update', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this) &
 
 		((event: 'part_delete', listener: (runningOrderId: string, sectionId: string, storyId: string) => void) => this) &
-		((event: 'part_create', listener: (runningOrderId: string, sectionId: string, storyId: string, newStory: IRundownPart) => void) => this) &
-		((event: 'part_update', listener: (runningOrderId: string, sectionId: string, storyId: string, newStory: IRundownPart) => void) => this)
+		((event: 'part_create', listener: (runningOrderId: string, sectionId: string, storyId: string, newStory: RundownPart) => void) => this) &
+		((event: 'part_update', listener: (runningOrderId: string, sectionId: string, storyId: string, newStory: RundownPart) => void) => this)
 
 	// Fast = list diffs, Slow = fetch All
 	public pollIntervalFast: number = 2 * 1000
@@ -92,14 +92,15 @@ export class RunningOrderWatcher extends EventEmitter {
 	}
 
 	/**
- 	* Will add all currently available Running Orders from the first drive folder
- 	* matching the provided name
- 	*
- 	* @param iNewsQueues Name of folder to add Running Orders from. Eg. "My Running Orders"
+	 * Will add all currently available Running Orders from the first drive folder
+	 * matching the provided name
+	 *
+	 * @param iNewsQueues Name of folder to add Running Orders from. Eg. "My Running Orders"
 	 */
 	async setInewsQueues (iNewsQueues: string): Promise<InewsRundown[]> {
 		console.log('DUMMY LOG : ', iNewsQueues)
-		return this.checkInewsRundowns()
+		let rundownList = this.checkInewsRundowns()
+		return rundownList
 	}
 
 	/**
@@ -151,7 +152,6 @@ export class RunningOrderWatcher extends EventEmitter {
 
 	private processUpdatedRunningOrder (rundownId: string, rundown: InewsRundown | null) {
 
-		/*
 		const oldRundown = this.runningOrders[rundownId]
 
 		// Check if runningOrders have changed:
@@ -195,8 +195,8 @@ export class RunningOrderWatcher extends EventEmitter {
 								newSection.parts.map(part => part.externalId))
 							).forEach((storyId: string) => {
 
-								const oldStory: IRundownPart = oldSection.parts.find(part => part.externalId === storyId) as IRundownPart // TODO handle the possibility of a missing id better
-								const newStory: IRundownPart = newSection.parts.find(part => part.externalId === storyId) as IRundownPart
+								const oldStory: RundownPart = oldSection.parts.find(part => part.externalId === storyId) as RundownPart // TODO handle the possibility of a missing id better
+								const newStory: RundownPart = newSection.parts.find(part => part.externalId === storyId) as RundownPart
 
 								if (!newStory && oldStory) {
 									this.emit('part_delete', rundownId, segmentId, storyId)
@@ -219,7 +219,7 @@ export class RunningOrderWatcher extends EventEmitter {
 				})
 			}
 		}
-*/
+
 		// Update the stored data:
 		if (rundown) {
 			this.runningOrders[rundownId] = clone(rundown)

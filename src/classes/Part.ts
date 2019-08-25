@@ -14,7 +14,7 @@ export interface IPart {
 	pieces: IPiece[]
 }
 
-export class IRundownPart implements IPart {
+export class RundownPart implements IPart {
 
 	constructor (
 		public type: string,

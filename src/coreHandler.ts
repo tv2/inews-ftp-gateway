@@ -157,9 +157,7 @@ export class CoreHandler {
 			this.logger.error(e)
 		})
 		if (this._onConnected) this._onConnected()
-		// this._coreMosHandlers.forEach((cmh: CoreMosDeviceHandler) => {
-		// 	cmh.setupSubscriptionsAndObservers()
-		// })
+
 	}
 	onConnected (fcn: () => any) {
 		this._onConnected = fcn

@@ -21,7 +21,7 @@ export class RundownManager {
 	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
 		return this.downloadQueue(rundownSheetId)
 		.then(rundownNSML => {
-			return InewsRundown.fromNSMLdata(rundownSheetId, 'unknown', rundownNSML, outputLayers, this)
+			return InewsRundown.fromNSMLdata(rundownSheetId, rundownSheetId, rundownNSML, outputLayers, this)
 		})
 	}
 
@@ -66,7 +66,7 @@ export class RundownManager {
 		})
 	}
 
-	async getSheetsInDriveFolder (folderName: string): Promise<string[]> {
+	async getRunningOrdersList (folderName: string): Promise<string[]> {
 		console.log('DUMMY LOG : ' + folderName)
 		return DEFAULTS.INEWS_QUEUE
 	}
@@ -75,7 +75,7 @@ export class RundownManager {
 	 * validates a Rundown.
 	 * @param {string} sheetid Id of the sheet to check.
 	 */
-	async checkSheetIsValid (sheetid: string): Promise<boolean> {
+	async checkRundownIsValid (sheetid: string): Promise<boolean> {
 		console.log('DUMMY LOG : ' + sheetid)
 		return Promise.resolve(true)
 	}

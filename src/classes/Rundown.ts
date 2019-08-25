@@ -1,5 +1,5 @@
 import { RundownSegment } from './Segment'
-import { IRundownPart } from './Part'
+import { RundownPart } from './Part'
 import { RundownPiece } from './Piece'
 import { IRundownUpdate, RundownManager } from './RundownManager'
 import * as _ from 'underscore'
@@ -106,9 +106,9 @@ export class InewsRundown implements IRundown {
 					}
 				},
 				data: {
-					id: convertedStory.head.storyid[0],
-					name: convertedStory.head.formname[0],
-					type: 'string',
+					id: convertedStory.fullform.head[0].storyid[0],
+					name: convertedStory.fullform.story[0].fields[0].f[2]._,
+					type: 'SECTION',
 					float: 'string',
 					script: 'string',
 					objectType: 'string',
@@ -147,7 +147,7 @@ export class InewsRundown implements IRundown {
 		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
 		let segment = new RundownSegment(sheetId,implicitId, 0,'Implicit First Section', false)
-		let part: IRundownPart | undefined
+		let part: RundownPart | undefined
 		let sheetUpdates: IRundownUpdate[] = []
 
 
@@ -243,7 +243,7 @@ export class InewsRundown implements IRundown {
 						segment.addPart(part)
 						part = undefined
 					}
-					part = new IRundownPart(element.data.type, segment.externalId, id, _.keys(segment.parts).length, element.data.name || '', element.data.float === 'TRUE', element.data.script || '')
+					part = new RundownPart(element.data.type, segment.externalId, id, _.keys(segment.parts).length, element.data.name || '', element.data.float === 'TRUE', element.data.script || '')
 					if (element.data.objectType) {
 						let attr = { ...element.data.attributes || {}, ...{ adlib: isAdlib(element.data.objectTime).toString() } }
 						const firstItem = new RundownPiece(id + '_item', element.data.objectType, timeFromRawData(element.data.objectTime), timeFromRawData(element.data.duration), element.data.clipName || '', attr, 'TBA', '', element.data.transition || '')

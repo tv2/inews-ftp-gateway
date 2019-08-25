@@ -221,14 +221,17 @@ export class InewsFTPHandler {
 						this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
 					})
 					// if (true) {
-						this._logger.info(`Starting watch of ` + DEFAULTS.INEWS_QUEUE[0])
-						watcher.setInewsQueues(DEFAULTS.INEWS_QUEUE[0])
-						.then(() => this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${DEFAULTS.INEWS_QUEUE[0]}'`]))
+					this._logger.info(`Starting watch of ` + DEFAULTS.INEWS_QUEUE[0])
+					watcher.setInewsQueues(DEFAULTS.INEWS_QUEUE[0])
+						.then((queueList) => {
+							console.log('DUMMY LOG : ', queueList)
+							this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${DEFAULTS.INEWS_QUEUE[0]}'`])
+						})
 						.catch(e => {
 							console.log('Error in iNews Rundown list', e)
 						})
 						// }
-					}
+				}
 			}
 			return Promise.resolve()
 		})

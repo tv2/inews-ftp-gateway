@@ -98,6 +98,14 @@ export class InewsRundown implements IRundown {
 				default:
 					break
 			}
+			// Convert body object to script:
+			let script = ''
+			convertedStory.root.story.body.p.map((line: any) => {
+				if (typeof(line) === 'string') {
+					script = script + line + '\n'
+				}
+			})
+
 			return ({
 				meta: {
 					rowPosition: 3,
@@ -106,11 +114,11 @@ export class InewsRundown implements IRundown {
 					}
 				},
 				data: {
-					id: convertedStory.fullform.head[0].storyid[0],
-					name: convertedStory.fullform.story[0].fields[0].f[2]._,
+					id: convertedStory.root.head.storyid,
+					name: convertedStory.root.story.fields.f[2]._,
 					type: 'SECTION',
 					float: 'string',
-					script: 'string',
+					script: script,
 					objectType: 'string',
 					objectTime: 'string',
 					duration: 'string',
@@ -143,76 +151,76 @@ export class InewsRundown implements IRundown {
 		return letter
 	}
 
-	private static parsedFormsIntoSegments (sheetId: string, parsedElements: IParsedElement[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
-		let segments: RundownSegment[] = []
-		const implicitId = 'implicitFirst'
-		let segment = new RundownSegment(sheetId,implicitId, 0,'Implicit First Section', false)
-		let part: RundownPart | undefined
-		let sheetUpdates: IRundownUpdate[] = []
+	static timeFromRawData (time: string | undefined): number {
+		if (time === undefined) {
+			return 0
+		}
 
+		time = time.replace('\n', '').replace(/\s/g, '')
 
-		function timeFromRawData (time: string | undefined): number {
-			if (time === undefined) {
-				return 0
-			}
+		let parts: string[] = []
 
-			time = time.replace('\n', '').replace(/\s/g, '')
-
-			let parts: string[] = []
-
-			if (time.match(/^(\d{1,2}){1,2}([\.:]\d{1,2}){0,2}$/)) {
-				if (time.indexOf(':') !== -1) {
-					parts = time.split(':')
-				} else {
-					parts = time.split('.')
-				}
-			} else if (time.match(/^(\d{1,2}){0,2}(\.\d{1,2}){0,2}(:(\d{1,3}))?$/)) {
-				if (time.indexOf(':') !== -1) {
-					let t = time.split(':')
-					time = t[0].replace('.', ':')
-					time += '.' + t[1]
-				}
+		if (time.match(/^(\d{1,2}){1,2}([\.:]\d{1,2}){0,2}$/)) {
+			if (time.indexOf(':') !== -1) {
 				parts = time.split(':')
 			} else {
-				return 0
+				parts = time.split('.')
 			}
+		} else if (time.match(/^(\d{1,2}){0,2}(\.\d{1,2}){0,2}(:(\d{1,3}))?$/)) {
+			if (time.indexOf(':') !== -1) {
+				let t = time.split(':')
+				time = t[0].replace('.', ':')
+				time += '.' + t[1]
+			}
+			parts = time.split(':')
+		} else {
+			return 0
+		}
 
-			parts = parts.reverse()
+		parts = parts.reverse()
 
-			let ml = 1000
+		let ml = 1000
 
-			let multipliers: number[] = [ml, ml * 60, ml * 3600]
-			let duration = 0
+		let multipliers: number[] = [ml, ml * 60, ml * 3600]
+		let duration = 0
 
-			for (let i = 0; i < parts.length; i++) {
-				if (i === 0) {
-					if (parts[i].includes('.')) {
-						duration += Number(parts[i].split('.')[1])
-						duration += Number(parts[i].split('.')[0]) * multipliers[i]
-					} else {
-						duration += Number(parts[i]) * multipliers[i]
-					}
+		for (let i = 0; i < parts.length; i++) {
+			if (i === 0) {
+				if (parts[i].includes('.')) {
+					duration += Number(parts[i].split('.')[1])
+					duration += Number(parts[i].split('.')[0]) * multipliers[i]
 				} else {
 					duration += Number(parts[i]) * multipliers[i]
 				}
+			} else {
+				duration += Number(parts[i]) * multipliers[i]
 			}
-
-			return duration
 		}
 
-		function isAdlib (time: string | undefined): boolean {
-			if (!time) {
-				return true
-			}
+		return duration
+	}
 
-			return false
+
+	static isAdlib (time: string | undefined): boolean {
+		if (!time) {
+			return true
 		}
 
-		parsedElements.forEach(element => {
-			let id = element.data.id || ''
+		return false
+	}
+
+	private static parsedFormsIntoSegments (sheetId: string, parsedForms: IParsedElement[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
+		let segments: RundownSegment[] = []
+		const implicitId = 'implicitFirst'
+		let segment = new RundownSegment(sheetId,implicitId, 0,'Implicit Section', false)
+		let part: RundownPart | undefined
+		let sheetUpdates: IRundownUpdate[] = []
+
+		parsedForms.forEach(form => {
+			let id = form.data.id || ''
 			let currentSheetUpdate: IRundownUpdate | undefined
 
-			switch (element.data.type) {
+			switch (form.data.type) {
 				case 'SECTION':
 					if (part) {
 						segment.addPart(part)
@@ -222,7 +230,7 @@ export class InewsRundown implements IRundown {
 						segments.push(segment)
 					}
 
-					segment = new RundownSegment(sheetId, id, segments.length, element.data.name || '', element.data.float === 'TRUE')
+					segment = new RundownSegment(sheetId, id, segments.length, form.data.name || '', form.data.float === 'TRUE')
 					break
 				case '':
 				case undefined:
@@ -243,10 +251,10 @@ export class InewsRundown implements IRundown {
 						segment.addPart(part)
 						part = undefined
 					}
-					part = new RundownPart(element.data.type, segment.externalId, id, _.keys(segment.parts).length, element.data.name || '', element.data.float === 'TRUE', element.data.script || '')
-					if (element.data.objectType) {
-						let attr = { ...element.data.attributes || {}, ...{ adlib: isAdlib(element.data.objectTime).toString() } }
-						const firstItem = new RundownPiece(id + '_item', element.data.objectType, timeFromRawData(element.data.objectTime), timeFromRawData(element.data.duration), element.data.clipName || '', attr, 'TBA', '', element.data.transition || '')
+					part = new RundownPart(form.data.type, segment.externalId, id, _.keys(segment.parts).length, form.data.name || '', form.data.float === 'TRUE', form.data.script || '')
+					if (form.data.objectType) {
+						let attr = { ...form.data.attributes || {}, ...{ adlib: InewsRundown.isAdlib(form.data.objectTime).toString() } }
+						const firstItem = new RundownPiece(id + '_item', form.data.objectType, InewsRundown.timeFromRawData(form.data.objectTime), InewsRundown.timeFromRawData(form.data.duration), form.data.clipName || '', attr, 'TBA', '', form.data.transition || '')
 						part.addPiece(firstItem)
 					}
 					// TODO: ID issue. We can probably do "id + `_item`, or some shit"
@@ -266,29 +274,14 @@ export class InewsRundown implements IRundown {
 		segments.push(segment)
 		return { segments: segments, sheetUpdates }
 	}
-	/**
-	 *  KEEEP THIS EXPLANATION UNTIL TRANSFORMING INTO INEWS IS COMPLETED
-	 * Data attributes
-	 *
-	 * Row 1: Meta data about the running order;
-	 *  A1: iNews gateway version
-	 *  C1: Expected start
-	 *  E1: Expected end
-	 * Row 2: table names
-	 *  Should have one of each of id, name, type, float, script, objectType, objectTime, , duration, clipName, feedback
-	 *  Can have 0 to N of "attr: X" Where x can be any alphanumerical value eg. "attr: name"
-	 * Row 3: Human readable information. Ignored
-	 * Row 4: Start of row-items. Normally Row 4 will be a SECTION. If not a SECTION, a "section 1" is assumed.
-	 * All following rows is one of the possible row types.
-	 */
 
-	 /**
-	  *
-	  * @param sheetId Id of the sheet
-	  * @param name Name of the sheet (often the title)
-	  * @param rundownNSML Cells of the sheet
-	  * @param sheetManager Optional; Will be used to update the sheet if changes, such as ID-updates, needs to be done.
-	  */
+	/**
+	 *
+	 * @param sheetId Id of the sheet
+	 * @param name Name of the sheet (often the title)
+	 * @param rundownNSML Cells of the sheet
+	 * @param sheetManager Optional; Will be used to update the sheet if changes, such as ID-updates, needs to be done.
+	 */
 	static fromNSMLdata (sheetId: string, name: string, rundownNSML: any[][], outputLayers: IOutputLayer[], sheetManager?: RundownManager): InewsRundown {
 		console.log('DUMMY LOG : ' + sheetManager)
 		let parsedData = InewsRundown.parseRawData(rundownNSML, outputLayers)

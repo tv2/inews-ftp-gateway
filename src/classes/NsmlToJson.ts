@@ -28,13 +28,16 @@ export class NsmlToJson {
 		// Change header to XML:
 		storyArray[0] = '<?xml version="1.0" encoding="UTF-8" standalone="no" ?>'
 		// Put tag around the full form (head-body etc.):
-		storyArray.splice(1, 0, '<fullform>')
-		storyArray.push('</fullform>')
+		storyArray.splice(1, 0, '<root>')
+		storyArray.push('</root>')
 
 		// Convert back to string:
 		let story = storyArray.join('\n')
 
-		const parser = new Parser()
+		const parser = new Parser({
+			explicitArray: false,
+			mergeAttrs: true
+		})
 		let converted: any
 		parser.parseString(story, ((err: any, data: any) => {
 			converted = data

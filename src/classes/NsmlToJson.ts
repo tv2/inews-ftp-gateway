@@ -5,6 +5,8 @@ export class NsmlToJson {
 
 		// Split tags into objects:
 		let storyArray = nsmlData.story.split('\n')
+
+		// Put end tag on <meta>
 		storyArray[2] = storyArray[2].replace(/<meta(.*?)>/g, '<meta$1\></meta>')
 
 		console.log('DUMMY LOG : ', storyArray)
@@ -35,7 +37,6 @@ export class NsmlToJson {
 		let story = storyArray.join('\n')
 
 		const parser = new Parser({
-			explicitArray: false,
 			mergeAttrs: true
 		})
 		let converted: any

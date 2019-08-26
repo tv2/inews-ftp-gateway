@@ -69,44 +69,13 @@ export class InewsRundown implements IRundown {
 		segments.forEach(segment => this.segments.push(segment))
 	}
 
-	private static parseRawData (rundownNSML: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData} {
+	private static splitRawDataToElements (rundownNSML: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData} {
 
 		console.log('DUMMY LOG : ', outputLayers)
-		let elements: IParsedElement[] = rundownNSML.map((story) => {
+		let allElements: IParsedElement[] = []
+		rundownNSML.map((story): void => {
 			const convertedStory = NsmlToJson.convert(story)
-			console.log('DUMMY LOG : ', convertedStory)
-
-			let dummy = ''
-			switch (dummy) {
-				case 'id':
-				case 'name':
-				case 'type':
-				case 'float':
-				case 'script':
-				case 'objectType':
-				case 'objectTime':
-				case 'duration':
-				case 'clipName':
-				case 'feedback':
-				case 'transition':
-					break
-				case 'screen':
-					break
-				case '':
-				case undefined:
-					break
-				default:
-					break
-			}
-			// Convert body object to script:
-			let script = ''
-			convertedStory.root.story.body.p.map((line: any) => {
-				if (typeof(line) === 'string') {
-					script = script + line + '\n'
-				}
-			})
-
-			return ({
+			allElements.push({
 				meta: {
 					rowPosition: 3,
 					propColPosition: {
@@ -114,11 +83,11 @@ export class InewsRundown implements IRundown {
 					}
 				},
 				data: {
-					id: convertedStory.root.head.storyid,
-					name: convertedStory.root.story.fields.f[2]._,
+					id: convertedStory.root.head[0].storyid,
+					name: convertedStory.root.story[0].fields[0].f[2]._,
 					type: 'SECTION',
 					float: 'string',
-					script: script,
+					script: 'string',
 					objectType: 'string',
 					objectTime: 'string',
 					duration: 'string',
@@ -126,6 +95,64 @@ export class InewsRundown implements IRundown {
 					feedback: 'string',
 					transition: 'string',
 					attributes: { ['string']: 'string' }
+				}
+			})
+
+			return convertedStory.root.story[0].aeset[0].ae[0].ap.map((field: any, index: number): void => {
+				console.log('DUMMY LOG : ', index)
+
+				let dummy = ''
+				switch (dummy) {
+					case 'id':
+					case 'name':
+					case 'type':
+					case 'float':
+					case 'script':
+					case 'objectType':
+					case 'objectTime':
+					case 'duration':
+					case 'clipName':
+					case 'feedback':
+					case 'transition':
+						break
+					case 'screen':
+						break
+					case '':
+					case undefined:
+						break
+					default:
+						break
+				}
+				// Convert body object to script:
+				let script = ''
+				convertedStory.root.story[0].body[0].p.map((line: any) => {
+					if (typeof(line) === 'string') {
+						script = script + line + '\n'
+					}
+				})
+				if (field.length > 1) {
+					allElements.push({
+						meta: {
+							rowPosition: 3,
+							propColPosition: {
+								['string']: 0
+							}
+						},
+						data: {
+							id: convertedStory.root.head[0].storyid + index,
+							name: convertedStory.root.story[0].fields[0].f[2]._,
+							type: index === 0 ? 'script' : 'camera',
+							float: 'string',
+							script: index === 0 ? script : '',
+							objectType: 'string',
+							objectTime: 'string',
+							duration: 'string',
+							clipName: 'string',
+							feedback: 'string',
+							transition: 'string',
+							attributes: { ['string']: 'string' }
+						}
+					})
 				}
 			})
 		})
@@ -136,7 +163,7 @@ export class InewsRundown implements IRundown {
 				startTime: 0,
 				endTime: 1
 			},
-			elements: elements
+			elements: allElements
 		}
 	}
 
@@ -284,7 +311,7 @@ export class InewsRundown implements IRundown {
 	 */
 	static fromNSMLdata (sheetId: string, name: string, rundownNSML: any[][], outputLayers: IOutputLayer[], sheetManager?: RundownManager): InewsRundown {
 		console.log('DUMMY LOG : ' + sheetManager)
-		let parsedData = InewsRundown.parseRawData(rundownNSML, outputLayers)
+		let parsedData = InewsRundown.splitRawDataToElements(rundownNSML, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
 		let results = InewsRundown.parsedFormsIntoSegments(sheetId, parsedData.elements)
 		rundown.addSegments(results.segments)

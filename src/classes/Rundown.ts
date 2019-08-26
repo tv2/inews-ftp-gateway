@@ -4,15 +4,9 @@ import { RundownPiece } from './Piece'
 import { IRundownUpdate, RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
-import { NsmlToJson } from './NsmlToJson'
+import { SplitRawDataToElements } from './SplitRawDataToElements'
 
-interface IRundownMetaData {
-	version: string
-	startTime: number
-	endTime: number
-}
-
-interface IParsedElement {
+export interface IParsedElement {
 	data: {
 		id?: string
 		name?: string
@@ -63,72 +57,6 @@ export class InewsRundown implements IRundown {
 		segments.forEach(segment => this.segments.push(segment))
 	}
 
-	private static splitRawDataToElements (rundownNSML: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData} {
-
-		console.log('DUMMY LOG : ', outputLayers)
-		let allElements: IParsedElement[] = []
-		rundownNSML.map((story): void => {
-			const convertedStory = NsmlToJson.convert(story)
-			allElements.push({
-				// New section for each element:
-				data: {
-					id: convertedStory.root.head[0].storyid,
-					name: convertedStory.root.story[0].fields[0].f[2]._,
-					type: 'SECTION',
-					float: 'string',
-					script: 'string',
-					objectType: 'string',
-					objectTime: 'string',
-					duration: 'string',
-					clipName: 'string',
-					feedback: 'string',
-					transition: 'string',
-					attributes: { ['string']: 'string' }
-				}
-			})
-
-			// Return elements in section:
-			return convertedStory.root.story[0].aeset[0].ae[0].ap.map((field: any, index: number): void => {
-				console.log('DUMMY LOG : ', index)
-
-				// Convert body object to script:
-				let script = ''
-				convertedStory.root.story[0].body[0].p.map((line: any) => {
-					if (typeof(line) === 'string') {
-						script = script + line + '\n'
-					}
-				})
-				if (field.length > 1) {
-					allElements.push({
-						data: {
-							id: convertedStory.root.head[0].storyid + index,
-							name: convertedStory.root.story[0].fields[0].f[2]._,
-							type: 'CAM',
-							float: 'false',
-							script: script,
-							objectType: 'camera',
-							objectTime: '0',
-							duration: '10',
-							clipName: 'string',
-							feedback: 'string',
-							transition: 'string',
-							attributes: { ['Name']: 'CAM1' }
-						}
-					})
-				}
-			})
-		})
-
-		return {
-			meta: {
-				version: 'v0.2',
-				startTime: 0,
-				endTime: 1
-			},
-			elements: allElements
-		}
-	}
-
 	static timeFromRawData (time: string | undefined): number {
 		if (time === undefined) {
 			return 0
@@ -177,8 +105,7 @@ export class InewsRundown implements IRundown {
 
 		return duration
 	}
-
-
+	
 	static isAdlib (time: string | undefined): boolean {
 		if (!time) {
 			return true
@@ -262,7 +189,7 @@ export class InewsRundown implements IRundown {
 	 */
 	static fromNSMLdata (sheetId: string, name: string, rundownNSML: any[][], outputLayers: IOutputLayer[], sheetManager?: RundownManager): InewsRundown {
 		console.log('DUMMY LOG : ' + sheetManager)
-		let parsedData = InewsRundown.splitRawDataToElements(rundownNSML, outputLayers)
+		let parsedData = SplitRawDataToElements.convert(rundownNSML, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
 		let results = InewsRundown.parsedFormsIntoSegments(sheetId, parsedData.elements)
 		rundown.addSegments(results.segments)

@@ -13,12 +13,6 @@ interface IRundownMetaData {
 }
 
 interface IParsedElement {
-	meta: {
-		rowPosition: number,
-		propColPosition: {
-			[attrName: string]: number
-		}
-	},
 	data: {
 		id?: string
 		name?: string
@@ -76,12 +70,7 @@ export class InewsRundown implements IRundown {
 		rundownNSML.map((story): void => {
 			const convertedStory = NsmlToJson.convert(story)
 			allElements.push({
-				meta: {
-					rowPosition: 3,
-					propColPosition: {
-						['string']: 0
-					}
-				},
+				// New section for each element:
 				data: {
 					id: convertedStory.root.head[0].storyid,
 					name: convertedStory.root.story[0].fields[0].f[2]._,
@@ -98,31 +87,10 @@ export class InewsRundown implements IRundown {
 				}
 			})
 
+			// Return elements in section:
 			return convertedStory.root.story[0].aeset[0].ae[0].ap.map((field: any, index: number): void => {
 				console.log('DUMMY LOG : ', index)
 
-				let dummy = ''
-				switch (dummy) {
-					case 'id':
-					case 'name':
-					case 'type':
-					case 'float':
-					case 'script':
-					case 'objectType':
-					case 'objectTime':
-					case 'duration':
-					case 'clipName':
-					case 'feedback':
-					case 'transition':
-						break
-					case 'screen':
-						break
-					case '':
-					case undefined:
-						break
-					default:
-						break
-				}
 				// Convert body object to script:
 				let script = ''
 				convertedStory.root.story[0].body[0].p.map((line: any) => {
@@ -132,25 +100,19 @@ export class InewsRundown implements IRundown {
 				})
 				if (field.length > 1) {
 					allElements.push({
-						meta: {
-							rowPosition: 3,
-							propColPosition: {
-								['string']: 0
-							}
-						},
 						data: {
 							id: convertedStory.root.head[0].storyid + index,
 							name: convertedStory.root.story[0].fields[0].f[2]._,
-							type: index === 0 ? 'script' : 'camera',
-							float: 'string',
-							script: index === 0 ? script : '',
-							objectType: 'string',
-							objectTime: 'string',
-							duration: 'string',
+							type: 'CAM',
+							float: 'false',
+							script: script,
+							objectType: 'camera',
+							objectTime: '0',
+							duration: '10',
 							clipName: 'string',
 							feedback: 'string',
 							transition: 'string',
-							attributes: { ['string']: 'string' }
+							attributes: { ['Name']: 'CAM1' }
 						}
 					})
 				}
@@ -165,17 +127,6 @@ export class InewsRundown implements IRundown {
 			},
 			elements: allElements
 		}
-	}
-
-	static columnToLetter (columnOneIndexed: number): string {
-		let temp: number | undefined
-		let letter = ''
-		while (columnOneIndexed > 0) {
-			temp = (columnOneIndexed - 1) % 26
-			letter = String.fromCharCode(temp + 65) + letter
-			columnOneIndexed = (columnOneIndexed - temp - 1) / 26
-		}
-		return letter
 	}
 
 	static timeFromRawData (time: string | undefined): number {

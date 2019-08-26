@@ -16,8 +16,9 @@ export class SplitRawDataToElements {
 		let allElements: IParsedElement[] = []
 		rundownNSML.map((story): void => {
 			const convertedStory = NsmlToJson.convert(story)
+
+			// New section for each iNews form:
 			allElements.push({
-				// New section for each element:
 				data: {
 					id: convertedStory.root.head[0].storyid,
 					name: convertedStory.root.story[0].fields[0].f[2]._,
@@ -34,34 +35,29 @@ export class SplitRawDataToElements {
 				}
 			})
 
-			// Return elements in section:
-			return convertedStory.root.story[0].aeset[0].ae[0].ap.map((field: any, index: number): void => {
-				console.log('DUMMY LOG : ', index)
+			// Convert body object to script:
+			let script = ''
+			convertedStory.root.story[0].body[0].p.map((line: any) => {
+				if (typeof(line) === 'string') {
+					script = script + line + '\n'
+				}
+			})
 
-				// Convert body object to script:
-				let script = ''
-				convertedStory.root.story[0].body[0].p.map((line: any) => {
-					if (typeof(line) === 'string') {
-						script = script + line + '\n'
-					}
-				})
-				if (field.length > 1) {
-					allElements.push({
-						data: {
-							id: convertedStory.root.head[0].storyid + index,
-							name: convertedStory.root.story[0].fields[0].f[2]._,
-							type: 'CAM',
-							float: 'false',
-							script: script,
-							objectType: 'camera',
-							objectTime: '0',
-							duration: '10',
-							clipName: 'string',
-							feedback: 'string',
-							transition: 'string',
-							attributes: { ['Name']: 'CAM1' }
-						}
-					})
+			// If Camera :
+			allElements.push({
+				data: {
+					id: convertedStory.root.head[0].storyid + 'camera',
+					name: convertedStory.root.story[0].fields[0].f[2]._,
+					type: 'CAM',
+					float: 'false',
+					script: script,
+					objectType: 'camera',
+					objectTime: '0',
+					duration: '10',
+					clipName: 'string',
+					feedback: 'string',
+					transition: 'string',
+					attributes: { ['Name']: 'CAM1' }
 				}
 			})
 		})

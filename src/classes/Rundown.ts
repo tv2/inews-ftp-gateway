@@ -105,7 +105,7 @@ export class InewsRundown implements IRundown {
 
 		return duration
 	}
-	
+
 	static isAdlib (time: string | undefined): boolean {
 		if (!time) {
 			return true

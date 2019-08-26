@@ -43,7 +43,7 @@ export class SplitRawDataToElements {
 				}
 			})
 
-			// If Camera :
+			// If ...: camera
 			allElements.push({
 				data: {
 					id: convertedStory.root.head[0].storyid + 'camera',
@@ -60,6 +60,25 @@ export class SplitRawDataToElements {
 					attributes: { ['Name']: 'CAM1' }
 				}
 			})
+
+			// If ...: server
+			allElements.push({
+				data: {
+					id: convertedStory.root.head[0].storyid + 'video',
+					name: convertedStory.root.story[0].fields[0].f[2]._,
+					type: 'HEAD',
+					float: 'false',
+					script: '',
+					objectType: 'video',
+					objectTime: '0',
+					duration: '10',
+					clipName: 'ClipName From Story',
+					feedback: 'string',
+					transition: 'string',
+					attributes: { ['Name']: 'CAM2' }
+				}
+			})
+
 		})
 
 		return {

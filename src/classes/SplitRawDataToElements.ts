@@ -1,6 +1,6 @@
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from './Rundown'
-import { NsmlToJS } from './NsmlToJson'
+import { NsmlToJS } from './NsmlToJs'
 import { ManusTypeIndsl } from './manusConverters/ManusTypeIndsl'
 import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
 

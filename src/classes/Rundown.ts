@@ -114,7 +114,7 @@ export class InewsRundown implements IRundown {
 		return false
 	}
 
-	private static parsedFormsIntoSegments (sheetId: string, parsedForms: IParsedElement[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
+	private static parsedElementsIntoSegments (sheetId: string, parsedForms: IParsedElement[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
 		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
 		let segment = new RundownSegment(sheetId,implicitId, 0,'Implicit Section', false)
@@ -191,7 +191,7 @@ export class InewsRundown implements IRundown {
 		console.log('DUMMY LOG : ' + sheetManager)
 		let parsedData = SplitRawDataToElements.convert(rundownNSML, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
-		let results = InewsRundown.parsedFormsIntoSegments(sheetId, parsedData.elements)
+		let results = InewsRundown.parsedElementsIntoSegments(sheetId, parsedData.elements)
 		rundown.addSegments(results.segments)
 
 		return rundown

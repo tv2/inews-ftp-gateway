@@ -1,7 +1,7 @@
 import { RundownSegment } from './Segment'
 import { RundownPart } from './Part'
 import { RundownPiece } from './Piece'
-import { IRundownUpdate, RundownManager } from './RundownManager'
+import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { SplitRawDataToElements } from './SplitRawDataToElements'
@@ -53,6 +53,7 @@ export class InewsRundown implements IRundown {
 			expectedEnd:	this.expectedEnd
 		}
 	}
+
 	addSegments (segments: RundownSegment[]) {
 		segments.forEach(segment => this.segments.push(segment))
 	}
@@ -114,16 +115,14 @@ export class InewsRundown implements IRundown {
 		return false
 	}
 
-	private static parsedElementsIntoSegments (sheetId: string, parsedForms: IParsedElement[]): {segments: RundownSegment[], sheetUpdates: IRundownUpdate[]} {
+	private static parsedElementsIntoSegments (sheetId: string, parsedForms: IParsedElement[]): RundownSegment[] {
 		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
 		let segment = new RundownSegment(sheetId,implicitId, 0,'Implicit Section', false)
 		let part: RundownPart | undefined
-		let sheetUpdates: IRundownUpdate[] = []
 
 		parsedForms.forEach(form => {
 			let id = form.data.id || ''
-			let currentSheetUpdate: IRundownUpdate | undefined
 
 			switch (form.data.type) {
 				case 'SECTION':
@@ -137,18 +136,12 @@ export class InewsRundown implements IRundown {
 
 					segment = new RundownSegment(sheetId, id, segments.length, form.data.name || '', form.data.float === 'TRUE')
 					break
-				case '':
 				case undefined:
 					// This is an item only, not a story even. Usually "graphics" or "video"
 					if (!part) {
 						// Then what?!
-						currentSheetUpdate = undefined
 					}
 					break
-				case 'SPLIT':
-					// Not sure what to do there
-					// For now; assuming this is a type of story
-					// break;
 				default:
 					// It is likely a story
 					if (part) {
@@ -162,14 +155,7 @@ export class InewsRundown implements IRundown {
 						const firstItem = new RundownPiece(id + '_item', form.data.objectType, InewsRundown.timeFromRawData(form.data.objectTime), InewsRundown.timeFromRawData(form.data.duration), form.data.clipName || '', attr, 'TBA', '', form.data.transition || '')
 						part.addPiece(firstItem)
 					}
-					// TODO: ID issue. We can probably do "id + `_item`, or some shit"
 					break
-			}
-			if (currentSheetUpdate) {
-				// console.log('creating a new id for row', currentSheetUpdate.value)
-				// console.log(row)
-
-				sheetUpdates.push(currentSheetUpdate)
 			}
 		})
 
@@ -177,7 +163,7 @@ export class InewsRundown implements IRundown {
 			segment.addPart(part)
 		}
 		segments.push(segment)
-		return { segments: segments, sheetUpdates }
+		return segments
 	}
 
 	/**
@@ -191,8 +177,8 @@ export class InewsRundown implements IRundown {
 		console.log('DUMMY LOG : ' + sheetManager)
 		let parsedData = SplitRawDataToElements.convert(rundownNSML, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
-		let results = InewsRundown.parsedElementsIntoSegments(sheetId, parsedData.elements)
-		rundown.addSegments(results.segments)
+		let segments = InewsRundown.parsedElementsIntoSegments(sheetId, parsedData.elements)
+		rundown.addSegments(segments)
 
 		return rundown
 	}

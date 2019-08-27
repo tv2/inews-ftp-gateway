@@ -2,11 +2,6 @@ import { InewsRundown } from './Rundown'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import * as DEFAULTS from '../DEFAULTS'
 
-export interface IRundownUpdate {
-	value: string | number
-	cellPosition: string
-}
-
 export class RundownManager {
 
 	constructor (private inewsConnection: any) {

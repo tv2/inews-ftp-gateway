@@ -1,7 +1,7 @@
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from '../Rundown'
 import { NsmlToJS } from './NsmlToJs'
-import { IKgCodes, KgCodes } from './KgCodesToJs'
+import { IAeCodes, AeCodes } from './AeCodesToJs'
 import { ManusTypeIndsl } from './manusConverters/ManusTypeIndsl'
 import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
 
@@ -47,14 +47,14 @@ export class SplitRawDataToElements {
 				}
 			})
 
-			// Extract KG codes from form:
-			const kgCodes: IKgCodes[] = KgCodes.extract(convertedStory.root.aeset)
+			// Extract AE codes from form:
+			const aeCodes: IAeCodes[] = AeCodes.extract(convertedStory.root.story[0].aeset)
 
 			// Check Form type:
 			if (f[f.findIndex((x: any) => x.id[0] === 'var-2')]._ === 'INDSL') {
-				allElements.push(...ManusTypeIndsl.convert(convertedStory, script, kgCodes))
+				allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
 			} else {
-				allElements.push(...ManusTypeEmpty.convert(convertedStory, script, kgCodes))
+				allElements.push(...ManusTypeEmpty.convert(convertedStory, script, aeCodes))
 			}
 
 		})

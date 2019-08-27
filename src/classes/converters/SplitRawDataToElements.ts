@@ -2,7 +2,7 @@ import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from '../Rundown'
 import { NsmlToJS } from './NsmlToJs'
 import { IAeCodes, AeCodes } from './AeCodesToJs'
-import { BodyCodes, PI_CODE_TYPES } from './BodyCodesToJs'
+import { BodyCodes, PI_CODE_TYPES, IPiCodes } from './BodyCodesToJs'
 import { ManusTypeIndsl } from './manusConverters/ManusTypeIndsl'
 import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
 
@@ -40,17 +40,28 @@ export class SplitRawDataToElements {
 				}
 			})
 
-			// Extract body object to script:
-
+			// Extract body object to piCodes[] and script:
 			let { piCodes, script } = BodyCodes.extract(convertedStory.root.story[0].body)
 
 			// Extract AE codes from aesets:
 			const aeCodes: IAeCodes[] = AeCodes.extract(convertedStory.root.story[0].aeset)
 
-			// Check Form type:
+			// Loop through pi codes ('KAM' 'SERVER' 'VO' etc.):
 			piCodes.map((code) => {
 				switch (code.piCommand) {
-					case PI_CODE_TYPES[1]: // Server
+					case PI_CODE_TYPES[0]: // KAM
+						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						break
+					case PI_CODE_TYPES[1]: // SERVER
+						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						break
+					case PI_CODE_TYPES[2]: // VO
+						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						break
+					case PI_CODE_TYPES[3]: // VOSB
+						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						break
+					case PI_CODE_TYPES[4]: // ATTACK
 						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
 						break
 					default:

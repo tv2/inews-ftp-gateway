@@ -5,10 +5,11 @@ export interface IPiCodes {
 }
 
 export const PI_CODE_TYPES = [
-	'***VOSB',
+	'KAM ',
 	'***SERVER',
 	'***VO ',
-	'KAM '
+	'***VOSB',
+	'***ATTACK'
 ]
 
 export class BodyCodes {

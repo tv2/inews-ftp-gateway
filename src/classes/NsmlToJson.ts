@@ -1,6 +1,6 @@
 import { Parser } from 'xml2js'
 
-export class NsmlToJson {
+export class NsmlToJS {
 	static convert (nsmlData: any) {
 
 		// Split tags into objects:

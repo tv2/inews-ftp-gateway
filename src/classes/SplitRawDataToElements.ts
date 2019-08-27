@@ -1,6 +1,7 @@
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from './Rundown'
-import { NsmlToJson } from './NsmlToJson'
+import { NsmlToJS } from './NsmlToJson'
+import { ManusTypeServer } from './manusConverters/ManusTypeServer'
 
 interface IRundownMetaData {
 	version: string
@@ -15,7 +16,7 @@ export class SplitRawDataToElements {
 		console.log('DUMMY LOG : ', outputLayers)
 		let allElements: IParsedElement[] = []
 		rundownNSML.map((story): void => {
-			const convertedStory = NsmlToJson.convert(story)
+			const convertedStory = NsmlToJS.convert(story)
 
 			// New section for each iNews form:
 			allElements.push({
@@ -43,41 +44,8 @@ export class SplitRawDataToElements {
 				}
 			})
 
-			// If ...: camera
-			allElements.push({
-				data: {
-					id: convertedStory.root.head[0].storyid + 'camera',
-					name: convertedStory.root.story[0].fields[0].f[2]._,
-					type: 'CAM',
-					float: 'false',
-					script: script,
-					objectType: 'camera',
-					objectTime: '0',
-					duration: '10',
-					clipName: 'string',
-					feedback: 'string',
-					transition: 'string',
-					attributes: { ['Name']: 'CAM1' }
-				}
-			})
-
-			// If ...: server
-			allElements.push({
-				data: {
-					id: convertedStory.root.head[0].storyid + 'video',
-					name: convertedStory.root.story[0].fields[0].f[2]._,
-					type: 'HEAD',
-					float: 'false',
-					script: '',
-					objectType: 'video',
-					objectTime: '0',
-					duration: '10',
-					clipName: 'ClipName From Story',
-					feedback: 'string',
-					transition: 'string',
-					attributes: { ['Name']: 'CAM2' }
-				}
-			})
+			// If Form type is *** SERVER ***
+			allElements.push(...ManusTypeServer.convert(convertedStory, script))
 
 		})
 

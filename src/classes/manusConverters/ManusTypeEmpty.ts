@@ -1,14 +1,16 @@
 import { IParsedElement } from '../Rundown'
 
-export class ManusTypeServer {
+export class ManusTypeEmpty {
 
 	static convert (convertedStory: any, script: string): IParsedElement[] {
 		let elements: IParsedElement[] = []
+		const f = convertedStory.root.story[0].fields[0].f
 
+		let name = f[f.findIndex((x: any) => x.id[0] === 'title')]._
 		elements.push({
 			data: {
 				id: convertedStory.root.head[0].storyid + 'camera',
-				name: convertedStory.root.story[0].fields[0].f[2]._,
+				name: name,
 				type: 'CAM',
 				float: 'false',
 				script: script,
@@ -19,23 +21,6 @@ export class ManusTypeServer {
 				feedback: 'string',
 				transition: 'string',
 				attributes: { ['Name']: 'CAM1' }
-			}
-		})
-
-		elements.push({
-			data: {
-				id: convertedStory.root.head[0].storyid + 'video',
-				name: convertedStory.root.story[0].fields[0].f[2]._,
-				type: 'HEAD',
-				float: 'false',
-				script: '',
-				objectType: 'video',
-				objectTime: '0',
-				duration: '10',
-				clipName: 'ID from iNews',
-				feedback: 'string',
-				transition: 'string',
-				attributes: { ['Name']: 'CAM2' }
 			}
 		})
 

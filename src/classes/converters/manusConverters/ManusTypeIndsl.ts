@@ -1,8 +1,10 @@
-import { IParsedElement } from '../Rundown'
+import { IParsedElement } from '../../Rundown'
+import { IKgCodes } from '../KgCodesToJs'
 
 export class ManusTypeIndsl {
 
-	static convert (convertedStory: any, script: string): IParsedElement[] {
+	static convert (convertedStory: any, script: string, kgCodes: IKgCodes[]): IParsedElement[] {
+		console.log('DUMMY LOG :', kgCodes)
 		let elements: IParsedElement[] = []
 		const f = convertedStory.root.story[0].fields[0].f
 

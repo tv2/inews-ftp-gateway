@@ -4,7 +4,7 @@ import { RundownPiece } from './Piece'
 import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
-import { SplitRawDataToElements } from './SplitRawDataToElements'
+import { SplitRawDataToElements } from './converters/SplitRawDataToElements'
 
 export interface IParsedElement {
 	data: {

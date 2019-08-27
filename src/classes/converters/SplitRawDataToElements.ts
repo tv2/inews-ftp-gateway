@@ -2,6 +2,7 @@ import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from '../Rundown'
 import { NsmlToJS } from './NsmlToJs'
 import { IAeCodes, AeCodes } from './AeCodesToJs'
+import { BodyCodes, PI_CODE_TYPES } from './BodyCodesToJs'
 import { ManusTypeIndsl } from './manusConverters/ManusTypeIndsl'
 import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
 
@@ -39,24 +40,26 @@ export class SplitRawDataToElements {
 				}
 			})
 
-			// Convert body object to script:
-			let script = ''
-			convertedStory.root.story[0].body[0].p.map((line: any) => {
-				if (typeof(line) === 'string') {
-					script = script + line + '\n'
-				}
-			})
+			// Extract body object to script:
 
-			// Extract AE codes from form:
+			let { piCodes, script } = BodyCodes.extract(convertedStory.root.story[0].body)
+
+			// Extract AE codes from aesets:
 			const aeCodes: IAeCodes[] = AeCodes.extract(convertedStory.root.story[0].aeset)
 
 			// Check Form type:
-			if (f[f.findIndex((x: any) => x.id[0] === 'var-2')]._ === 'INDSL') {
-				allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
-			} else {
+			piCodes.map((code) => {
+				switch (code.piCommand) {
+					case PI_CODE_TYPES[1]: // Server
+						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						break
+					default:
+						allElements.push(...ManusTypeEmpty.convert(convertedStory, script, aeCodes))
+				}
+			})
+			if (piCodes.length === 0) {
 				allElements.push(...ManusTypeEmpty.convert(convertedStory, script, aeCodes))
 			}
-
 		})
 
 		return {

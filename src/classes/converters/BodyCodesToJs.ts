@@ -1,16 +1,4 @@
-
-export interface IElementCodes {
-	elementCommand: string
-	arguments: Array<string>
-}
-
-export const ELEMENT_CODE_TYPES = [
-	'KAM',
-	'***SERVER',
-	'***VO ',
-	'***VOSB',
-	'***ATTACK'
-]
+import { ELEMENT_CODE_TYPES, IElementCodes } from '../SplitRawDataToElements'
 
 export class BodyCodes {
 	static extract (bodyList: any[]): { elementCodes: IElementCodes[], script: string } {

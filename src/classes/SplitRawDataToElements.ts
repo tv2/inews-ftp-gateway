@@ -2,7 +2,7 @@ import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from './Rundown'
 import { NsmlToJS } from './converters/NsmlToJs'
 import { IAeCodes, AeCodes } from './converters/AeCodesToJs'
-import { BodyCodes, ELEMENT_CODE_TYPES } from './converters/BodyCodesToJs'
+import { BodyCodes } from './converters/BodyCodesToJs'
 import { ManusTypeServer } from './manusConverters/ManusTypeServer'
 import { ManusTypeKam } from './manusConverters/ManusTypeKam'
 import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
@@ -12,6 +12,19 @@ interface IRundownMetaData {
 	startTime: number
 	endTime: number
 }
+
+export interface IElementCodes {
+	elementCommand: string
+	arguments: Array<string>
+}
+
+export const ELEMENT_CODE_TYPES = [
+	'KAM',
+	'***SERVER',
+	'***VO ',
+	'***VOSB',
+	'***ATTACK'
+]
 
 export class SplitRawDataToElements {
 

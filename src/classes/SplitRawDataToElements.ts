@@ -2,7 +2,7 @@ import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from './Rundown'
 import { NsmlToJS } from './converters/NsmlToJs'
 import { IAeCodes, AeCodes } from './converters/AeCodesToJs'
-import { BodyCodes, PI_CODE_TYPES } from './converters/BodyCodesToJs'
+import { BodyCodes, ELEMENT_CODE_TYPES } from './converters/BodyCodesToJs'
 import { ManusTypeServer } from './manusConverters/ManusTypeServer'
 import { ManusTypeKam } from './manusConverters/ManusTypeKam'
 import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
@@ -42,38 +42,39 @@ export class SplitRawDataToElements {
 			})
 
 			// Extract body object to piCodes[] and script:
-			let { piCodes, script } = BodyCodes.extract(convertedStory.root.story[0].body)
+			let { elementCodes, script } = BodyCodes.extract(convertedStory.root.story[0].body)
 
 			// Extract AE codes from aesets:
 			const aeCodes: IAeCodes[] = AeCodes.extract(convertedStory.root.story[0].aeset)
 
 			// Loop through pi codes ('KAM' 'SERVER' 'VO' etc.):
-			piCodes.map((code) => {
-				switch (code.piCommand) {
-					case PI_CODE_TYPES[0]: // KAM
+			elementCodes.map((code) => {
+				switch (code.elementCommand) {
+					case ELEMENT_CODE_TYPES[0]: // KAM
 						allElements.push(...ManusTypeKam.convert(convertedStory, script, aeCodes))
 						break
-					case PI_CODE_TYPES[1]: // SERVER
+					case ELEMENT_CODE_TYPES[1]: // SERVER
 						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
 						break
-					case PI_CODE_TYPES[2]: // VO
-						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
+					case ELEMENT_CODE_TYPES[2]: // VO
+						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'VO type Not Implemented', aeCodes))
 						break
-					case PI_CODE_TYPES[3]: // VOSB
-						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
+					case ELEMENT_CODE_TYPES[3]: // VOSB
+						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'VOSB type Not Implemented', aeCodes))
 						break
-					case PI_CODE_TYPES[4]: // ATTACK
-						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
+					case ELEMENT_CODE_TYPES[4]: // ATTACK
+						allElements.push(...ManusTypeServer.convert(convertedStory, 'ATTACK type Not Implemented', aeCodes))
 						break
 					case 'undefined':
 						console.log('DUMMY LOG')
 						break
 					default:
-						allElements.push(...ManusTypeEmpty.convert(convertedStory, script, aeCodes))
+						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'Unknown Manus Type', aeCodes))
+
 				}
 			})
-			if (piCodes.length === 0) {
-				allElements.push(...ManusTypeEmpty.convert(convertedStory, PI_CODE_TYPES[0], aeCodes))
+			if (elementCodes.length === 0) {
+				allElements.push(...ManusTypeEmpty.convert(convertedStory, 'Manus Segment Not Implemented', aeCodes))
 			}
 		})
 

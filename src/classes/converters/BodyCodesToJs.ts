@@ -1,10 +1,10 @@
 
-export interface IPiCodes {
-	piCommand: string
+export interface IElementCodes {
+	elementCommand: string
 	arguments: Array<string>
 }
 
-export const PI_CODE_TYPES = [
+export const ELEMENT_CODE_TYPES = [
 	'KAM',
 	'***SERVER',
 	'***VO ',
@@ -13,8 +13,8 @@ export const PI_CODE_TYPES = [
 ]
 
 export class BodyCodes {
-	static extract (bodyList: any[]): { piCodes: IPiCodes[], script: string } {
-		let piCodes: IPiCodes[] = []
+	static extract (bodyList: any[]): { elementCodes: IElementCodes[], script: string } {
+		let elementCodes: IElementCodes[] = []
 
 		let script = ''
 		bodyList[0].p.map((line: any) => {
@@ -24,8 +24,8 @@ export class BodyCodes {
 				if (line.pi || false) {
 					// Find Codetype and add to piCodes[]
 					if (typeof(line.pi[0]) === 'string') {
-						piCodes.push({
-							piCommand: String(PI_CODE_TYPES.filter((type: any) => line.pi[0].includes(type))[0]) || '',
+						elementCodes.push({
+							elementCommand: String(ELEMENT_CODE_TYPES.filter((type: any) => line.pi[0].includes(type))[0]) || '',
 							arguments: line.pi
 						})
 					}
@@ -37,7 +37,7 @@ export class BodyCodes {
 		})
 
 		return ({
-			piCodes: piCodes,
+			elementCodes: elementCodes,
 			script: script
 		})
 	}

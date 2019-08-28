@@ -3,7 +3,8 @@ import { IParsedElement } from './Rundown'
 import { NsmlToJS } from './converters/NsmlToJs'
 import { IAeCodes, AeCodes } from './converters/AeCodesToJs'
 import { BodyCodes, PI_CODE_TYPES } from './converters/BodyCodesToJs'
-import { ManusTypeIndsl } from './manusConverters/ManusTypeIndsl'
+import { ManusTypeServer } from './manusConverters/ManusTypeServer'
+import { ManusTypeKam } from './manusConverters/ManusTypeKam'
 import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
 
 interface IRundownMetaData {
@@ -50,26 +51,29 @@ export class SplitRawDataToElements {
 			piCodes.map((code) => {
 				switch (code.piCommand) {
 					case PI_CODE_TYPES[0]: // KAM
-						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						allElements.push(...ManusTypeKam.convert(convertedStory, script, aeCodes))
 						break
 					case PI_CODE_TYPES[1]: // SERVER
-						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
 						break
 					case PI_CODE_TYPES[2]: // VO
-						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
 						break
 					case PI_CODE_TYPES[3]: // VOSB
-						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
 						break
 					case PI_CODE_TYPES[4]: // ATTACK
-						allElements.push(...ManusTypeIndsl.convert(convertedStory, script, aeCodes))
+						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
+						break
+					case 'undefined':
+						console.log('DUMMY LOG')
 						break
 					default:
 						allElements.push(...ManusTypeEmpty.convert(convertedStory, script, aeCodes))
 				}
 			})
 			if (piCodes.length === 0) {
-				allElements.push(...ManusTypeEmpty.convert(convertedStory, script, aeCodes))
+				allElements.push(...ManusTypeEmpty.convert(convertedStory, PI_CODE_TYPES[0], aeCodes))
 			}
 		})
 

@@ -5,7 +5,7 @@ export interface IPiCodes {
 }
 
 export const PI_CODE_TYPES = [
-	'KAM ',
+	'KAM',
 	'***SERVER',
 	'***VO ',
 	'***VOSB',
@@ -23,10 +23,12 @@ export class BodyCodes {
 			} else if (typeof(line) === 'object') {
 				if (line.pi || false) {
 					// Find Codetype and add to piCodes[]
-					piCodes.push({
-						piCommand: String(PI_CODE_TYPES.filter((type: any) => type.includes(line.pi))),
-						arguments: line.pi
-					})
+					if (typeof(line.pi[0]) === 'string') {
+						piCodes.push({
+							piCommand: String(PI_CODE_TYPES.filter((type: any) => line.pi[0].includes(type))[0]) || '',
+							arguments: line.pi
+						})
+					}
 					script = script + line.pi + '\n'
 				} else if (line.cc) {
 					console.log('DUMMY LOG : ', line.cc)

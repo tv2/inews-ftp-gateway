@@ -2,7 +2,7 @@ import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from '../Rundown'
 import { NsmlToJS } from './NsmlToJs'
 import { IAeCodes, AeCodes } from './AeCodesToJs'
-import { BodyCodes, PI_CODE_TYPES, IPiCodes } from './BodyCodesToJs'
+import { BodyCodes, PI_CODE_TYPES } from './BodyCodesToJs'
 import { ManusTypeIndsl } from './manusConverters/ManusTypeIndsl'
 import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
 

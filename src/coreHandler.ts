@@ -10,7 +10,7 @@ import { Process } from './process'
 import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
-import { IMediaDict } from './classes/media'
+import { IMediaDict } from './classes/datastructures/media'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {

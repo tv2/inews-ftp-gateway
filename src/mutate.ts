@@ -1,5 +1,5 @@
 import * as _ from 'underscore'
-import { InewsRundown } from './classes/Rundown'
+import { InewsRundown } from './classes/datastructures/Rundown'
 import { IngestRundown, IngestSegment, IngestPart } from 'tv-automation-sofie-blueprints-integration'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { RundownPart } from './classes/datastructures/Part'

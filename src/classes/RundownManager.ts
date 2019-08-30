@@ -1,10 +1,16 @@
-import { InewsRundown } from './Rundown'
+import { InewsRundown } from './datastructures/Rundown'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import * as DEFAULTS from '../DEFAULTS'
+import * as Winston from 'winston'
+import { SplitRawDataToElements } from './SplitRawDataToElements'
+import { ParsedElementsIntoSegments } from './ParsedElementsToSegments'
 
 export class RundownManager {
 
-	constructor (private inewsConnection: any) {
+	private _logger: Winston.LoggerInstance
+
+	constructor (private logger: Winston.LoggerInstance, private inewsConnection: any) {
+		this._logger = this.logger
 		this.inewsConnection = inewsConnection
 	}
 
@@ -14,9 +20,10 @@ export class RundownManager {
 	 * @param rundownSheetId Id of the iNews rundown containing the Running Order
 	 */
 	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
+		this._logger.info('Downloading : ' + rundownSheetId)
 		return this.downloadQueue(rundownSheetId)
 		.then(rundownNSML => {
-			return InewsRundown.fromNSMLdata(rundownSheetId, rundownSheetId, rundownNSML, outputLayers, this)
+			return this.fromNSMLdata(this._logger, rundownSheetId, rundownSheetId, rundownNSML, outputLayers, this)
 		})
 	}
 
@@ -35,6 +42,27 @@ export class RundownManager {
 		})
 
 		return Promise.resolve(stories)
+	}
+
+
+	/**
+	 *
+	 * @param _logger Winston logger instance
+	 * @param sheetId Id of the sheet
+	 * @param name Name of the sheet (often the title)
+	 * @param rundownNSML Cells of the sheet
+	 * @param sheetManager Optional; Will be used to update the sheet if changes, such as ID-updates, needs to be done.
+	 */
+	private fromNSMLdata (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownNSML: any[][], outputLayers: IOutputLayer[], sheetManager?: RundownManager): InewsRundown {
+		console.log('DUMMY LOG : ' + sheetManager)
+		_logger.info('Converting ', name, ' to Sofie')
+		let parsedData = SplitRawDataToElements.convert(rundownNSML, outputLayers)
+		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
+		let segments = ParsedElementsIntoSegments.parse(sheetId, parsedData.elements)
+		rundown.addSegments(segments)
+
+		_logger.info(name, ' converted to Sofie Rundown')
+		return rundown
 	}
 
 	async getInewsData (queueName: string): Promise<Array<any>> {

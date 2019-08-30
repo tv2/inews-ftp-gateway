@@ -1,4 +1,4 @@
-import { IParsedElement } from '../Rundown'
+import { IParsedElement } from '../datastructures/Rundown'
 import { IAeCodes } from '../converters/AeCodesToJs'
 
 export class ManusTypeEmpty {

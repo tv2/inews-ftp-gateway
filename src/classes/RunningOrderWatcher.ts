@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 import * as dotenv from 'dotenv'
-import { InewsRundown } from './Rundown'
+import { InewsRundown } from './datastructures/Rundown'
 import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { RundownSegment } from './datastructures/Segment'
@@ -9,6 +9,7 @@ import * as clone from 'clone'
 import { CoreHandler } from '../coreHandler'
 import * as inews from '@johnsand/inews'
 import * as DEFAULTS from '../DEFAULTS'
+import * as Winston from 'winston'
 
 dotenv.config()
 
@@ -44,6 +45,8 @@ export class RunningOrderWatcher extends EventEmitter {
 	private currentlyChecking: boolean = false
 	private rundownManager: RundownManager
 	private iNewsConnection: any
+	private _logger: Winston.LoggerInstance
+
 	/**
 	 * A Running Order watcher which will poll iNews FTP server for changes and emit events
 	 * whenever a change occurs.
@@ -56,6 +59,7 @@ export class RunningOrderWatcher extends EventEmitter {
 	 */
 	constructor (
 		// IP, Username and Password is taken from the DEFAULTS.ts file until CORE integration is made
+		private logger: Winston.LoggerInstance,
 		private userName: string,
 		private passWord: string,
 		private coreHandler: CoreHandler,
@@ -63,13 +67,14 @@ export class RunningOrderWatcher extends EventEmitter {
 		delayStart?: boolean
 	) {
 		super()
+		this._logger = this.logger
 		this.iNewsConnection = inews({
 			'hosts': DEFAULTS.SERVERS,
 			'user': this.userName,
 			'password': this.passWord
 		})
 
-		this.rundownManager = new RundownManager(this.iNewsConnection)
+		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
 		if (!delayStart) {
 			this.startWatcher()
 		}

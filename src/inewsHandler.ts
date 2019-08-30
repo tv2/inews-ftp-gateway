@@ -179,7 +179,7 @@ export class InewsFTPHandler {
 					const userName = DEFAULTS.USERNAME
 					const passWord = DEFAULTS.PASSWORD
 
-					const watcher = new RunningOrderWatcher(userName, passWord, this._coreHandler, 'v0.2')
+					const watcher = new RunningOrderWatcher(this._logger, userName, passWord, this._coreHandler, 'v0.2')
 					this.iNewsWatcher = watcher
 
 					watcher

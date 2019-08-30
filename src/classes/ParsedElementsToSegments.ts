@@ -70,7 +70,7 @@ export class ParsedElementsIntoSegments {
 		return duration
 	}
 
-	static isAdlib(time: string | undefined): boolean {
+	static isAdlib (time: string | undefined): boolean {
 		if (!time) {
 			return true
 		}

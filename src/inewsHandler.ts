@@ -9,11 +9,13 @@ import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { mutateRundown, mutateSegment, mutatePart } from './mutate'
 import * as DEFAULTS from './DEFAULTS'
+import * as inews from '@johnsand/inews'
 
 export interface InewsFTPConfig {
-	// Todo: add settings here?
-	// self: IConnectionConfig
+	userName: string
+	passWord: string
 }
+
 export interface InewsFTPDeviceSettings {
 	/** Path / Name to the Drive folder */
 	folderPath: string
@@ -52,6 +54,9 @@ export interface AccessToken {
 export class InewsFTPHandler {
 
 	public options: InewsFTPConfig
+	public iNewsConnection: any
+	public userName: string
+	public passWord: string
 	public debugLogging: boolean = false
 
 	private iNewsWatcher?: RunningOrderWatcher
@@ -152,8 +157,13 @@ export class InewsFTPHandler {
 		}, 20)
 	}
 	private async _initInewsFTPConnection (): Promise<void> {
-
-		// ToDo: Move Init inewConnection for RunningOrderWatcher constructor to here:
+		this.iNewsConnection = inews({
+			'hosts': DEFAULTS.SERVERS,
+			'user': this.options.userName,
+			'password': this.options.passWord
+		})
+		// ToDo:
+		// Promise for checking if Connection is established
 		if (this._disposed) return Promise.resolve()
 		if (!this._settings) throw Error('iNews-Settings are not set')
 
@@ -221,8 +231,11 @@ export class InewsFTPHandler {
 						this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
 					})
 					// if (true) {
-					this._logger.info(`Starting watch of ` + DEFAULTS.INEWS_QUEUE)
-					watcher.setInewsQueues(DEFAULTS.INEWS_QUEUE[0])
+					DEFAULTS.INEWS_QUEUE.map((q) => {
+						this._logger.info(`Starting watch of `, q)
+					})
+
+					watcher.checkInewsRundowns()
 						.then((queueList) => {
 							console.log('DUMMY LOG : ', queueList)
 							this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${DEFAULTS.INEWS_QUEUE[0]}'`])

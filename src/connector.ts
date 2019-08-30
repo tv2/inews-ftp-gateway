@@ -4,11 +4,12 @@ import { CoreHandler, CoreConfig } from './coreHandler'
 import * as Winston from 'winston'
 import { Process } from './process'
 
+
 export interface Config {
 	process: ProcessConfig
 	device: DeviceConfig
 	core: CoreConfig
-	spreadsheet: InewsFTPConfig
+	ftpLogin: InewsFTPConfig
 }
 export interface ProcessConfig {
 	/** Will cause the Node applocation to blindly accept all certificates. Not recommenced unless in local, controlled networks. */
@@ -33,7 +34,7 @@ export class Connector {
 		this._config = config
 		this._process = new Process(this._logger)
 		this.coreHandler = new CoreHandler(this._logger, this._config.device)
-		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this._config, this.coreHandler)
+		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this._config.ftpLogin, this.coreHandler)
 	}
 
 	init (): Promise<void> {

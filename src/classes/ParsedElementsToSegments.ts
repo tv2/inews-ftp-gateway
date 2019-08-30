@@ -1,9 +1,24 @@
 import { RundownPart } from './datastructures/Part'
 import { RundownPiece } from './datastructures/Piece'
 import { RundownSegment } from './datastructures/Segment'
-import { IParsedElement } from './datastructures/Rundown'
 import * as _ from 'underscore'
 
+export interface IParsedElement {
+	data: {
+		id?: string
+		name?: string
+		type?: string
+		float: string
+		script?: string
+		objectType?: string
+		objectTime?: string
+		duration?: string
+		clipName?: string
+		feedback?: string
+		transition?: string
+		attributes?: {[key: string]: string}
+	}
+}
 export class ParsedElementsIntoSegments {
 
 	static timeFromRawData (time: string | undefined): number {

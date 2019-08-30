@@ -1,5 +1,5 @@
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
-import { IParsedElement } from './datastructures/Rundown'
+import { IParsedElement } from './ParsedElementsToSegments'
 import { NsmlToJS } from './converters/NsmlToJs'
 import { IAeCodes, AeCodes } from './converters/AeCodesToJs'
 import { BodyCodes } from './converters/BodyCodesToJs'

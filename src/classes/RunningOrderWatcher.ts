@@ -82,7 +82,6 @@ export class RunningOrderWatcher extends EventEmitter {
 
 	async checkRunningOrderById (runningOrderId: string): Promise<InewsRundown> {
 		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId, this.coreHandler.GetOutputLayers())
-
 		if (runningOrder.gatewayVersion === this.gatewayVersion) {
 			this.processUpdatedRunningOrder(runningOrder.externalId, runningOrder)
 		}
@@ -113,25 +112,25 @@ export class RunningOrderWatcher extends EventEmitter {
 	 */
 	startWatcher () {
 		console.log('Starting Watcher')
+
 		this.stopWatcher()
 
-		this.mediaPollInterval = setInterval(() => {
+		this.fastInterval = setInterval(() => {
 			if (this.currentlyChecking) {
 				return
 			}
-			console.log('Running check')
+			this.logger.info('Running Rundown check')
 			this.currentlyChecking = true
 
 			this.checkInewsRundowns()
 			.catch(error => {
-				console.error('Something went wrong during check', error, error.stack)
+				this.logger.error('Something went wrong during check', error, error.stack)
 			})
 			.then(() => {
 				// console.log('slow check done')
 				this.currentlyChecking = false
 			}).catch(console.error)
-
-		}, this.pollIntervalMedia)
+		}, this.pollIntervalFast)
 	}
 
 	/**

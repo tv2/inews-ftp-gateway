@@ -221,7 +221,7 @@ export class InewsFTPHandler {
 						this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
 					})
 					// if (true) {
-					this._logger.info(`Starting watch of ` + DEFAULTS.INEWS_QUEUE[0])
+					this._logger.info(`Starting watch of ` + DEFAULTS.INEWS_QUEUE)
 					watcher.setInewsQueues(DEFAULTS.INEWS_QUEUE[0])
 						.then((queueList) => {
 							console.log('DUMMY LOG : ', queueList)

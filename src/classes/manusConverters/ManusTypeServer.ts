@@ -1,4 +1,4 @@
-import { IParsedElement } from '../datastructures/Rundown'
+import { IParsedElement } from '../ParsedElementsToSegments'
 import { IAeCodes } from '../converters/AeCodesToJs'
 
 export class ManusTypeServer {

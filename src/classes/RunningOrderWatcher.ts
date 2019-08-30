@@ -7,7 +7,6 @@ import { RundownSegment } from './datastructures/Segment'
 import { RundownPart } from './datastructures/Part'
 import * as clone from 'clone'
 import { CoreHandler } from '../coreHandler'
-import * as inews from '@johnsand/inews'
 import * as DEFAULTS from '../DEFAULTS'
 import * as Winston from 'winston'
 
@@ -44,7 +43,6 @@ export class RunningOrderWatcher extends EventEmitter {
 
 	private currentlyChecking: boolean = false
 	private rundownManager: RundownManager
-	private iNewsConnection: any
 	private _logger: Winston.LoggerInstance
 
 	/**
@@ -60,19 +58,13 @@ export class RunningOrderWatcher extends EventEmitter {
 	constructor (
 		// IP, Username and Password is taken from the DEFAULTS.ts file until CORE integration is made
 		private logger: Winston.LoggerInstance,
-		private userName: string,
-		private passWord: string,
 		private coreHandler: CoreHandler,
+		private iNewsConnection: any,
 		private gatewayVersion: string,
 		delayStart?: boolean
 	) {
 		super()
 		this._logger = this.logger
-		this.iNewsConnection = inews({
-			'hosts': DEFAULTS.SERVERS,
-			'user': this.userName,
-			'password': this.passWord
-		})
 
 		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
 		if (!delayStart) {
@@ -93,18 +85,6 @@ export class RunningOrderWatcher extends EventEmitter {
 		return Promise.all(DEFAULTS.INEWS_QUEUE.map(roId => {
 			return this.checkRunningOrderById(roId)
 		}))
-	}
-
-	/**
-	 * Will add all currently available Running Orders from the first drive folder
-	 * matching the provided name
-	 *
-	 * @param iNewsQueues Name of folder to add Running Orders from. Eg. "My Running Orders"
-	 */
-	async setInewsQueues (iNewsQueues: string): Promise<InewsRundown[]> {
-		console.log('DUMMY LOG : ', iNewsQueues)
-		let rundownList = this.checkInewsRundowns()
-		return rundownList
 	}
 
 	/**

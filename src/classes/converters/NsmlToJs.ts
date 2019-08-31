@@ -15,9 +15,16 @@ export class NsmlToJS {
 			// Set quotes around arguments xx="yy" instead of xx=yy
 			// But not on <ap> tags:
 			if (story.slice(0, 3) !== '<ap') {
-				// and not when there´s allready qoute around argument:
-				if (!story.match(/="/)) {
-					story = story.replace(/(<.*?)=(.*?)>/g, '$1="$2">')
+				// Arguments between <cc> </cc> tags, should not be converted
+				if (story.includes('<cc>')) {
+					if (!story.match(/="/)) {
+						story = story.replace(/(<a .*?)=(.*?)>/g, '$1="$2">')
+					}
+				} else {
+					// and not when there´s allready qoute around argument:
+					if (!story.match(/="/)) {
+						story = story.replace(/(<.*?)=(.*?)>/g, '$1="$2">')
+					}
 				}
 			}
 			// Put end tag on <a> tags:

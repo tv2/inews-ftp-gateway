@@ -6,6 +6,7 @@ import { BodyCodes } from './BodyCodesToJs'
 import { ManusTypeServer } from '../manusConverters/ManusTypeServer'
 import { ManusTypeKam } from '../manusConverters/ManusTypeKam'
 import { ManusTypeEmpty } from '../manusConverters/ManusTypeEmpty'
+import * as Winston from 'winston'
 
 interface IRundownMetaData {
 	version: string
@@ -28,13 +29,15 @@ export const ELEMENT_CODE_TYPES = [
 
 export class SplitRawDataToElements {
 
-	static convert (rundownNSML: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData} {
+	static convert (_logger: Winston.LoggerInstance, rundownNSML: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData} {
 
 		console.log('DUMMY LOG : ', outputLayers)
 		let allElements: IParsedElement[] = []
 		rundownNSML.map((story): void => {
+			_logger.info(' Converting : ', story.storyName)
 			const convertedStory = NsmlToJS.convert(story)
 			const f = convertedStory.root.story[0].fields[0].f
+
 
 			// New section for each iNews form:
 			allElements.push({

@@ -22,9 +22,9 @@ export class RundownManager {
 	}
 
 	convertNSMLtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownNSML: any[][], outputLayers: IOutputLayer[]): InewsRundown {
-		let parsedData = SplitRawDataToElements.convert(rundownNSML, outputLayers)
-		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
 		_logger.info('START : ', name, ' convert to Sofie Rundown')
+		let parsedData = SplitRawDataToElements.convert(_logger, rundownNSML, outputLayers)
+		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
 		let segments = ParsedElementsIntoSegments.parse(sheetId, parsedData.elements)
 		rundown.addSegments(segments)
 		_logger.info('DONE : ', name, ' converted to Sofie Rundown')
@@ -36,9 +36,9 @@ export class RundownManager {
 			let stories: Array<any> = []
 			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {
-					console.log('File list readed')
 					dirList.map((storyFile: any, index: number) => {
 						this.inewsConnection.storyNsml(queueName, storyFile.file, (error: any, storyNsml: any) => {
+							console.log('DUMMY LOG : ', error)
 							stories.push({ 'storyName': storyFile.storyName, 'story': storyNsml })
 							if (index === dirList.length - 1) {
 								resolve(stories)

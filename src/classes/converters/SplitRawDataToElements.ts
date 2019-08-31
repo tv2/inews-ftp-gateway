@@ -38,11 +38,10 @@ export class SplitRawDataToElements {
 			const convertedStory = NsmlToJS.convert(story)
 			const f = convertedStory.root.story[0].fields[0].f
 
-
 			// New section for each iNews form:
 			allElements.push({
 				data: {
-					id: convertedStory.root.head[0].storyid,
+					id: convertedStory.root.head[0].storyid[0],
 					name: f[f.findIndex((x: any) => x.id[0] === 'title')]._,
 					type: 'SECTION',
 					float: 'string',
@@ -58,10 +57,10 @@ export class SplitRawDataToElements {
 			})
 
 			// Extract body object to piCodes[] and script:
-			let { elementCodes, script } = BodyCodes.extract(convertedStory.root.story[0].body)
+			let { elementCodes, script } = BodyCodes.extract(convertedStory.root.story[0].body || [])
 
 			// Extract AE codes from aesets:
-			const aeCodes: IAeCodes[] = AeCodes.extract(convertedStory.root.story[0].aeset)
+			const aeCodes: IAeCodes[] = AeCodes.extract(convertedStory.root.story[0].aeset || [])
 
 			// Loop through pi codes ('KAM' 'SERVER' 'VO' etc.):
 			elementCodes.map((code) => {

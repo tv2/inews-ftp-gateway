@@ -72,37 +72,23 @@ export class RunningOrderWatcher extends EventEmitter {
 		}
 	}
 
-	async checkRunningOrderById (runningOrderId: string): Promise<InewsRundown> {
-		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId, this.coreHandler.GetOutputLayers())
-		if (runningOrder.gatewayVersion === this.gatewayVersion) {
-			this.processUpdatedRunningOrder(runningOrder.externalId, runningOrder)
-		}
-
-		return runningOrder
-	}
-
-	async checkInewsRundowns (): Promise<InewsRundown[]> {
-		return Promise.all(DEFAULTS.INEWS_QUEUE.map(roId => {
-			return this.checkRunningOrderById(roId)
-		}))
-	}
 
 	/**
 	 * Start the watcher
 	 */
 	startWatcher () {
-		console.log('Starting Watcher')
-
+		this.logger.info('Clear all wathcers')
 		this.stopWatcher()
+		this.logger.info('Start wathcers')
 
 		this.fastInterval = setInterval(() => {
 			if (this.currentlyChecking) {
 				return
 			}
-			this.logger.info('Running Rundown check')
+			this.logger.info('Check rundowns for updates')
 			this.currentlyChecking = true
 
-			this.checkInewsRundowns()
+			this.checkINewsRundowns()
 			.catch(error => {
 				this.logger.error('Something went wrong during check', error, error.stack)
 			})
@@ -132,6 +118,20 @@ export class RunningOrderWatcher extends EventEmitter {
 	}
 	dispose () {
 		this.stopWatcher()
+	}
+
+	async checkINewsRundowns (): Promise<InewsRundown[]> {
+		return Promise.all(DEFAULTS.INEWS_QUEUE.map(roId => {
+			return this.checkINewsRundownById(roId)
+		}))
+	}
+
+	async checkINewsRundownById (runningOrderId: string): Promise<InewsRundown> {
+		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId, this.coreHandler.GetOutputLayers())
+		if (runningOrder.gatewayVersion === this.gatewayVersion) {
+			this.processUpdatedRunningOrder(runningOrder.externalId, runningOrder)
+		}
+		return runningOrder
 	}
 
 	private processUpdatedRunningOrder (rundownId: string, rundown: InewsRundown | null) {

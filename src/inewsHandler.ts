@@ -77,12 +77,11 @@ export class InewsFTPHandler {
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this._coreHandler, this.iNewsConnection, 'v0.2')
 
-				// if (true) {
 				DEFAULTS.INEWS_QUEUE.map((q) => {
 					this._logger.info(`Starting watch of `, q)
 				})
 
-				this.iNewsWatcher.checkInewsRundowns()
+				this.iNewsWatcher.checkINewsRundowns()
 					.then((queueList) => {
 						console.log('DUMMY LOG : ', queueList)
 						this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${DEFAULTS.INEWS_QUEUE[0]}'`])

@@ -1,11 +1,11 @@
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
-import { IParsedElement } from './ParsedElementsToSegments'
-import { NsmlToJS } from './converters/NsmlToJs'
-import { IAeCodes, AeCodes } from './converters/AeCodesToJs'
-import { BodyCodes } from './converters/BodyCodesToJs'
-import { ManusTypeServer } from './manusConverters/ManusTypeServer'
-import { ManusTypeKam } from './manusConverters/ManusTypeKam'
-import { ManusTypeEmpty } from './manusConverters/ManusTypeEmpty'
+import { IParsedElement } from '../ParsedElementsToSegments'
+import { NsmlToJS } from './NsmlToJs'
+import { IAeCodes, AeCodes } from './AeCodesToJs'
+import { BodyCodes } from './BodyCodesToJs'
+import { ManusTypeServer } from '../manusConverters/ManusTypeServer'
+import { ManusTypeKam } from '../manusConverters/ManusTypeKam'
+import { ManusTypeEmpty } from '../manusConverters/ManusTypeEmpty'
 
 interface IRundownMetaData {
 	version: string

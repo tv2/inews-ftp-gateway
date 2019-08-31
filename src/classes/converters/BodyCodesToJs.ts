@@ -1,4 +1,4 @@
-import { ELEMENT_CODE_TYPES, IElementCodes } from '../SplitRawDataToElements'
+import { ELEMENT_CODE_TYPES, IElementCodes } from './SplitRawDataToElements'
 
 export class BodyCodes {
 	static extract (bodyList: any[]): { elementCodes: IElementCodes[], script: string } {

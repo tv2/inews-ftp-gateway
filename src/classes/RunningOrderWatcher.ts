@@ -72,7 +72,6 @@ export class RunningOrderWatcher extends EventEmitter {
 		}
 	}
 
-
 	/**
 	 * Start the watcher
 	 */

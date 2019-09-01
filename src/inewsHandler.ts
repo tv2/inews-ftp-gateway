@@ -6,6 +6,7 @@ import {
 } from 'tv-automation-server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
+import { mutatePart, mutateRundown, mutateSegment } from './mutate'
 import * as DEFAULTS from './DEFAULTS'
 import * as inews from '@johnsand/inews'
 
@@ -77,6 +78,8 @@ export class InewsFTPHandler {
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this._coreHandler, this.iNewsConnection, 'v0.2')
 
+				this.updateChanges(this.iNewsWatcher)
+
 				DEFAULTS.INEWS_QUEUE.map((q) => {
 					this._logger.info(`Starting watch of `, q)
 				})
@@ -93,5 +96,47 @@ export class InewsFTPHandler {
 			}
 		}
 		return Promise.resolve()
+	}
+
+	updateChanges (iNewsWatcher: RunningOrderWatcher) {
+		iNewsWatcher
+		.on('info', (message: any) => {
+			this._logger.info(message)
+		})
+		.on('error', (error: any) => {
+			this._logger.error(error)
+		})
+		.on('warning', (warning: any) => {
+			this._logger.error(warning)
+		})
+		// TODO - these event types should operate on the correct types and with better parameters
+		.on('rundown_delete', (rundownExternalId) => {
+			this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
+		})
+		.on('rundown_create', (_rundownExternalId, rundown) => {
+			this._coreHandler.core.callMethod(P.methods.dataRundownCreate, [mutateRundown(rundown)]).catch(this._logger.error)
+		})
+		.on('rundown_update', (_rundownExternalId, rundown) => {
+			this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)]).catch(this._logger.error)
+		})
+		.on('segment_delete', (rundownExternalId, sectionId) => {
+			this._coreHandler.core.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, sectionId]).catch(this._logger.error)
+		})
+		.on('segment_create', (rundownExternalId, _sectionId, newSection) => {
+			this._coreHandler.core.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
+		})
+		.on('segment_update', (rundownExternalId, _sectionId, newSection) => {
+			this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
+		})
+		.on('part_delete', (rundownExternalId, sectionId, storyId) => {
+			this._coreHandler.core.callMethod(P.methods.dataPartDelete, [rundownExternalId, sectionId, storyId]).catch(this._logger.error)
+		})
+		.on('part_create', (rundownExternalId, sectionId, _storyId, newStory) => {
+			this._coreHandler.core.callMethod(P.methods.dataPartCreate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
+		})
+		.on('part_update', (rundownExternalId, sectionId, _storyId, newStory) => {
+			this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
+		})
+
 	}
 }

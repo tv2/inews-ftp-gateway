@@ -3,7 +3,7 @@ import { IAeCodes } from '../converters/AeCodesToJs'
 
 export class ManusTypeServer {
 
-	static convert (convertedStory: any, script: string, aeCodes: IAeCodes[]): IParsedElement[] {
+	static convert (convertedStory: any, script: string, aeCodes: IAeCodes[], index: number): IParsedElement[] {
 		console.log('DUMMY LOG :', aeCodes, script)
 
 		let elements: IParsedElement[] = []
@@ -15,7 +15,7 @@ export class ManusTypeServer {
 
 		elements.push({
 			data: {
-				id: convertedStory.root.head[0].storyid + 'video',
+				id: convertedStory.root.head[0].storyid + 'video' + index,
 				name: name,
 				type: 'HEAD',
 				float: 'false',

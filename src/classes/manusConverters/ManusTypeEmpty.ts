@@ -3,7 +3,7 @@ import { IAeCodes } from '../converters/AeCodesToJs'
 
 export class ManusTypeEmpty {
 
-	static convert (convertedStory: any, script: string, aeCodes: IAeCodes[]): IParsedElement[] {
+	static convert (convertedStory: any, script: string, aeCodes: IAeCodes[], index: number): IParsedElement[] {
 		console.log('DUMMY LOG :', aeCodes)
 
 		let elements: IParsedElement[] = []
@@ -13,7 +13,7 @@ export class ManusTypeEmpty {
 		let name = f[f.findIndex((x: any) => x.id[0] === 'title')]._
 		elements.push({
 			data: {
-				id: convertedStory.root.head[0].storyid + 'camera',
+				id: convertedStory.root.head[0].storyid + 'camera' + index,
 				name: name,
 				type: 'CAM',
 				float: 'false',

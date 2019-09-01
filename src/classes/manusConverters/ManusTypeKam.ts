@@ -3,7 +3,7 @@ import { IAeCodes } from '../converters/AeCodesToJs'
 
 export class ManusTypeKam {
 
-	static convert (convertedStory: any, script: string, aeCodes: IAeCodes[]): IParsedElement[] {
+	static convert (convertedStory: any, script: string, aeCodes: IAeCodes[], index: number): IParsedElement[] {
 		console.log('DUMMY LOG :', aeCodes)
 
 		let elements: IParsedElement[] = []
@@ -18,7 +18,7 @@ export class ManusTypeKam {
 		}
 		elements.push({
 			data: {
-				id: convertedStory.root.head[0].storyid + 'camera',
+				id: convertedStory.root.head[0].storyid + 'camera' + index,
 				name: name,
 				type: 'CAM',
 				float: 'false',

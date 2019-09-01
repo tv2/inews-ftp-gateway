@@ -63,33 +63,33 @@ export class SplitRawDataToElements {
 			const aeCodes: IAeCodes[] = AeCodes.extract(convertedStory.root.story[0].aeset || [])
 
 			// Loop through pi codes ('KAM' 'SERVER' 'VO' etc.):
-			elementCodes.map((code) => {
+			elementCodes.map((code, index) => {
 				switch (code.elementCommand) {
 					case ELEMENT_CODE_TYPES[0]: // KAM
-						allElements.push(...ManusTypeKam.convert(convertedStory, script, aeCodes))
+						allElements.push(...ManusTypeKam.convert(convertedStory, script, aeCodes, index))
 						break
 					case ELEMENT_CODE_TYPES[1]: // SERVER
-						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes))
+						allElements.push(...ManusTypeServer.convert(convertedStory, script, aeCodes, index))
 						break
 					case ELEMENT_CODE_TYPES[2]: // VO
-						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'VO type Not Implemented', aeCodes))
+						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'VO type Not Implemented', aeCodes, index))
 						break
 					case ELEMENT_CODE_TYPES[3]: // VOSB
-						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'VOSB type Not Implemented', aeCodes))
+						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'VOSB type Not Implemented', aeCodes, index))
 						break
 					case ELEMENT_CODE_TYPES[4]: // ATTACK
-						allElements.push(...ManusTypeServer.convert(convertedStory, 'ATTACK type Not Implemented', aeCodes))
+						allElements.push(...ManusTypeServer.convert(convertedStory, 'ATTACK type Not Implemented', aeCodes, index))
 						break
 					case 'undefined':
 						console.log('DUMMY LOG')
 						break
 					default:
-						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'Unknown Manus Type', aeCodes))
+						allElements.push(...ManusTypeEmpty.convert(convertedStory, 'Unknown Manus Type', aeCodes, index))
 
 				}
 			})
 			if (elementCodes.length === 0) {
-				allElements.push(...ManusTypeEmpty.convert(convertedStory, 'Manus Segment Not Implemented', aeCodes))
+				allElements.push(...ManusTypeEmpty.convert(convertedStory, 'Manus Segment Not Implemented', aeCodes, 0))
 			}
 		})
 

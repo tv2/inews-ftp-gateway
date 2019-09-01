@@ -62,6 +62,7 @@ export class SplitRawDataToElements {
 			// Extract AE codes from aesets:
 			const aeCodes: IAeCodes[] = AeCodes.extract(convertedStory.root.story[0].aeset || [])
 
+// ********SOME OF THIS MIGHT BE MOVED TO BLUEPRINTS
 			// Loop through pi codes ('KAM' 'SERVER' 'VO' etc.):
 			elementCodes.map((code, index) => {
 				switch (code.elementCommand) {

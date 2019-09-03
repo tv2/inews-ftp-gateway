@@ -21,10 +21,10 @@ export interface IElementCodes {
 
 export const ELEMENT_CODE_TYPES = [
 	'KAM',
-	'***SERVER',
-	'***VO ',
-	'***VOSB',
-	'***ATTACK'
+	'SERVER',
+	'VO ',
+	'VOSB',
+	'ATTACK'
 ]
 
 export class SplitRawDataToElements {

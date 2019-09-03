@@ -29,7 +29,7 @@ export class ManusTypeKam {
 				clipName: 'string',
 				feedback: 'string',
 				transition: 'string',
-				attributes: { ['Name']: 'kam1' }
+				attributes: { 'name': 'kam1' }
 			}
 		})
 

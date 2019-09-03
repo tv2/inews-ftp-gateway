@@ -26,7 +26,7 @@ export class ManusTypeServer {
 				clipName: videoID,
 				feedback: 'string',
 				transition: 'string',
-				attributes: { ['Name']: 'CAM2' }
+				attributes: { 'Name': 'CAM2' }
 			}
 		})
 

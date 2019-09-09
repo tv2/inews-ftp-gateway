@@ -24,7 +24,7 @@ export class ManusTypeEmpty {
 				clipName: 'stringManusEmpty',
 				feedback: 'string',
 				transition: 'string',
-				attributes: { ['Name']: 'CAM1' }
+				attributes: { 'name': 'kam3' }
 			}
 		})
 

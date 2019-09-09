@@ -41,6 +41,7 @@
     "validate:dependencies": "yarn audit && yarn license-validate",
     "license-validate": "node-license-validator -p -d --allow-licenses MIT BSD BSD-3-Clause BSD-2-Clause ISC Apache Apache-2.0 Unlicense --allow-packages cycle",
     "start": "node dist/index.js",
+    "debug": "node --inspect dist/index.js",
     "unlinkall": "yarn unlink tv-automation-server-core-integration && yarn --check-files"
   },
   "scripts-info": {

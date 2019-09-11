@@ -15,9 +15,9 @@ export class RundownManager {
 
 	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
 		return this.downloadINewsRundown(rundownSheetId)
-		.then(rundownNSML => {
+		.then(rundownRaw => {
 			this._logger.info(rundownSheetId, ' Downloaded ')
-			return this.convertNSMLtoSofie(this._logger, rundownSheetId, rundownSheetId, rundownNSML, outputLayers)
+			return this.convertNSMLtoSofie(this._logger, rundownSheetId, rundownSheetId, rundownRaw, outputLayers)
 		})
 	}
 
@@ -36,10 +36,10 @@ export class RundownManager {
 			let stories: Array<any> = []
 			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {
-					dirList.map((storyFile: any, index: number) => {
-						this.inewsConnection.storyNsml(queueName, storyFile.file, (error: any, storyNsml: any) => {
+					dirList.forEach((storyFile: any, index: number) => {
+						this.inewsConnection.storyNsml(queueName, storyFile.file, (error: any, story: any) => {
 							console.log('DUMMY LOG : ', error)
-							stories.push({ 'storyName': storyFile.storyName, 'story': storyNsml })
+							stories.push({ 'storyName': storyFile.storyName, 'story': story })
 							if (index === dirList.length - 1) {
 								resolve(stories)
 							}

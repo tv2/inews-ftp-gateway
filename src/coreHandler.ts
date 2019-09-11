@@ -53,7 +53,7 @@ export class CoreHandler {
 
 	constructor (logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
 		this.logger = logger
-		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'Spreadsheet Gateway'))
+		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'iNews Gateway'))
 	}
 
 	init (_deviceOptions: DeviceConfig, config: CoreConfig, process: Process): Promise<void> {
@@ -142,7 +142,7 @@ export class CoreHandler {
 			...credentials,
 
 			deviceCategory: P.DeviceCategory.INGEST,
-			deviceType: P.DeviceType.SPREADSHEET,
+			deviceType: P.DeviceType.INEWS,
 			deviceSubType: P.SUBTYPE_PROCESS,
 
 			deviceName: name,
@@ -457,7 +457,7 @@ export class CoreHandler {
 					})
 				}
 			} else {
-				throw Error('Could not get a studio for spreadsheet-gateway')
+				throw Error('Could not get a studio for iNews-gateway')
 			}
 		}
 

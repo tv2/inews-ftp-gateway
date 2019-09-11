@@ -1,7 +1,7 @@
 import { InewsRundown } from './datastructures/Rundown'
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import * as Winston from 'winston'
-import { SplitRawDataToElements } from './converters/SplitRawDataToElements'
+import { SplitRawDataToElements } from './SplitRawDataToElements'
 import { ParsedElementsIntoSegments } from './ParsedElementsToSegments'
 
 export class RundownManager {

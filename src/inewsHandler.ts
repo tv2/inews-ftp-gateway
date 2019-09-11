@@ -7,12 +7,28 @@ import {
 import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { mutatePart, mutateRundown, mutateSegment } from './mutate'
-import * as DEFAULTS from './DEFAULTS'
 import * as inews from '@johnsand/inews'
 
 export interface InewsFTPConfig {
 	userName: string
 	passWord: string
+}
+
+export interface INewsDeviceSettings {
+	hosts: Array<INewsHost>
+	user: string
+	password: string
+	queues: Array<INewsQueue>
+}
+
+export interface INewsHost {
+	_id: string
+	host: string
+}
+
+export interface INewsQueue {
+	_id: string
+	queue: string
 }
 
 export class InewsFTPHandler {
@@ -27,7 +43,7 @@ export class InewsFTPHandler {
 
 	private _logger: Winston.LoggerInstance
 	private _disposed: boolean = false
-	private _settings?: InewsFTPConfig
+	private _settings?: INewsDeviceSettings
 	private _coreHandler: CoreHandler
 
 	constructor (logger: Winston.LoggerInstance, config: InewsFTPConfig, coreHandler: CoreHandler) {
@@ -40,9 +56,7 @@ export class InewsFTPHandler {
 		return coreHandler.core.getPeripheralDevice()
 		.then((peripheralDevice: any) => {
 			this._settings = peripheralDevice.settings || {}
-			// ToDo: Use settings from core:
 
-			console.log('DUMMY LOG : ', this._settings)
 			return this._setupDevices()
 			.catch(e => {
 				if (e) throw e // otherwise just swallow it
@@ -66,10 +80,11 @@ export class InewsFTPHandler {
 
 	private _setupDevices (): Promise<void> {
 		if (this._disposed) return Promise.resolve()
+		if (!this._settings) return Promise.resolve()
 		this.iNewsConnection = inews({
-			'hosts': DEFAULTS.SERVERS,
-			'user': this.options.userName,
-			'password': this.options.passWord
+			'hosts': this._settings.hosts.map(host => host.host),
+			'user': this._settings.user,
+			'password': this._settings.password
 		})
 
 		if (!this.iNewsWatcher) {
@@ -80,14 +95,14 @@ export class InewsFTPHandler {
 
 				this.updateChanges(this.iNewsWatcher)
 
-				DEFAULTS.INEWS_QUEUE.map((q) => {
-					this._logger.info(`Starting watch of `, q)
+				this._settings.queues.map((q) => {
+					this._logger.info(`Starting watch of `, q.queue)
 				})
 
 				this.iNewsWatcher.checkINewsRundowns()
 					.then((queueList) => {
 						console.log('DUMMY LOG : ', queueList)
-						this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${DEFAULTS.INEWS_QUEUE[0]}'`])
+						if (this._settings) this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${this._settings.queues[0].queue}'`])
 					})
 					.catch(e => {
 						console.log('Error in iNews Rundown list', e)

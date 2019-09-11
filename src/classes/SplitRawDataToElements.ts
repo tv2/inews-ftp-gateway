@@ -19,15 +19,15 @@ export class SplitRawDataToElements {
 
 		console.log('DUMMY LOG : ', outputLayers)
 		let allElements: IParsedElement[] = []
-		rundownRaw.forEach((story): void => {
-			_logger.info(' Converting : ', story.storyName)
-			const f = story.story.fields
+		rundownRaw.forEach((root): void => {
+			_logger.info(' Converting : ', root.storyName)
+			const story = root.story
 
 			// New section for each iNews form:
 			allElements.push({
 				data: {
-					id: story.story.id,
-					name: f.title,
+					id: story.id,
+					name: story.fields.title,
 					type: 'SECTION',
 					float: 'string',
 					script: 'string',

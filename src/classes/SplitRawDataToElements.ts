@@ -1,16 +1,12 @@
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from './ParsedElementsToSegments'
+import { BodyCodes } from './converters/BodyCodesToJS'
 import * as Winston from 'winston'
 
 interface IRundownMetaData {
 	version: string
 	startTime: number
 	endTime: number
-}
-
-export interface IElementCodes {
-	elementCommand: string
-	arguments: Array<string>
 }
 
 export class SplitRawDataToElements {
@@ -22,6 +18,12 @@ export class SplitRawDataToElements {
 		rundownRaw.forEach((root): void => {
 			_logger.info(' Converting : ', root.storyName)
 			const story = root.story
+
+// THESE ARE THE EXTRACTED BODY CODES AND THE SCRIPT:
+// DONT KNOW IF IT SHOULD BE DONE HERE OR IN THE BLUEPRINTS
+
+			let { elementCodes, script } = BodyCodes.extract(story.body)
+			console.log('DUMMY LOG : ' + elementCodes + ' ' + script)
 
 			// New section for each iNews form:
 			allElements.push({
@@ -40,8 +42,8 @@ export class SplitRawDataToElements {
 					attributes: { ['string']: 'string' }
 				}
 			})
-
 		})
+
 		return {
 			meta: {
 				version: 'v0.2',

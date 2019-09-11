@@ -37,13 +37,13 @@ export class SplitRawDataToElements {
 		let allElements: IParsedElement[] = []
 		rundownRaw.forEach((story): void => {
 			_logger.info(' Converting : ', story.storyName)
-			const f = story.root.story[0].fields[0].f
+			const f = story.story.fields
 
 			// New section for each iNews form:
 			allElements.push({
 				data: {
-					id: story.root.head[0].storyid[0],
-					name: f[f.findIndex((x: any) => x.id[0] === 'title')]._,
+					id: story.story.id,
+					name: f.title,
 					type: 'SECTION',
 					float: 'string',
 					script: 'string',

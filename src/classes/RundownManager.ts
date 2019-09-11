@@ -37,7 +37,7 @@ export class RundownManager {
 			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {
 					dirList.forEach((storyFile: any, index: number) => {
-						this.inewsConnection.storyNsml(queueName, storyFile.file, (error: any, story: any) => {
+						this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 							console.log('DUMMY LOG : ', error)
 							stories.push({ 'storyName': storyFile.storyName, 'story': story })
 							if (index === dirList.length - 1) {

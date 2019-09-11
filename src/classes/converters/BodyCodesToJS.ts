@@ -8,8 +8,15 @@ export class BodyCodes {
 
 		let script = ''
 		bodyArray.forEach((line: any) => {
+			line = line.replace('<p>', '')
+			line = line.replace('</p>', '')
+			line = line.replace(/<a (.*?)>/, '')
+			line = line.replace('</a>', '')
+
 			if (!line.includes('<cc>')) {
 				if (line.includes('<pi>')) {
+					line = line.replace('<pi>', '')
+					line = line.replace('</pi>', '')
 					elementCodes.push(line)
 				}
 				script = script + line + '\n'

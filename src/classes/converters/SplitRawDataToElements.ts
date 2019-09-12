@@ -50,7 +50,7 @@ export class SplitRawDataToElements {
 			})
 
 			elementCodes.forEach((code, index) => {
-				ELEMENT_CODE_TYPES.forEach((type) => {
+				for (let type of ELEMENT_CODE_TYPES) {
 					if (code.includes(type.code)) {
 						switch (type.type) {
 							case 1:
@@ -68,8 +68,9 @@ export class SplitRawDataToElements {
 							default:
 								allElements.push(...ManusTypeEmpty.convert(story, 'Unknown Manus Type', index))
 						}
+						break
 					}
-				})
+				}
 			})
 			if (elementCodes.length === 0) {
 				allElements.push(...ManusTypeEmpty.convert(story, 'Manus Segment Not Implemented', 0))

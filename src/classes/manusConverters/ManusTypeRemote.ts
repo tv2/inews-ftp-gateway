@@ -1,8 +1,9 @@
 import { IParsedElement } from '../ParsedElementsToSegments'
+import { IRundownStory } from '../converters/SplitRawDataToElements'
 
 export class ManusTypeRemote {
 
-	static convert (story: any, script: string, index: number): IParsedElement[] {
+	static convert (story: IRundownStory, script: string, index: number): IParsedElement[] {
 
 		let elements: IParsedElement[] = []
 

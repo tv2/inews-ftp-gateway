@@ -21,7 +21,7 @@ export class RundownManager {
 		})
 	}
 
-	convertNSMLtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownNSML: any[][], outputLayers: IOutputLayer[]): InewsRundown {
+	convertNSMLtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownNSML: any[], outputLayers: IOutputLayer[]): InewsRundown {
 		_logger.info('START : ', name, ' convert to Sofie Rundown')
 		let parsedData = SplitRawDataToElements.convert(_logger, rundownNSML, outputLayers)
 		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)

@@ -2,6 +2,8 @@ import { RundownPart } from './datastructures/Part'
 import { RundownPiece } from './datastructures/Piece'
 import { RundownSegment } from './datastructures/Segment'
 import * as _ from 'underscore'
+import { cues } from './converters/SplitRawDataToElements'
+import { IBodyCodes } from './converters/BodyCodesToJS'
 
 export interface IParsedElement {
 	data: {
@@ -11,12 +13,8 @@ export interface IParsedElement {
 		float: string
 		script?: string
 		objectType?: string
-		objectTime?: string
 		duration?: string
 		clipName?: string
-		feedback?: string
-		transition?: string
-		attributes?: {[key: string]: string}
 	}
 }
 export class ParsedElementsIntoSegments {
@@ -78,10 +76,10 @@ export class ParsedElementsIntoSegments {
 		return false
 	}
 
-	static parse (sheetId: string, parsedForms: IParsedElement[]): RundownSegment[] {
+	static parse (sheetId: string, parsedForms: IParsedElement[], fields: any, bodyCodes: IBodyCodes[], cues: cues): RundownSegment[] {
 		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
-		let segment = new RundownSegment(sheetId, implicitId, 0, 'Implicit Section', false)
+		let segment = new RundownSegment(sheetId, implicitId, 0, 'Implicit Section', false, fields, bodyCodes, cues)
 		let part: RundownPart | undefined
 
 		parsedForms.forEach(form => {
@@ -97,7 +95,7 @@ export class ParsedElementsIntoSegments {
 						segments.push(segment)
 					}
 
-					segment = new RundownSegment(sheetId, id, segments.length, form.data.name || '', form.data.float === 'TRUE')
+					segment = new RundownSegment(sheetId, id, segments.length, form.data.name || '', form.data.float === 'TRUE', fields, bodyCodes, cues)
 					break
 				case undefined:
 					// This is an item only, not a story even. Usually "graphics" or "video"
@@ -114,8 +112,7 @@ export class ParsedElementsIntoSegments {
 					}
 					part = new RundownPart(form.data.type, segment.externalId, id, _.keys(segment.parts).length, form.data.name || '', form.data.float === 'TRUE', form.data.script || '')
 					if (form.data.objectType) {
-						let attr = { ...form.data.attributes || {}, ...{ adlib: ParsedElementsIntoSegments.isAdlib(form.data.objectTime).toString() } }
-						const firstItem = new RundownPiece(id + '_item', form.data.objectType, ParsedElementsIntoSegments.timeFromRawData(form.data.objectTime), ParsedElementsIntoSegments.timeFromRawData(form.data.duration), form.data.clipName || '', attr, 'TBA', '', form.data.transition || '')
+						const firstItem = new RundownPiece(id + '_item', form.data.objectType, ParsedElementsIntoSegments.timeFromRawData(form.data.duration), form.data.clipName || '', 'TBA', '')
 						part.addPiece(firstItem)
 					}
 					break

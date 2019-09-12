@@ -15,12 +15,8 @@ export class ManusTypeServer {
 				float: 'false',
 				script: '',
 				objectType: 'video',
-				objectTime: '0',
 				duration: story.fields.tapeTime,
-				clipName: story.fields.videoId,
-				feedback: 'string',
-				transition: 'string',
-				attributes: { 'name': 'kam2' }
+				clipName: story.fields.videoId
 			}
 		})
 

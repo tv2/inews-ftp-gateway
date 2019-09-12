@@ -1,13 +1,17 @@
+export interface IBodyCodes {
+	elementCodes: string[],
+	script: string
+}
 
 export class BodyCodes {
-	static extract (bodyString: string): { elementCodes: string[], script: string } {
+	static extract (bodyString: string): IBodyCodes {
 		let elementCodes: string[] = []
 
 		// Split tags into objects:
 		let bodyArray: string[] = bodyString.split('\n') || []
 
 		let script = ''
-		bodyArray.forEach((line: any) => {
+		bodyArray.forEach((line: string) => {
 			line = line.replace('<p>', '')
 			line = line.replace('</p>', '')
 			line = line.replace(/<a (.*?)>/, '')

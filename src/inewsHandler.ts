@@ -9,11 +9,6 @@ import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { mutatePart, mutateRundown, mutateSegment } from './mutate'
 import * as inews from '@johnsand/inews'
 
-export interface InewsFTPConfig {
-	userName: string
-	passWord: string
-}
-
 export interface INewsDeviceSettings {
 	hosts: Array<INewsHost>
 	user: string
@@ -33,7 +28,6 @@ export interface INewsQueue {
 
 export class InewsFTPHandler {
 
-	public options: InewsFTPConfig
 	public iNewsConnection: any
 	public userName: string
 	public passWord: string
@@ -46,9 +40,8 @@ export class InewsFTPHandler {
 	private _settings?: INewsDeviceSettings
 	private _coreHandler: CoreHandler
 
-	constructor (logger: Winston.LoggerInstance, config: InewsFTPConfig, coreHandler: CoreHandler) {
+	constructor (logger: Winston.LoggerInstance, coreHandler: CoreHandler) {
 		this._logger = logger
-		this.options = config
 		this._coreHandler = coreHandler
 	}
 
@@ -91,7 +84,7 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this._coreHandler, this.iNewsConnection, 'v0.2')
+				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this._coreHandler, this.iNewsConnection, this._settings.queues, 'v0.2')
 
 				this.updateChanges(this.iNewsWatcher)
 

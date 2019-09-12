@@ -2,7 +2,6 @@
 import { Connector, Config } from './connector'
 import * as Winston from 'winston'
 import _ = require('underscore')
-import * as DEFAULTS from './DEFAULTS'
 
 // CLI arguments / Environment variables --------------
 let host: string 		= process.env.CORE_HOST 					|| '127.0.0.1'
@@ -197,10 +196,6 @@ let config: Config = {
 		host: host,
 		port: port,
 		watchdog: !disableWatchdog
-	},
-	ftpLogin: {
-		userName: DEFAULTS.USERNAME,
-		passWord: DEFAULTS.PASSWORD
 	}
 }
 

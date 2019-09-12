@@ -2,6 +2,8 @@ import { RundownPart } from './datastructures/Part'
 import { RundownPiece } from './datastructures/Piece'
 import { RundownSegment } from './datastructures/Segment'
 import * as _ from 'underscore'
+import { cues } from './converters/SplitRawDataToElements'
+import { IBodyCodes } from './converters/BodyCodesToJS'
 
 export interface IParsedElement {
 	data: {
@@ -74,7 +76,7 @@ export class ParsedElementsIntoSegments {
 		return false
 	}
 
-	static parse (sheetId: string, parsedForms: IParsedElement[], fields: any, bodyCodes: any, cues: any): RundownSegment[] {
+	static parse (sheetId: string, parsedForms: IParsedElement[], fields: any, bodyCodes: IBodyCodes[], cues: cues): RundownSegment[] {
 		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
 		let segment = new RundownSegment(sheetId, implicitId, 0, 'Implicit Section', false, fields, bodyCodes, cues)

@@ -6,8 +6,7 @@ export interface IPart {
 	externalId: string // unique within the parent section
 	rank: number
 	name: string
-	type: string //  Assume we want this
-	// type: string
+	type: string
 	float: boolean
 	script: string
 

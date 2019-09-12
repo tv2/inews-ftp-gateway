@@ -1,6 +1,6 @@
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from '../ParsedElementsToSegments'
-import { BodyCodes } from './BodyCodesToJS'
+import { BodyCodes, IBodyCodes } from './BodyCodesToJS'
 import * as Winston from 'winston'
 
 import {
@@ -18,9 +18,35 @@ interface IRundownMetaData {
 	endTime: number
 }
 
+export interface IRundownStory {
+	body: string
+	cues: Array<Array<string>>
+	fields: any
+	id: string
+	meta: {
+		words?: string
+		rate?: string
+	}
+}
+
+interface IRundownRaw {
+	story: IRundownStory
+	storyName: string
+}
+
+export type cues = Array<Array<string>>[]
+
+interface IParsedRundown {
+	elements: IParsedElement[],
+	meta: IRundownMetaData,
+	fields: any,
+	bodyCodes: IBodyCodes[],
+	cues: cues
+}
+
 export class SplitRawDataToElements {
 
-	static convert (_logger: Winston.LoggerInstance, rundownRaw: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData} {
+	static convert (_logger: Winston.LoggerInstance, rundownRaw: IRundownRaw[], outputLayers: IOutputLayer[]): IParsedRundown {
 
 		console.log('DUMMY LOG : ', outputLayers)
 		let allElements: IParsedElement[] = []
@@ -40,12 +66,8 @@ export class SplitRawDataToElements {
 					float: 'string',
 					script: 'string',
 					objectType: 'string',
-					objectTime: 'string',
 					duration: 'string',
-					clipName: 'string',
-					feedback: 'string',
-					transition: 'string',
-					attributes: { ['string']: 'string' }
+					clipName: 'string'
 				}
 			})
 
@@ -83,6 +105,9 @@ export class SplitRawDataToElements {
 				startTime: 0,
 				endTime: 1
 			},
+			fields: rundownRaw.map((root) => { return root.story.fields }),
+			bodyCodes: rundownRaw.map((root) => { return BodyCodes.extract(root.story.body) }),
+			cues: rundownRaw.map((root) => { return root.story.cues }),
 			elements: allElements
 		}
 	}

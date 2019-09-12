@@ -1,8 +1,9 @@
 import { IParsedElement } from '../ParsedElementsToSegments'
+import { IRundownStory } from '../converters/SplitRawDataToElements'
 
 export class ManusTypeRemote {
 
-	static convert (story: any, script: string, index: number): IParsedElement[] {
+	static convert (story: IRundownStory, script: string, index: number): IParsedElement[] {
 
 		let elements: IParsedElement[] = []
 
@@ -14,12 +15,8 @@ export class ManusTypeRemote {
 				float: 'false',
 				script: script,
 				objectType: 'camera',
-				objectTime: '0',
 				duration: story.fields.audioTime,
-				clipName: 'string',
-				feedback: 'string',
-				transition: 'string',
-				attributes: { 'name': 'kam1' }
+				clipName: 'string'
 			}
 		})
 

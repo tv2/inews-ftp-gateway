@@ -1,5 +1,7 @@
 import { RundownPart } from './Part'
-// import { hasChangeType } from './hasChangeType';
+import { IBodyCodes } from '../converters/BodyCodesToJS'
+import { cues } from '../converters/SplitRawDataToElements'
+
 export interface ISegment {
 	rundownId: string
 	externalId: string // unique within the parent runningOrder
@@ -15,6 +17,9 @@ export class RundownSegment implements ISegment {
 		public rank: number,
 		public name: string,
 		public float: boolean,
+		public fields: any,
+		public bodyCodes: IBodyCodes[],
+		public cues: cues,
 		public parts: RundownPart[] = []
 	) {}
 	serialize (): ISegment {

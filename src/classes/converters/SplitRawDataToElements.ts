@@ -20,7 +20,7 @@ interface IRundownMetaData {
 
 export class SplitRawDataToElements {
 
-	static convert (_logger: Winston.LoggerInstance, rundownRaw: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData} {
+	static convert (_logger: Winston.LoggerInstance, rundownRaw: any[], outputLayers: IOutputLayer[]): {elements: IParsedElement[], meta: IRundownMetaData, fields: any, bodyCodes: any, cues: any} {
 
 		console.log('DUMMY LOG : ', outputLayers)
 		let allElements: IParsedElement[] = []
@@ -83,6 +83,9 @@ export class SplitRawDataToElements {
 				startTime: 0,
 				endTime: 1
 			},
+			fields: rundownRaw.map((root) => { return root.story.fields }),
+			bodyCodes: rundownRaw.map((root) => { return BodyCodes.extract(root.story.body) }),
+			cues: rundownRaw.map((root) => { return root.story.codes }),
 			elements: allElements
 		}
 	}

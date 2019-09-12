@@ -7,8 +7,8 @@ import { RundownSegment } from './datastructures/Segment'
 import { RundownPart } from './datastructures/Part'
 import * as clone from 'clone'
 import { CoreHandler } from '../coreHandler'
-import * as DEFAULTS from '../DEFAULTS'
 import * as Winston from 'winston'
+import { INewsQueue } from '../inewsHandler'
 
 dotenv.config()
 
@@ -49,17 +49,15 @@ export class RunningOrderWatcher extends EventEmitter {
 	 * A Running Order watcher which will poll iNews FTP server for changes and emit events
 	 * whenever a change occurs.
 	 *
-	 * @param userName iNews username
-	 * @param passWord iNews password
 	 * @param coreHandler Handler for Sofie Core
 	 * @param gatewayVersion Set version of gateway
 	 * @param delayStart (Optional) Set to a falsy value to prevent the watcher to start watching immediately.
 	 */
 	constructor (
-		// IP, Username and Password is taken from the DEFAULTS.ts file until CORE integration is made
 		private logger: Winston.LoggerInstance,
 		private coreHandler: CoreHandler,
 		private iNewsConnection: any,
+		private iNewsQueue: Array<INewsQueue>,
 		private gatewayVersion: string,
 		delayStart?: boolean
 	) {
@@ -120,8 +118,8 @@ export class RunningOrderWatcher extends EventEmitter {
 	}
 
 	async checkINewsRundowns (): Promise<InewsRundown[]> {
-		return Promise.all(DEFAULTS.INEWS_QUEUE.map(roId => {
-			return this.checkINewsRundownById(roId)
+		return Promise.all(this.iNewsQueue.map(roId => {
+			return this.checkINewsRundownById(roId.queue)
 		}))
 	}
 

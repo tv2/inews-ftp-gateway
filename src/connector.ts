@@ -1,15 +1,14 @@
 
-import { InewsFTPHandler, InewsFTPConfig } from './inewsHandler'
+import { InewsFTPHandler, INewsDeviceSettings } from './inewsHandler'
 import { CoreHandler, CoreConfig } from './coreHandler'
 import * as Winston from 'winston'
+import * as _ from 'underscore'
 import { Process } from './process'
-
 
 export interface Config {
 	process: ProcessConfig
 	device: DeviceConfig
 	core: CoreConfig
-	ftpLogin: InewsFTPConfig
 }
 export interface ProcessConfig {
 	/** Will cause the Node applocation to blindly accept all certificates. Not recommenced unless in local, controlled networks. */
@@ -24,17 +23,19 @@ export interface DeviceConfig {
 export class Connector {
 
 	private iNewsFTPHandler: InewsFTPHandler
+	private _observers: Array<any> = []
 	private coreHandler: CoreHandler
 	private _config: Config
 	private _logger: Winston.LoggerInstance
 	private _process: Process
+	private _settings?: INewsDeviceSettings
 
 	constructor (logger: Winston.LoggerInstance, config: Config) {
 		this._logger = logger
 		this._config = config
 		this._process = new Process(this._logger)
 		this.coreHandler = new CoreHandler(this._logger, this._config.device)
-		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this._config.ftpLogin, this.coreHandler)
+		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this.coreHandler)
 	}
 
 	init (): Promise<void> {
@@ -53,6 +54,7 @@ export class Connector {
 			return this.initInewsFTPHandler()
 		})
 		.then(() => {
+			this.setupObserver()
 			this._logger.info('Initialization done')
 			return
 		})
@@ -103,5 +105,45 @@ export class Connector {
 		.then(() => {
 			return
 		})
+	}
+	setupObserver () {
+		// Setup observer.
+		let observer = this.coreHandler.core.observe('peripheralDevices')
+		this._observers.push(observer)
+
+		let addedChanged = (id: string) => {
+			// Check that collection exists.
+			let devices = this.coreHandler.core.getCollection('peripheralDevices')
+			if (!devices) throw Error('"peripheralDevices" collection not found!')
+
+			// Find studio ID.
+			let dev = devices.findOne({ _id: id })
+
+			if (dev) {
+				let settings: INewsDeviceSettings = dev.settings || {}
+				if (!this._settings || !_.isEqual(settings, this._settings)) {
+					this.iNewsFTPHandler.dispose()
+					.then(() => {
+						this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this.coreHandler)
+						this.initInewsFTPHandler()
+						.catch((error) => this._logger.error(error))
+					})
+					.catch((error) => {
+						this._logger.error(error)
+						throw new Error('Failed to update iNewsFTP settings')
+					})
+				}
+				this._settings = settings
+			}
+		}
+
+		observer.added = (id: string) => {
+			addedChanged(id)
+		}
+		observer.changed = (id: string) => {
+			addedChanged(id)
+		}
+
+		addedChanged(this.coreHandler.core.deviceId)
 	}
 }

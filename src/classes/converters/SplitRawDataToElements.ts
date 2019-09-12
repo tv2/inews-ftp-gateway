@@ -47,23 +47,27 @@ export class SplitRawDataToElements {
 				}
 			})
 
-// A MORE FLEXIBLE MANUSCODE <-> FUNCTION HANDLER SHOULD BE MADE
-// Maybe a [{ commandName: 'KAM', functionName: 'ManusTypeKam' }] etc.
-// Feel free to rename and change for whats best
 			elementCodes.forEach((code, index) => {
-				if (code.includes(ELEMENT_CODE_TYPES[0])) { // KAM
-					allElements.push(...ManusTypeKam.convert(story, script,index))
-				} else if (code.includes(ELEMENT_CODE_TYPES[1])) { // SERVER
-					allElements.push(...ManusTypeServer.convert(story, script, index))
-				} else if (code.includes(ELEMENT_CODE_TYPES[2])) { // VO
-					allElements.push(...ManusTypeEmpty.convert(story, 'VO type Not Implemented', index))
-				} else if (code.includes(ELEMENT_CODE_TYPES[3])) { // VOSB
-					allElements.push(...ManusTypeEmpty.convert(story, 'VOSB type Not Implemented', index))
-				} else if (code.includes(ELEMENT_CODE_TYPES[4])) { // ATTACK
-					allElements.push(...ManusTypeServer.convert(story, 'ATTACK type Not Implemented', index))
-				} else {
-					allElements.push(...ManusTypeEmpty.convert(story, 'Unknown Manus Type', index))
-				}
+				ELEMENT_CODE_TYPES.forEach((type) => {
+					if (code.includes(type.code)) {
+						switch (type.type) {
+							case 1:
+								allElements.push(...ManusTypeKam.convert(story, script,index))
+								break
+							case 2:
+								allElements.push(...ManusTypeServer.convert(story, script, index))
+								break
+							case 3:
+								allElements.push(...ManusTypeEmpty.convert(story, 'VO type Not Implemented', index))
+								break
+							case 4:
+								allElements.push(...ManusTypeEmpty.convert(story, 'LIVE type Not Implemented', index))
+								break
+							default:
+								allElements.push(...ManusTypeEmpty.convert(story, 'Unknown Manus Type', index))
+						}
+					}
+				})
 			})
 			if (elementCodes.length === 0) {
 				allElements.push(...ManusTypeEmpty.convert(story, 'Manus Segment Not Implemented', 0))

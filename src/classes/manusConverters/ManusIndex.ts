@@ -1,6 +1,8 @@
 import { ManusTypeEmpty } from './ManusTypeEmpty'
 import { ManusTypeKam } from './ManusTypeKam'
 import { ManusTypeServer } from './ManusTypeServer'
+import { ManusTypeVO } from './ManusTypeVO'
+import { ManusTypeRemote } from './ManusTypeRemote'
 
 /* THIS IS THE LIST OF BODY CODES THAT WE NEED TO SPLIT INTO SEGMENTS:
  * GROUPED INTO:
@@ -28,4 +30,4 @@ export const ELEMENT_CODE_TYPES = [
 	{ code: 'VOLIVE', type: 3 }
 ]
 
-export { ManusTypeEmpty, ManusTypeKam, ManusTypeServer }
+export { ManusTypeEmpty, ManusTypeKam, ManusTypeServer, ManusTypeVO, ManusTypeRemote }

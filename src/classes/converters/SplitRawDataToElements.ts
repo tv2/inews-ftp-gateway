@@ -7,6 +7,8 @@ import {
 	ManusTypeServer,
 	ManusTypeEmpty,
 	ManusTypeKam,
+	ManusTypeRemote,
+	ManusTypeVO,
 	ELEMENT_CODE_TYPES
 } from '../manusConverters/ManusIndex'
 
@@ -58,10 +60,10 @@ export class SplitRawDataToElements {
 								allElements.push(...ManusTypeServer.convert(story, script, index))
 								break
 							case 3:
-								allElements.push(...ManusTypeEmpty.convert(story, 'VO type Not Implemented', index))
+								allElements.push(...ManusTypeVO.convert(story, 'VO type Not Implemented', index))
 								break
 							case 4:
-								allElements.push(...ManusTypeEmpty.convert(story, 'LIVE type Not Implemented', index))
+								allElements.push(...ManusTypeRemote.convert(story, 'LIVE type Not Implemented', index))
 								break
 							default:
 								allElements.push(...ManusTypeEmpty.convert(story, 'Unknown Manus Type', index))

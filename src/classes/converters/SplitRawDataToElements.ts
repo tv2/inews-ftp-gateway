@@ -40,12 +40,8 @@ export class SplitRawDataToElements {
 					float: 'string',
 					script: 'string',
 					objectType: 'string',
-					objectTime: 'string',
 					duration: 'string',
-					clipName: 'string',
-					feedback: 'string',
-					transition: 'string',
-					attributes: { ['string']: 'string' }
+					clipName: 'string'
 				}
 			})
 

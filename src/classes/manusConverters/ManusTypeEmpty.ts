@@ -14,12 +14,8 @@ export class ManusTypeEmpty {
 				float: 'false',
 				script: script,
 				objectType: 'camera',
-				objectTime: '0',
 				duration: '10', /* audioTime, */
-				clipName: 'stringManusEmpty',
-				feedback: 'string',
-				transition: 'string',
-				attributes: { 'name': 'kam3' }
+				clipName: 'stringManusEmpty'
 			}
 		})
 

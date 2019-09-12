@@ -9,7 +9,7 @@ export class ManusTypeVO {
 		elements.push({
 			data: {
 				id: story.id + 'camera' + index,
-				name: story.fields.titel,
+				name: story.fields.title,
 				type: 'CAM',
 				float: 'false',
 				script: script,

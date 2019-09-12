@@ -10,7 +10,7 @@ export class ManusTypeServer {
 		elements.push({
 			data: {
 				id: story.id + 'video' + index,
-				name: story.fields.titel,
+				name: story.fields.title,
 				type: 'HEAD',
 				float: 'false',
 				script: '',

@@ -11,12 +11,8 @@ export interface IParsedElement {
 		float: string
 		script?: string
 		objectType?: string
-		objectTime?: string
 		duration?: string
 		clipName?: string
-		feedback?: string
-		transition?: string
-		attributes?: {[key: string]: string}
 	}
 }
 export class ParsedElementsIntoSegments {
@@ -114,8 +110,7 @@ export class ParsedElementsIntoSegments {
 					}
 					part = new RundownPart(form.data.type, segment.externalId, id, _.keys(segment.parts).length, form.data.name || '', form.data.float === 'TRUE', form.data.script || '')
 					if (form.data.objectType) {
-						let attr = { ...form.data.attributes || {}, ...{ adlib: ParsedElementsIntoSegments.isAdlib(form.data.objectTime).toString() } }
-						const firstItem = new RundownPiece(id + '_item', form.data.objectType, ParsedElementsIntoSegments.timeFromRawData(form.data.objectTime), ParsedElementsIntoSegments.timeFromRawData(form.data.duration), form.data.clipName || '', attr, 'TBA', '', form.data.transition || '')
+						const firstItem = new RundownPiece(id + '_item', form.data.objectType, ParsedElementsIntoSegments.timeFromRawData(form.data.duration), form.data.clipName || '', 'TBA', '')
 						part.addPiece(firstItem)
 					}
 					break

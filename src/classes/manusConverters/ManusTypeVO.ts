@@ -14,12 +14,8 @@ export class ManusTypeVO {
 				float: 'false',
 				script: script,
 				objectType: 'camera',
-				objectTime: '0',
 				duration: story.fields.audioTime,
-				clipName: 'string',
-				feedback: 'string',
-				transition: 'string',
-				attributes: { 'name': 'kam1' }
+				clipName: 'string'
 			}
 		})
 

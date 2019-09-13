@@ -31,6 +31,12 @@ export class RundownManager {
 		return rundown
 	}
 
+	emptyInewsFtpBuffer () {
+		// ToDo: This workaround clears the _queue inside johnsand@inews:
+		this.inewsConnection._queue.queuedJobList.list = {}
+		this.inewsConnection._queue.inprogressJobList.list = {}
+	}
+
 	async downloadINewsRundown (queueName: string): Promise<Array<any>> {
 		return new Promise((resolve) => {
 			let stories: Array<any> = []

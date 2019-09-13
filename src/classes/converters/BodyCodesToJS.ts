@@ -1,7 +1,4 @@
-export interface IBodyCodes {
-	elementCodes: string[],
-	script: string
-}
+import { IBodyCodes } from './SplitRawDataToElements'
 
 export class BodyCodes {
 	static extract (bodyString: string): IBodyCodes {

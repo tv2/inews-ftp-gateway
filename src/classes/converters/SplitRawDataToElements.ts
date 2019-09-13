@@ -1,6 +1,6 @@
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { IParsedElement } from '../ParsedElementsToSegments'
-import { BodyCodes, IBodyCodes } from './BodyCodesToJS'
+import { BodyCodes } from './BodyCodesToJS'
 import * as Winston from 'winston'
 
 import {
@@ -34,14 +34,21 @@ interface IRundownRaw {
 	storyName: string
 }
 
-export type cues = Array<Array<string>>[]
+export interface ICue {
+	cue: Array<Array<string>>
+}
+
+export interface IBodyCodes {
+	elementCodes: string[],
+	script: string
+}
 
 interface IParsedRundown {
 	elements: IParsedElement[],
 	meta: IRundownMetaData,
 	fields: any,
 	bodyCodes: IBodyCodes[],
-	cues: cues
+	cues: ICue[]
 }
 
 export class SplitRawDataToElements {
@@ -107,7 +114,7 @@ export class SplitRawDataToElements {
 			},
 			fields: rundownRaw.map((root) => { return root.story.fields }),
 			bodyCodes: rundownRaw.map((root) => { return BodyCodes.extract(root.story.body) }),
-			cues: rundownRaw.map((root) => { return root.story.cues }),
+			cues: rundownRaw.map((root) => { return ({ cue: root.story.cues }) }),
 			elements: allElements
 		}
 	}

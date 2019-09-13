@@ -90,6 +90,7 @@ export class RunningOrderWatcher extends EventEmitter {
 				this.logger.error('Something went wrong during check', error, error.stack)
 			})
 			.then(() => {
+				this.rundownManager.emptyInewsFtpBuffer()
 				// console.log('slow check done')
 				this.currentlyChecking = false
 			}).catch(console.error)

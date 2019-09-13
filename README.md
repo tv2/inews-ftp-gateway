@@ -13,7 +13,6 @@ npm run start -host 127.0.0.1 -port 3000 -log "log.log"
 npm run start
 ```
 
-As of now the gateway uses the Sofie-spreadsheet protocol. So for now all settings is manually added in a DEFAULT.ts file. So copy example_DEFAULTS.ts to DEFAULTS.ts and edit Ip, login, queues etc.
 
 **CLI arguments:**
 

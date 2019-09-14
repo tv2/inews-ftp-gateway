@@ -32,7 +32,7 @@ export class RundownManager {
 	}
 
 	emptyInewsFtpBuffer () {
-		// ToDo: This workaround clears the _queue inside johnsand@inews:
+		// TODO: This workaround clears the _queue inside johnsand@inews:
 		this.inewsConnection._queue.queuedJobList.list = {}
 		this.inewsConnection._queue.inprogressJobList.list = {}
 	}

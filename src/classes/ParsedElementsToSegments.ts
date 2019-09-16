@@ -78,7 +78,7 @@ export class ParsedElementsIntoSegments {
 	static parse (sheetId: string, parsedForms: IParsedElement[], fields: any, bodyCodes: IBodyCodes[], cues: ICue[]): RundownSegment[] {
 		let segments: RundownSegment[] = []
 		const implicitId = 'implicitFirst'
-		let segment = new RundownSegment(sheetId, implicitId, 0, 'Implicit Section', false, fields, bodyCodes, cues)
+		let segment: RundownSegment
 		let part: RundownPart | undefined
 
 		parsedForms.forEach(form => {
@@ -91,10 +91,9 @@ export class ParsedElementsIntoSegments {
 						part = undefined
 					}
 					if (!(segment.externalId === implicitId && _.keys(segment.parts).length === 0)) {
+						segment = new RundownSegment(sheetId, id, segments.length, form.data.name || '', form.data.float === 'TRUE', fields, bodyCodes, cues)
 						segments.push(segment)
 					}
-
-					segment = new RundownSegment(sheetId, id, segments.length, form.data.name || '', form.data.float === 'TRUE', fields, bodyCodes, cues)
 					break
 				case undefined:
 					// This is an item only, not a story even. Usually "graphics" or "video"

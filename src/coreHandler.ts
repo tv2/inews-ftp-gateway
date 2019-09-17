@@ -181,7 +181,8 @@ export class CoreHandler {
 				_id: this.core.deviceId
 			}),
 			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
-			this.core.autoSubscribe('peripheralDevices', this.core.deviceId)
+			this.core.autoSubscribe('peripheralDevices', this.core.deviceId),
+			this.core.autoSubscribe('rundowns', {})
 		])
 		.then((subs) => {
 			this._subscriptions = this._subscriptions.concat(subs)
@@ -528,5 +529,28 @@ export class CoreHandler {
 
 	public GetOutputLayers (): Array<IOutputLayer> {
 		return this._outputLayers
+	}
+
+	/**
+	 * Returns the ID of the currently active rundown.
+	 */
+	public GetLiveRundown (): string | undefined {
+		let rundowns = this.core.getCollection('rundowns')
+		if (!rundowns) throw Error('"rundowns" collection not found!')
+
+		let activeRundown = rundowns.findOne({ studioId: this._studioId, active: true })
+		return activeRundown.externalId
+	}
+
+	/**
+	 * Checks if a rundown is acrtive.
+	 * @param externalId External ID of the active rundown.
+	 */
+	public IsRundownLive (externalId: string): boolean {
+		let rundowns = this.core.getCollection('rundowns')
+		if (!rundowns) throw Error('"rundowns" collection not found!')
+
+		let rundown = rundowns.findOne({ studioId: this._studioId, externalId: externalId })
+		return rundown.active
 	}
 }

@@ -1,0 +1,72 @@
+[
+    {
+        "elementCodes": [
+            "CAMERA 1\r"
+        ],
+        "script": "\r\n\r\n\r\nCAMERA 1\r\nHer står em masse tekst\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "\r"
+        ],
+        "script": "\r\n\r\n\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "KAM 1\r"
+        ],
+        "script": "\r\n\r\nKAM 1\r\n\r\n\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "KAM CS 3\r"
+        ],
+        "script": "\r\nKAM CS 3\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n<tab><tab><tab><tab></tab></tab></tab></tab>\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "KAM 1<tab><tab><tab></tab></tab></tab>\r"
+        ],
+        "script": "\r\nKAM 1<tab><tab><tab></tab></tab></tab>\r\n<a idref=\"3\"><a idref=\"4\"></a></a>\r\n\r\n\r\n\r\n<a idref=\"9\"><a idref=\"10\"></a></a>\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "***SERVER*** \r",
+            "SLUTORD:UD PÅ TID\r"
+        ],
+        "script": "\r\n\r\n\r\n\r\n\r\n***SERVER*** \r\n\r\n\r\n\r\nSLUTORD:UD PÅ TID\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "KAM 1<tab><tab></tab></tab>\r"
+        ],
+        "script": "\r\nKAM 1<tab><tab></tab></tab>\r\n\r\n<a idref=\"1\"></a>\r\n<a idref=\"3\"></a>\r\n\r\n\r\n<a idref=\"7\"></a>\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "***100% GRAFIK***\r"
+        ],
+        "script": "\r\n***100% GRAFIK***\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "KAM 1\r",
+            "***SERVER*** \r",
+            "SLUTORD: Slå dem\r"
+        ],
+        "script": "\r\nKAM 1\r\n\r\nLad os lige høre, hvordan den danske herredouble selv ser frem til den her kamp.\r\n\r\n\r\n\r\n***SERVER*** \r\n<a idref=\"2\"></a>\r\n\r\nSLUTORD: Slå dem\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "KAM 1<tab><tab></tab></tab>\r"
+        ],
+        "script": "\r\nKAM 1<tab><tab></tab></tab>\r\n\r\n\r\n<a idref=\"5\"></a>\r\n\r\n\r\n<a idref=\"4\"></a>\r\n\r\n\n"
+    },
+    {
+        "elementCodes": [
+            "***SERVER*** \r",
+            "SLUTORD: Krafedeme vannvittigt.\r"
+        ],
+        "script": "\r\n\r\n\r\nKento Momota har vist overmenneskelig styrke, efter sit comecack til sporten i 2018, men måske er konkurrenterne ved at hale ind på ham igen.\r\n\r\n\r\n\r\n***SERVER*** \r\n<a idref=\"2\"><a idref=\"3\"><a idref=\"4\"><a idref=\"5\"></a></a></a></a>\r\n\r\nSLUTORD: Krafedeme vannvittigt.\r\n\r\n\r\n\n"
+    }
+]

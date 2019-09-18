@@ -1,0 +1,242 @@
+[
+    {
+        "data": {
+            "id": "2e1d3ecb:00d210ee:5d6cc0f3",
+            "name": "TESTMANUS BEDE",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "191f009e:00cb28c8:5d67c8be",
+            "name": "VM BADMINTON - BASEL 22 aug 2019",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1a1f009e:00bd0dd8:5d5e54a3",
+            "name": "SETUP STUDIE",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1a1f009e:00bd0dd8:5d5e54a3camera0",
+            "name": "SETUP STUDIE",
+            "type": "CAM",
+            "float": "false",
+            "script": "\r\n\r\nKAM 1\r\n\r\n\r\n\r\n\n",
+            "objectType": "camera",
+            "duration": "0",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1b1f009e:00bd0dd7:5d5e54a3",
+            "name": "KLAR ON AIR",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1b1f009e:00bd0dd7:5d5e54a3camera0",
+            "name": "KLAR ON AIR",
+            "type": "CAM",
+            "float": "false",
+            "script": "\r\nKAM CS 3\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n<tab><tab><tab><tab></tab></tab></tab></tab>\r\n\r\n\n",
+            "objectType": "camera",
+            "duration": "0",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1c1f009e:00bd0dd5:5d5e54a3",
+            "name": "STUDIE VELKOMMEN",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1c1f009e:00bd0dd5:5d5e54a3camera0",
+            "name": "STUDIE VELKOMMEN",
+            "type": "CAM",
+            "float": "false",
+            "script": "\r\nKAM 1<tab><tab><tab></tab></tab></tab>\r\n<a idref=\"3\"><a idref=\"4\"></a></a>\r\n\r\n\r\n\r\n<a idref=\"9\"><a idref=\"10\"></a></a>\r\n\r\n\n",
+            "objectType": "camera",
+            "duration": "0",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1d1f009e:00bd0dd3:5d5e54a3",
+            "name": "Swinger - Antonsen Forste Kamp",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1d1f009e:00bd0dd3:5d5e54a3video0",
+            "name": "Swinger - Antonsen Forste Kamp",
+            "type": "HEAD",
+            "float": "false",
+            "script": "",
+            "objectType": "video",
+            "duration": "29",
+            "clipName": "1249335A"
+        }
+    },
+    {
+        "data": {
+            "id": "1e1f009e:00bd0dd2:5d5e54a3",
+            "name": "STUDIE",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1e1f009e:00bd0dd2:5d5e54a3camera0",
+            "name": "STUDIE",
+            "type": "CAM",
+            "float": "false",
+            "script": "\r\nKAM 1<tab><tab></tab></tab>\r\n\r\n<a idref=\"1\"></a>\r\n<a idref=\"3\"></a>\r\n\r\n\r\n<a idref=\"7\"></a>\r\n\r\n\n",
+            "objectType": "camera",
+            "duration": "0",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "1f1f009e:00bd0dd0:5d5e54a3",
+            "name": "SKILT 100 % Danskere torsdag ",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "001f009f:00bd0dce:5d5e54a3",
+            "name": "Skaarup/Astrup sync",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "001f009f:00bd0dce:5d5e54a3camera0",
+            "name": "Skaarup/Astrup sync",
+            "type": "CAM",
+            "float": "false",
+            "script": "\r\nKAM 1\r\n\r\nLad os lige høre, hvordan den danske herredouble selv ser frem til den her kamp.\r\n\r\n\r\n\r\n***SERVER*** \r\n<a idref=\"2\"></a>\r\n\r\nSLUTORD: Slå dem\r\n\r\n\n",
+            "objectType": "camera",
+            "duration": "6",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "001f009f:00bd0dce:5d5e54a3video1",
+            "name": "Skaarup/Astrup sync",
+            "type": "HEAD",
+            "float": "false",
+            "script": "",
+            "objectType": "video",
+            "duration": "20",
+            "clipName": "1249621A"
+        }
+    },
+    {
+        "data": {
+            "id": "011f009f:00bd0dde:5d5e54a3",
+            "name": "STUDIE",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "011f009f:00bd0dde:5d5e54a3camera0",
+            "name": "STUDIE",
+            "type": "CAM",
+            "float": "false",
+            "script": "\r\nKAM 1<tab><tab></tab></tab>\r\n\r\n\r\n<a idref=\"5\"></a>\r\n\r\n\r\n<a idref=\"4\"></a>\r\n\r\n\n",
+            "objectType": "camera",
+            "duration": "0",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "021f009f:00bd29ac:5d5e54a3",
+            "name": "Menneskelig Momota",
+            "type": "SECTION",
+            "float": "string",
+            "script": "string",
+            "objectType": "string",
+            "duration": "string",
+            "clipName": "string"
+        }
+    },
+    {
+        "data": {
+            "id": "021f009f:00bd29ac:5d5e54a3video0",
+            "name": "Menneskelig Momota",
+            "type": "HEAD",
+            "float": "false",
+            "script": "",
+            "objectType": "video",
+            "duration": "121",
+            "clipName": "1248681A"
+        }
+    }
+]

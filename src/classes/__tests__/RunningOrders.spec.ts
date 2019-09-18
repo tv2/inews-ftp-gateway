@@ -6,7 +6,6 @@ import parsedFields from './__mocks__/parsedData_Fields.json'
 import parsedMeta from './__mocks__/parsedData_Meta.json'
 import parsedSegments from './__mocks__/segments.json'
 import { InewsRundown } from '../datastructures/Rundown'
-// import { RundownManager } from '../RundownManager'
 import winston = require('winston')
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import { SplitRawDataToElements } from '../converters/SplitRawDataToElements'

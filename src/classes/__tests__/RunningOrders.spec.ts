@@ -1,7 +1,16 @@
-
-import { InewsRundown } from '../Rundown'
-
-// import * as cellData from './cellValues.json'
+import ftpData from './__mocks__/ftpData.json'
+import parsedBodyCodes from './__mocks__/parsedData_BodyCodes.json'
+import parsedCues from './__mocks__/parsedData_Cues.json'
+import parsedElements from './__mocks__/parsedData_Elements.json'
+import parsedFields from './__mocks__/parsedData_Fields.json'
+import parsedMeta from './__mocks__/parsedData_Meta.json'
+import parsedSegments from './__mocks__/segments.json'
+import { InewsRundown } from '../datastructures/Rundown'
+// import { RundownManager } from '../RundownManager'
+import winston = require('winston')
+import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
+import { SplitRawDataToElements } from '../converters/SplitRawDataToElements'
+import { ParsedElementsIntoSegments } from '../ParsedElementsToSegments'
 
 describe('RunningOrders', () => {
 
@@ -9,96 +18,44 @@ describe('RunningOrders', () => {
 		let a = new InewsRundown('test', 'some name', 'v0.2', 1, 2)
 		expect(a).toBeTruthy()
 	})
-	// it('should correctly parse 2d cell array', () => {
-	// 	let a = InewsRundown.fromSheetCells('sheetId123', 'name', (cellData as any).values)
-	// 	expect(a).toBeTruthy()
+})
 
-	// 	expect(a.id).toEqual('sheetId123')
-	// 	expect(a.name).toEqual('name')
-	// 	expect(a.expectedStart).toEqual(new Date(1577685600000))
-	// 	expect(a.expectedEnd).toEqual(new Date(1577685600000 + 30 * 60 * 1000))
-	// 	expect(a.segments.length).toBe(10)
-	// })
-	// it('Diff undefined should return "Deleted" change', () => {
-	// 	let a = InewsRundown.fromSheetCells('sheetId123', 'name', (cellData as any).values)
-	// 	let diff = a.diff(undefined)
-	// 	expect(diff.changeType).toEqual('Deleted')
-	// })
-	// it('Diff itself should return "Unchanged" change', () => {
-	// 	let a = InewsRundown.fromSheetCells('sheetId123', 'name', (cellData as any).values)
-	// 	let diff = a.diff(a)
-	// 	expect(diff.changeType).toEqual('Unchanged')
-	// 	expect(diff.sections.length).toEqual(0)
-	// })
-	// it('Diff identical should return "Unchanged" change', () => {
-	// 	let a = InewsRundown.fromSheetCells('sheetId123', 'name', (cellData as any).values)
-	// 	let b = InewsRundown.fromSheetCells('sheetId123', 'name', (cellData as any).values)
-	// 	let diff = a.diff(b)
-	// 	expect(diff.changeType).toEqual('Unchanged')
-	// 	expect(diff.sections.length).toEqual(0) // Will not work right now as the id's are not set
-	// })
-	describe('#columnToLetter', () => {
-		it('returns correct values', () => {
-			expect(InewsRundown.columnToLetter(0)).toEqual('')
-			expect(InewsRundown.columnToLetter(1)).toEqual('A')
-			expect(InewsRundown.columnToLetter(2)).toEqual('B')
-			expect(InewsRundown.columnToLetter(3)).toEqual('C')
-			expect(InewsRundown.columnToLetter(4)).toEqual('D')
-			expect(InewsRundown.columnToLetter(5)).toEqual('E')
-			expect(InewsRundown.columnToLetter(6)).toEqual('F')
-			expect(InewsRundown.columnToLetter(7)).toEqual('G')
-			expect(InewsRundown.columnToLetter(8)).toEqual('H')
-			expect(InewsRundown.columnToLetter(9)).toEqual('I')
-			expect(InewsRundown.columnToLetter(10)).toEqual('J')
-			expect(InewsRundown.columnToLetter(11)).toEqual('K')
-			expect(InewsRundown.columnToLetter(12)).toEqual('L')
-			expect(InewsRundown.columnToLetter(13)).toEqual('M')
-			expect(InewsRundown.columnToLetter(14)).toEqual('N')
-			expect(InewsRundown.columnToLetter(15)).toEqual('O')
-			expect(InewsRundown.columnToLetter(16)).toEqual('P')
-			expect(InewsRundown.columnToLetter(17)).toEqual('Q')
-			expect(InewsRundown.columnToLetter(18)).toEqual('R')
-			expect(InewsRundown.columnToLetter(19)).toEqual('S')
-			expect(InewsRundown.columnToLetter(20)).toEqual('T')
-			expect(InewsRundown.columnToLetter(21)).toEqual('U')
-			expect(InewsRundown.columnToLetter(22)).toEqual('V')
-			expect(InewsRundown.columnToLetter(23)).toEqual('W')
-			expect(InewsRundown.columnToLetter(24)).toEqual('X')
-			expect(InewsRundown.columnToLetter(25)).toEqual('Y')
-			expect(InewsRundown.columnToLetter(26)).toEqual('Z')
-			expect(InewsRundown.columnToLetter(27)).toEqual('AA')
-			expect(InewsRundown.columnToLetter(28)).toEqual('AB')
-			expect(InewsRundown.columnToLetter(29)).toEqual('AC')
-			expect(InewsRundown.columnToLetter(30)).toEqual('AD')
-			expect(InewsRundown.columnToLetter(31)).toEqual('AE')
-			expect(InewsRundown.columnToLetter(32)).toEqual('AF')
-			expect(InewsRundown.columnToLetter(33)).toEqual('AG')
-			expect(InewsRundown.columnToLetter(34)).toEqual('AH')
-			expect(InewsRundown.columnToLetter(35)).toEqual('AI')
-			expect(InewsRundown.columnToLetter(36)).toEqual('AJ')
-			expect(InewsRundown.columnToLetter(37)).toEqual('AK')
-			expect(InewsRundown.columnToLetter(38)).toEqual('AL')
-			expect(InewsRundown.columnToLetter(39)).toEqual('AM')
-			expect(InewsRundown.columnToLetter(40)).toEqual('AN')
-			expect(InewsRundown.columnToLetter(41)).toEqual('AO')
-			expect(InewsRundown.columnToLetter(42)).toEqual('AP')
-			expect(InewsRundown.columnToLetter(43)).toEqual('AQ')
-			expect(InewsRundown.columnToLetter(44)).toEqual('AR')
-			expect(InewsRundown.columnToLetter(45)).toEqual('AS')
-			expect(InewsRundown.columnToLetter(46)).toEqual('AT')
-			expect(InewsRundown.columnToLetter(47)).toEqual('AU')
-			expect(InewsRundown.columnToLetter(48)).toEqual('AV')
-			expect(InewsRundown.columnToLetter(49)).toEqual('AW')
-			expect(InewsRundown.columnToLetter(50)).toEqual('AX')
-			expect(InewsRundown.columnToLetter(51)).toEqual('AY')
-			expect(InewsRundown.columnToLetter(52)).toEqual('AZ')
-			expect(InewsRundown.columnToLetter(53)).toEqual('BA')
-			expect(InewsRundown.columnToLetter(54)).toEqual('BB')
-			expect(InewsRundown.columnToLetter(55)).toEqual('BC')
-			expect(InewsRundown.columnToLetter(56)).toEqual('BD')
-			expect(InewsRundown.columnToLetter(57)).toEqual('BE')
-			expect(InewsRundown.columnToLetter(26 * 26 + 27)).toEqual('AAA')
-			expect(InewsRundown.columnToLetter(26 * 26 * 27 + 27)).toEqual('AAAA')
-		})
+let outputLayers: IOutputLayer[] = [
+	{
+		_id: 'pgm0',
+		name: 'Program',
+		_rank: 1,
+		isPGM: true
+	}
+]
+
+describe('RundownManager', () => {
+	it('SplitRawDataToElements', () => {
+		let logger = new winston.Logger()
+		let parsedData = SplitRawDataToElements.convert(logger, JSON.parse(JSON.stringify(ftpData)), outputLayers)
+		expect(parsedData.meta).toEqual(parsedMeta)
+		expect(parsedData.fields).toEqual(parsedFields)
+		expect(parsedData.bodyCodes).toEqual(parsedBodyCodes)
+		expect(parsedData.cues).toEqual(parsedCues)
+		expect(parsedData.elements).toEqual(parsedElements)
+	})
+	it('INewsRundown', () => {
+		let id = '00000000000001'
+		let logger = new winston.Logger()
+		let parsedData = SplitRawDataToElements.convert(logger, JSON.parse(JSON.stringify(ftpData)), outputLayers)
+		let rundown = new InewsRundown(id, id, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
+		expect(rundown.externalId).toEqual(id)
+		expect(rundown.name).toEqual(id)
+		expect(rundown.gatewayVersion).toEqual('v0.2')
+		expect(rundown.expectedStart).toEqual(0)
+		expect(rundown.expectedEnd).toEqual(1)
+		expect(rundown.segments).toEqual([])
+	})
+	it('Segments', () => {
+		let id = '00000000000001'
+		let logger = new winston.Logger()
+		let parsedData = SplitRawDataToElements.convert(logger, JSON.parse(JSON.stringify(ftpData)), outputLayers)
+		let segments = ParsedElementsIntoSegments.parse(id, parsedData.elements, parsedData.fields, parsedData.bodyCodes, parsedData.cues)
+		expect(segments).toEqual(parsedSegments)
 	})
 })

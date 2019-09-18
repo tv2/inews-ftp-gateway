@@ -4,5 +4,9 @@
     "node_modules/**",
     "src/**/*spec.ts",
     "src/**/__mocks__/*"
-  ]
+  ],
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "esModuleInterop": true
+  }
 }

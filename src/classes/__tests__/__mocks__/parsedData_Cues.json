@@ -1,0 +1,279 @@
+[
+    {
+        "cue": []
+    },
+    {
+        "cue": []
+    },
+    {
+        "cue": [
+            [
+                "WATCHOUT=WO RESET",
+                ";0.00"
+            ],
+            [
+                "WATCHOUT=WO loop EVENT 1",
+                ";0.01"
+            ]
+        ]
+    },
+    {
+        "cue": [
+            [
+                "STUDIOSETUP=afvikling C",
+                ";0.00"
+            ],
+            [
+                "STUDIE=ST2p",
+                ";0.01"
+            ],
+            [
+                "STUDIE=ST4s",
+                ";0.02"
+            ],
+            [
+                "kg ovl-all-out",
+                "CLEAR OVERLAY",
+                ";0.00"
+            ],
+            [
+                "KG=DESIGN_BADMINTON",
+                ";0.00.01"
+            ],
+            [
+                "kg tema_out",
+                "TEMA OUT",
+                ";0:1x"
+            ],
+            [
+                "VIZ=dve-triopage",
+                "GRAFIK=BG_LOADER_BAD_DVE",
+                ";0.00.03"
+            ],
+            [
+                "VIZ=full-triopage",
+                "GRAFIK=BG_LOADER_BAD",
+                ";0.00.05"
+            ],
+            [
+                "STUDIE=MIC ON OFF",
+                "ST2vrt1=OFF",
+                "ST2vrt2=OFF",
+                "ST2gst1=OFF",
+                "ST2gst2=OFF",
+                "ST4vrt=OFF",
+                "ST4gst=OFF",
+                ";0.00"
+            ],
+            [
+                "WATCHOUT=WO INPUT",
+                "inp1=LIVE 1",
+                "inp2=LIVE 2",
+                "inp3=EVS 1",
+                "inp4=EVS 2",
+                ";0.00"
+            ]
+        ]
+    },
+    {
+        "cue": [
+            null,
+            null,
+            [
+                "kg bund JAN Ø. JØRGENSEN",
+                "Badmintonspiller",
+                ";x.xx"
+            ],
+            [
+                "kg bund HANS-KRISTIAN VITTINGHUS",
+                "Badmintonspiller",
+                ";x.xx"
+            ],
+            [
+                "kg bund KENNETH JONASSEN",
+                "Cheflandstræner, Danmark",
+                ";x.xx"
+            ],
+            [
+                "kg bund MORTEN ANKERDAL",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund DENNIS BOSTRUP",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund JIM LAUGESEN",
+                "Badmintonekspert, TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund KRISTOFFER MØLDRUP",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund JOACHIM FISCHER",
+                "Badmintonekspert, TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund JAN Ø. JØRGENSEN",
+                "Badmintonspiller",
+                ";x.xx"
+            ]
+        ]
+    },
+    {
+        "cue": []
+    },
+    {
+        "cue": [
+            [
+                "kg bund AMALIE MAGELUND",
+                "Badmintonspiller",
+                ";x.xx"
+            ],
+            [
+                "kg bund FREJA RAVN",
+                "Badmintonspiller",
+                ";x.xx"
+            ],
+            [
+                "kg bund MORTEN ANKERDAL",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund ANDERS ANTONSEN",
+                "Badmintonspiller",
+                ";x.xx"
+            ],
+            [
+                "kg bund DENNIS BOSTRUP",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund JIM LAUGESEN",
+                "Badmintonekspert, TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund KRISTOFFER MØLDRUP",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund JOACHIM FISCHER",
+                "Badmintonekspert, TV 2 SPORT",
+                ";x.xx"
+            ]
+        ]
+    },
+    {
+        "cue": [
+            [
+                "GRAFIK=FULL"
+            ],
+            [
+                "]] S3.0 M 0 [[",
+                "cg4 ]] 1 YNYAB 0 [[ pilotdata",
+                "Senderplan/22-08-2019",
+                "VCPID=2547785",
+                "ContinueCount=-1",
+                "Senderplan/22-08-2019"
+            ]
+        ]
+    },
+    {
+        "cue": [
+            [
+                "SS=SC-STILLS",
+                ";0.00.01"
+            ],
+            [
+                "SS=SC-LOOP",
+                ";0.00.01"
+            ],
+            [
+                "kg bund KIM ASTRUP",
+                "Badmintonspiller",
+                ";0.01"
+            ]
+        ]
+    },
+    {
+        "cue": [
+            [
+                "kg bund MORTEN ANKERDAL",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund DENNIS BOSTRUP",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund JIM LAUGESEN",
+                "Badmintonekspert, TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund KRISTOFFER MØLDRUP",
+                "TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund JOACHIM FISCHER",
+                "Badmintonekspert, TV 2 SPORT",
+                ";x.xx"
+            ],
+            [
+                "kg bund ANDERS ANTONSEN",
+                "Badmintonspiller",
+                ";x.xx"
+            ]
+        ]
+    },
+    {
+        "cue": [
+            [
+                "SS=SC-STILLS",
+                ";0.00.01"
+            ],
+            [
+                "SS=SC-LOOP",
+                ";0.00.01"
+            ],
+            [
+                "kg bund KENNETH JONASSEN",
+                "Landstræner",
+                ";0.01-0.03"
+            ],
+            [
+                "kg bund PETER GADE",
+                "Tidligere verdensetter",
+                ";0.07-0.07"
+            ],
+            [
+                "kg bund JONAS BO NIELSEN",
+                "jobn@tv2.dk",
+                ";0.25-0.28"
+            ],
+            [
+                "kg tlftopt ANDERS ANTONSEN",
+                "Badmintonspiller",
+                ";1.46-2.01"
+            ],
+            [
+                "kg bund MORTEN FROST",
+                "Tidligere verdensetter",
+                ";1.02"
+            ]
+        ]
+    }
+]

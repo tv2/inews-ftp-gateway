@@ -1,8 +1,8 @@
-import { RundownPart } from './datastructures/Part'
-import { RundownPiece } from './datastructures/Piece'
 import { RundownSegment } from './datastructures/Segment'
 import * as _ from 'underscore'
 import { ICue, IBodyCodes } from './converters/SplitRawDataToElements'
+import { RundownPart } from './datastructures/Part'
+import { RundownPiece } from './datastructures/Piece'
 
 export interface IParsedElement {
 	data: {
@@ -77,51 +77,25 @@ export class ParsedElementsIntoSegments {
 
 	static parse (sheetId: string, parsedForms: IParsedElement[], fields: any, bodyCodes: IBodyCodes[], cues: ICue[]): RundownSegment[] {
 		let segments: RundownSegment[] = []
-		const implicitId = 'implicitFirst'
-		let segment: RundownSegment = new RundownSegment(sheetId, implicitId, 0, 'Implicit Section', false, fields, bodyCodes, cues)
-		let part: RundownPart | undefined
 
+		let currentSegment = -1
 		parsedForms.forEach(form => {
-			let id = form.data.id || ''
-
-			switch (form.data.type) {
-				case 'SECTION':
-					if (part) {
-						segment.addPart(part)
-						part = undefined
-					}
-					if (!(segment.externalId === implicitId && _.keys(segment.parts).length === 0)) {
-						segments.push(segment)
-					}
-
-					segment = new RundownSegment(sheetId, id, segments.length, form.data.name || '', form.data.float === 'TRUE', fields, bodyCodes, cues)
-					break
-				case undefined:
-					// This is an item only, not a story even. Usually "graphics" or "video"
-					if (!part) {
-						// Then what?!
-					}
-					break
-				default:
-					// It is likely a story
-					if (part) {
-						// We already have a story. We should add it to the section.
-						segment.addPart(part)
-						part = undefined
-					}
-					part = new RundownPart(form.data.type, segment.externalId, id, _.keys(segment.parts).length, form.data.name || '', form.data.float === 'TRUE', form.data.script || '')
+			if (form.data.type !== 'SECTION') {
+				if (segments[currentSegment]) {
+					let part = new RundownPart(form.data.type || '', segments[currentSegment].externalId, form.data.id || '', _.keys(segments[currentSegment].parts).length, form.data.name || '', form.data.float === 'TRUE', form.data.script || '')
 					if (form.data.objectType) {
-						const firstItem = new RundownPiece(id + '_item', form.data.objectType, ParsedElementsIntoSegments.timeFromRawData(form.data.duration), form.data.clipName || '', 'TBA', '')
+						const firstItem = new RundownPiece(form.data.id + '_item', form.data.objectType, ParsedElementsIntoSegments.timeFromRawData(form.data.duration), form.data.clipName || '', 'TBA', '')
 						part.addPiece(firstItem)
 					}
-					break
+					segments[currentSegment].parts.push(part)
+				}
+			} else {
+				let segment = new RundownSegment(sheetId, form.data.id || '', segments.length, form.data.name || '', form.data.float === 'TRUE', fields, bodyCodes, cues)
+				segments.push(segment)
+				currentSegment++
 			}
 		})
 
-		if (part) {
-			segment.addPart(part)
-		}
-		segments.push(segment)
 		return segments
 	}
 

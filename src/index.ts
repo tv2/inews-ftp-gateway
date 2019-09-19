@@ -118,21 +118,23 @@ if (logPath) {
 	})
 	// Hijack console.log:
 	// @ts-ignore
-	let orgConsoleLog = console.log
-	console.log = function (...args: any[]) {
-		// orgConsoleLog('a')
-		if (args.length >= 1) {
-			try {
+	if (!process.env.DEV) {
+		let orgConsoleLog = console.log
+		console.log = function (...args: any[]) {
+			// orgConsoleLog('a')
+			if (args.length >= 1) {
+				try {
 
-				// @ts-ignore one or more arguments
-				logger.debug(...args)
-				// logger.debug(...args.map(JSONStringifyCircular()))
-			} catch (e) {
-				orgConsoleLog('CATCH')
+					// @ts-ignore one or more arguments
+					logger.debug(...args)
+					// logger.debug(...args.map(JSONStringifyCircular()))
+				} catch (e) {
+					orgConsoleLog('CATCH')
+					orgConsoleLog(...args)
+					throw e
+				}
 				orgConsoleLog(...args)
-				throw e
 			}
-			orgConsoleLog(...args)
 		}
 	}
 } else {
@@ -148,12 +150,13 @@ if (logPath) {
 	})
 	// Hijack console.log:
 	// @ts-ignore
-	let orgConsoleLog = console.log
-	console.log = function (...args: any[]) {
-		// orgConsoleLog('a')
-		if (args.length >= 1) {
-			// @ts-ignore one or more arguments
-			logger.debug(...args)
+	if (!process.env.DEV) {
+		console.log = function (...args: any[]) {
+			// orgConsoleLog('a')
+			if (args.length >= 1) {
+				// @ts-ignore one or more arguments
+				logger.debug(...args)
+			}
 		}
 	}
 }

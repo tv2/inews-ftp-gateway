@@ -66,13 +66,19 @@ export class RunningOrderWatcher extends EventEmitter {
 
 		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
 
+		if (!delayStart) {
+			this.startWatcher()
+		}
+	}
+
+	fakeRundown () {
 		// TODO: Remove for production
 		if (process.env.DEV) {
+			console.log('DEV MODE')
 			let ftpData = require('./fakeFTPData')
 			let rundown = this.rundownManager.convertNSMLtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default, this.coreHandler.GetOutputLayers())
+			console.log(rundown)
 			this.emit('rundown_create', '135381b4-f11a-4689-8346-b298b966664f', rundown)
-		} else if (!delayStart) {
-			this.startWatcher()
 		}
 	}
 

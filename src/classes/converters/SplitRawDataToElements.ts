@@ -58,7 +58,7 @@ export class SplitRawDataToElements {
 		console.log('DUMMY LOG : ', outputLayers)
 		let allElements: IParsedElement[] = []
 		rundownRaw.forEach((root): void => {
-			_logger.info(' Converting : ', root.storyName)
+			//_logger.info(' Converting : ', root.storyName)
 			const story = root.story
 
 			let { elementCodes, script } = BodyCodes.extract(story.body)

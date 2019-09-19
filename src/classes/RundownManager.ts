@@ -49,7 +49,7 @@ export class RundownManager {
 							if (index === dirList.length - 1) {
 								resolve(stories)
 							}
-							this._logger.info('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
+							//this._logger.info('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
 						})
 					})
 				} else {

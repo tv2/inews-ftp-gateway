@@ -5,7 +5,7 @@ import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { RundownSegment } from './datastructures/Segment'
 import { RundownPart } from './datastructures/Part'
-import clone from 'clone'
+import * as clone from 'clone'
 import { CoreHandler } from '../coreHandler'
 import * as Winston from 'winston'
 import { INewsQueue } from '../inewsHandler'
@@ -65,7 +65,13 @@ export class RunningOrderWatcher extends EventEmitter {
 		this._logger = this.logger
 
 		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
-		if (!delayStart) {
+
+		// TODO: Remove for production
+		if (process.env.DEV) {
+			let ftpData = require('./fakeFTPData')
+			let rundown = this.rundownManager.convertNSMLtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default, this.coreHandler.GetOutputLayers())
+			this.emit('rundown_create', '135381b4-f11a-4689-8346-b298b966664f', rundown)
+		} else if (!delayStart) {
 			this.startWatcher()
 		}
 	}

@@ -93,14 +93,17 @@ export class InewsFTPHandler {
 				})
 
 				this.iNewsWatcher.checkINewsRundowns()
-					.then((queueList) => {
-						console.log('DUMMY LOG : ', queueList)
-						if (this._settings) this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${this._settings.queues[0].queue}'`])
-					})
-					.catch(e => {
-						console.log('Error in iNews Rundown list', e)
-					})
-					// }
+				.then((queueList) => {
+					console.log('DUMMY LOG : ', queueList)
+					if (this._settings) this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${this._settings.queues[0].queue}'`])
+				})
+				.catch(e => {
+					console.log('Error in iNews Rundown list', e)
+				})
+
+				if (process.env.DEV) {
+					this.iNewsWatcher.fakeRundown()
+				}
 			}
 		}
 		return Promise.resolve()

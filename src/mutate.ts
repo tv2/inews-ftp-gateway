@@ -9,7 +9,7 @@ export function mutateRundown (rundown: InewsRundown): IngestRundown {
 	return {
 		externalId: rundown.externalId,
 		name: rundown.name,
-		type: 'external',
+		type: 'inews',
 		payload: _.omit(rundown, 'segments'),
 		segments: _.values(rundown.segments || {}).map(mutateSegment)
 	}

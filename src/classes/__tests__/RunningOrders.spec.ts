@@ -1,10 +1,11 @@
-import ftpData from './__mocks__/ftpData.json'
-import parsedBodyCodes from './__mocks__/parsedData_BodyCodes.json'
-import parsedCues from './__mocks__/parsedData_Cues.json'
-import parsedElements from './__mocks__/parsedData_Elements.json'
-import parsedFields from './__mocks__/parsedData_Fields.json'
-import parsedMeta from './__mocks__/parsedData_Meta.json'
-import parsedSegments from './__mocks__/segments.json'
+let fs = require('fs')
+let ftpData = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/ftpData.json'))
+let parsedBodyCodes = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/parsedData_BodyCodes.json'))
+let parsedCues = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/parsedData_Cues.json'))
+let parsedElements = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/parsedData_Elements.json'))
+let parsedFields = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/parsedData_Fields.json'))
+let parsedMeta = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/parsedData_Meta.json'))
+let parsedSegments = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/segments.json'))
 import { InewsRundown } from '../datastructures/Rundown'
 import winston = require('winston')
 import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'

@@ -1,7 +1,5 @@
 import { InewsRundown } from './datastructures/Rundown'
-import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import * as Winston from 'winston'
-import { SplitRawDataToElements } from './converters/SplitRawDataToElements'
 import { ParsedElementsIntoSegments } from './ParsedElementsToSegments'
 
 export class RundownManager {
@@ -13,19 +11,23 @@ export class RundownManager {
 		this.inewsConnection = inewsConnection
 	}
 
-	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
+	downloadRunningOrder (rundownSheetId: string): Promise<InewsRundown> {
 		return this.downloadINewsRundown(rundownSheetId)
 		.then(rundownRaw => {
 			this._logger.info(rundownSheetId, ' Downloaded ')
-			return this.convertNSMLtoSofie(this._logger, rundownSheetId, rundownSheetId, rundownRaw, outputLayers)
+			return this.convertRawtoSofie(this._logger, rundownSheetId, rundownSheetId, rundownRaw)
 		})
 	}
 
-	convertNSMLtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownNSML: any[], outputLayers: IOutputLayer[]): InewsRundown {
+	convertRawtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownRaw: any[]): InewsRundown {
 		_logger.info('START : ', name, ' convert to Sofie Rundown')
-		let parsedData = SplitRawDataToElements.convert(_logger, rundownNSML, outputLayers)
-		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
-		let segments = ParsedElementsIntoSegments.parse(sheetId, parsedData.elements, parsedData.fields, parsedData.bodyCodes, parsedData.cues)
+		// where should these data come from? 
+		let version = 'v0.2'
+		let startTime = 0
+		let endTime = 1
+
+		let rundown = new InewsRundown(sheetId, name, version, startTime, endTime)
+		let segments = ParsedElementsIntoSegments.parse(sheetId,rundownRaw)
 		rundown.addSegments(segments)
 		_logger.info('DONE : ', name, ' converted to Sofie Rundown')
 		return rundown

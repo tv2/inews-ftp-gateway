@@ -19,7 +19,7 @@ export class ParsedINewsIntoSegments {
 		let segments: RundownSegment[] = []
 
 		inewsRaw.forEach(story => {
-			let segment = new RundownSegment(sheetId, story.story.id || '', segments.length, story.storyName || '', false)
+			let segment = new RundownSegment(sheetId, story.story.id || '', story.story, segments.length, story.storyName || '', false)
 			segments.push(segment)
 		})
 		return segments

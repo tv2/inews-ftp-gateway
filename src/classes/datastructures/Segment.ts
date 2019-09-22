@@ -11,12 +11,14 @@ export interface ISegment {
 export class RundownSegment implements ISegment {
 	constructor (
 		public rundownId: string,
+		public iNewsStory: any,
 		public externalId: string,
 		public rank: number,
 		public name: string,
 		public float: boolean,
-		public parts: RundownPart[] = []
+		public parts: RundownPart[] = [],
 	) {}
+
 	serialize (): ISegment {
 		return {
 			rundownId:		this.rundownId,

@@ -1,6 +1,6 @@
 import { InewsRundown } from './datastructures/Rundown'
 import * as Winston from 'winston'
-import { ParsedElementsIntoSegments } from './ParsedElementsToSegments'
+import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
 
 export class RundownManager {
 
@@ -27,7 +27,7 @@ export class RundownManager {
 		let endTime = 1
 
 		let rundown = new InewsRundown(sheetId, name, version, startTime, endTime)
-		let segments = ParsedElementsIntoSegments.parse(sheetId,rundownRaw)
+		let segments = ParsedINewsIntoSegments.parse(sheetId,rundownRaw)
 		rundown.addSegments(segments)
 		_logger.info('DONE : ', name, ' converted to Sofie Rundown')
 		return rundown

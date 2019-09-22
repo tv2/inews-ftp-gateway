@@ -6,7 +6,6 @@ import * as _ from 'underscore'
 import { RundownSegment } from './datastructures/Segment'
 import { RundownPart } from './datastructures/Part'
 import * as clone from 'clone'
-import { CoreHandler } from '../coreHandler'
 import * as Winston from 'winston'
 import { INewsQueue } from '../inewsHandler'
 
@@ -55,7 +54,6 @@ export class RunningOrderWatcher extends EventEmitter {
 	 */
 	constructor (
 		private logger: Winston.LoggerInstance,
-		private coreHandler: CoreHandler,
 		private iNewsConnection: any,
 		private iNewsQueue: Array<INewsQueue>,
 		private gatewayVersion: string,
@@ -76,7 +74,7 @@ export class RunningOrderWatcher extends EventEmitter {
 		if (process.env.DEV) {
 			console.log('DEV MODE')
 			let ftpData = require('./fakeFTPData')
-			let rundown = this.rundownManager.convertNSMLtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default, this.coreHandler.GetOutputLayers())
+			let rundown = this.rundownManager.convertRawtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default)
 			console.log(rundown)
 			this.emit('rundown_create', '135381b4-f11a-4689-8346-b298b966664f', rundown)
 		}
@@ -137,7 +135,7 @@ export class RunningOrderWatcher extends EventEmitter {
 	}
 
 	async checkINewsRundownById (runningOrderId: string): Promise<InewsRundown> {
-		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId, this.coreHandler.GetOutputLayers())
+		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId)
 		if (runningOrder.gatewayVersion === this.gatewayVersion) {
 			this.processUpdatedRunningOrder(runningOrder.externalId, runningOrder)
 		}

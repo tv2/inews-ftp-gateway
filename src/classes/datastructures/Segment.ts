@@ -2,6 +2,7 @@ import { RundownPart } from './Part'
 
 export interface ISegment {
 	rundownId: string
+	iNewsStory: any
 	externalId: string // unique within the parent runningOrder
 	rank: number
 	name: string
@@ -22,6 +23,7 @@ export class RundownSegment implements ISegment {
 	serialize (): ISegment {
 		return {
 			rundownId:		this.rundownId,
+			iNewsStory: 	this.iNewsStory,
 			externalId:					this.externalId,
 			rank:				this.rank,
 			name:				this.name,

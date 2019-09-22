@@ -84,7 +84,7 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this._coreHandler, this.iNewsConnection, this._settings.queues, 'v0.2')
+				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2')
 
 				this.updateChanges(this.iNewsWatcher)
 

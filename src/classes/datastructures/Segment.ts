@@ -1,5 +1,4 @@
 import { RundownPart } from './Part'
-import { ICue, IBodyCodes } from '../converters/SplitRawDataToElements'
 
 export interface ISegment {
 	rundownId: string
@@ -16,9 +15,6 @@ export class RundownSegment implements ISegment {
 		public rank: number,
 		public name: string,
 		public float: boolean,
-		public fields: any,
-		public bodyCodes: IBodyCodes[],
-		public cues: ICue[],
 		public parts: RundownPart[] = []
 	) {}
 	serialize (): ISegment {

@@ -135,7 +135,7 @@ export class RunningOrderWatcher extends EventEmitter {
 	}
 
 	async checkINewsRundownById (runningOrderId: string): Promise<InewsRundown> {
-		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId)
+		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId, this.runningOrders[runningOrderId])
 		if (runningOrder.gatewayVersion === this.gatewayVersion) {
 			this.processUpdatedRunningOrder(runningOrder.externalId, runningOrder)
 		}

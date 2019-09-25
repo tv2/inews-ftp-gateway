@@ -20,7 +20,7 @@ export class InewsRundown implements IRundown {
 		public gatewayVersion: string,
 		public expectedStart: number,
 		public expectedEnd: number,
-		public segments: RundownSegment[] = []
+		public segments: RundownSegment[] = [],
 	) {}
 
 	serialize (): IRundown {

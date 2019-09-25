@@ -11,8 +11,8 @@ export class RundownManager {
 		this.inewsConnection = inewsConnection
 	}
 
-	downloadRunningOrder (rundownSheetId: string): Promise<InewsRundown> {
-		return this.downloadINewsRundown(rundownSheetId)
+	downloadRunningOrder (rundownSheetId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
+		return this.downloadINewsRundown(rundownSheetId, oldRundown)
 		.then(rundownRaw => {
 			this._logger.info(rundownSheetId, ' Downloaded ')
 			return this.convertRawtoSofie(this._logger, rundownSheetId, rundownSheetId, rundownRaw)
@@ -39,20 +39,26 @@ export class RundownManager {
 		this.inewsConnection._queue.inprogressJobList.list = {}
 	}
 
-	async downloadINewsRundown (queueName: string): Promise<Array<any>> {
+	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<any>> {
 		return new Promise((resolve) => {
 			let stories: Array<any> = []
 			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {
 					dirList.forEach((storyFile: any, index: number) => {
-						this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
-							console.log('DUMMY LOG : ', error)
-							stories.push({ 'storyName': storyFile.storyName, 'story': story })
-							if (index === dirList.length - 1) {
-								resolve(stories)
-							}
-							this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
-						})
+						if (dirList.modified != oldRundown.segments[index].modified) {
+							this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
+								console.log('DUMMY LOG : ', error)
+								stories.push({ 
+									'storyName': storyFile.storyName, 
+									'story': story, 
+									'modified': storyFile.modified
+								})
+								if (index === dirList.length - 1) {
+									resolve(stories)
+								}
+								this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
+							})
+						}
 					})
 				} else {
 					this._logger.error('Error downloading iNews rundown : ', error)

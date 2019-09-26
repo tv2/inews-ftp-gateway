@@ -55,7 +55,7 @@ export class RundownManager {
 						let modified = String(Date.now()) //To get a unique initializer
 						if (typeof(oldRundown) != 'undefined') {
 							if (typeof(oldRundown.segments) != 'undefined') {
-								if (oldRundown.segments.length <= index) {
+								if (oldRundown.segments.length > index + 1) {
 									modified = oldRundown.segments[index].modified
 								}
 							}

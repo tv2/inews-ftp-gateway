@@ -95,7 +95,7 @@ export class InewsFTPHandler {
 				this.iNewsWatcher.checkINewsRundowns()
 				.then((queueList) => {
 					console.log('DUMMY LOG : ', queueList)
-					if (this._settings) this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queue : '${this._settings.queues[0].queue}'`])
+					if (this._settings) this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
 				})
 				.catch(e => {
 					console.log('Error in iNews Rundown list', e)

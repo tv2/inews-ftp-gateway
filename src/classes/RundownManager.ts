@@ -61,19 +61,31 @@ export class RundownManager {
 							}
 						}
 
+						stories.push({ 
+							'storyName': '', 
+							'story': '', 
+							'modified': ''
+						})
+
 						if (String(storyFile.modified) != String(modified)) {
 							this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 								console.log('DUMMY LOG : ', error)
-								stories.push({ 
+								stories[index] = { 
 									'storyName': storyFile.storyName, 
 									'story': story, 
 									'modified': storyFile.modified
-								})
+								}
 								if (index === dirList.length - 1) {
 									resolve(stories)
 								}
 								this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
 							})
+						} else {
+							stories[index] = { 
+								'storyName': oldRundown.segments[index].name, 
+								'story': oldRundown.segments[index].iNewsStory, 
+								'modified': oldRundown.segments[index].modified
+							}
 						}
 					})
 				} else {

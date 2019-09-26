@@ -61,7 +61,7 @@ export class RundownManager {
 							}
 						}
 
-						if (dirList.modified != modified) {
+						if (String(storyFile.modified) != String(modified)) {
 							this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 								console.log('DUMMY LOG : ', error)
 								stories.push({ 

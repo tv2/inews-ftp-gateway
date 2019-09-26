@@ -45,7 +45,17 @@ export class RundownManager {
 			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {
 					dirList.forEach((storyFile: any, index: number) => {
-						if (dirList.modified != oldRundown.segments[index].modified) {
+
+						let modified = String(Date.now()) //To get a unique initializer
+						if (typeof(oldRundown) != 'undefined') {
+							if (typeof(oldRundown.segments) != 'undefined') {
+								if (oldRundown.segments.length <= index) {
+									modified = oldRundown.segments[index].modified
+								}
+							}
+						}
+
+						if (dirList.modified != modified) {
 							this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 								console.log('DUMMY LOG : ', error)
 								stories.push({ 

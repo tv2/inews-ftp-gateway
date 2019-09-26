@@ -2,6 +2,12 @@ import { InewsRundown } from './datastructures/Rundown'
 import * as Winston from 'winston'
 import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
 
+export interface IRawStory {
+	'storyName': string
+	'story': any 
+	'modified': string
+}
+
 export class RundownManager {
 
 	private _logger: Winston.LoggerInstance
@@ -13,13 +19,13 @@ export class RundownManager {
 
 	downloadRunningOrder (rundownSheetId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
 		return this.downloadINewsRundown(rundownSheetId, oldRundown)
-		.then(rundownRaw => {
+		.then((rundownRaw: IRawStory[]) => {
 			this._logger.info(rundownSheetId, ' Downloaded ')
 			return this.convertRawtoSofie(this._logger, rundownSheetId, rundownSheetId, rundownRaw)
 		})
 	}
 
-	convertRawtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownRaw: any[]): InewsRundown {
+	convertRawtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownRaw: IRawStory[]): InewsRundown {
 		_logger.info('START : ', name, ' convert to Sofie Rundown')
 		// where should these data come from? 
 		let version = 'v0.2'
@@ -39,9 +45,9 @@ export class RundownManager {
 		this.inewsConnection._queue.inprogressJobList.list = {}
 	}
 
-	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<any>> {
+	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<IRawStory>> {
 		return new Promise((resolve) => {
-			let stories: Array<any> = []
+			let stories: Array<IRawStory> = []
 			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {
 					dirList.forEach((storyFile: any, index: number) => {

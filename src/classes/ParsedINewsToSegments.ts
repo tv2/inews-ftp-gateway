@@ -1,4 +1,5 @@
 import { RundownSegment } from './datastructures/Segment'
+import { IRawStory } from './RundownManager'
 import * as _ from 'underscore'
 
 export interface IParsedElement {
@@ -15,7 +16,7 @@ export interface IParsedElement {
 }
 export class ParsedINewsIntoSegments {
 
-	static parse (sheetId: string, inewsRaw: any[]): RundownSegment[] {
+	static parse (sheetId: string, inewsRaw: IRawStory[]): RundownSegment[] {
 		let segments: RundownSegment[] = []
 
 		inewsRaw.forEach(story => {

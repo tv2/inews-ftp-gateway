@@ -19,7 +19,7 @@ export class RundownSegment implements ISegment {
 		public rank: number,
 		public name: string,
 		public float: boolean,
-		public parts: RundownPart[] = [],
+		public parts: RundownPart[] = []
 	) {}
 
 	serialize (): ISegment {

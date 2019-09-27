@@ -27,7 +27,7 @@ export class RundownManager {
 
 	convertRawtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownRaw: IRawStory[]): InewsRundown {
 		_logger.info('START : ', name, ' convert to Sofie Rundown')
-		// where should these data come from? 
+		// where should these data come from?
 		let version = 'v0.2'
 		let startTime = 0
 		let endTime = 1

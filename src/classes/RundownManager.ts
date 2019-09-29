@@ -61,31 +61,31 @@ export class RundownManager {
 	}
 	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
 		return new Promise((resolve) => {
-			let story: IRawStory			
-			let oldModified = String(Date.now()) //To get a unique initializer
-			if (typeof(oldRundown) != 'undefined') {
-				if (typeof(oldRundown.segments) != 'undefined') {
-					if (oldRundown.segments.length > index + 1) {
+			let story: IRawStory
+			let oldModified = String(Date.now()) // To get a unique initializer
+			if (typeof(oldRundown) !== 'undefined') {
+				if (typeof(oldRundown.segments) !== 'undefined') {
+					if (oldRundown.segments.length >= index + 1) {
 						oldModified = oldRundown.segments[index].modified
 					}
 				}
 			}
-			
-			if (String(storyFile.modified) != String(oldModified)) {
+
+			if (String(storyFile.modified) !== String(oldModified)) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
-					story = { 
-						'storyName': storyFile.storyName, 
-						'story': story, 
+					story = {
+						'storyName': storyFile.storyName,
+						'story': story,
 						'modified': storyFile.modified
 					}
 					resolve(story)
 				})
 			} else {
-				story = { 
-					'storyName': oldRundown.segments[index].name, 
-					'story': oldRundown.segments[index].iNewsStory, 
+				story = {
+					'storyName': oldRundown.segments[index].name,
+					'story': oldRundown.segments[index].iNewsStory,
 					'modified': oldRundown.segments[index].modified
 				}
 				resolve(story)

@@ -47,52 +47,49 @@ export class RundownManager {
 
 	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<IRawStory>> {
 		return new Promise((resolve) => {
-			let stories: Array<IRawStory> = []
-			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
+			return this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {
-					dirList.forEach((storyFile: any, index: number) => {
-
-						let modified = String(Date.now()) //To get a unique initializer
-						if (typeof(oldRundown) != 'undefined') {
-							if (typeof(oldRundown.segments) != 'undefined') {
-								if (oldRundown.segments.length > index + 1) {
-									modified = oldRundown.segments[index].modified
-								}
-							}
-						}
-
-						stories.push({ 
-							'storyName': '', 
-							'story': '', 
-							'modified': ''
-						})
-
-						if (String(storyFile.modified) != String(modified)) {
-							this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
-								console.log('DUMMY LOG : ', error)
-								stories[index] = { 
-									'storyName': storyFile.storyName, 
-									'story': story, 
-									'modified': storyFile.modified
-								}
-								if (index === dirList.length - 1) {
-									resolve(stories)
-								}
-								this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
-							})
-						} else {
-							stories[index] = { 
-								'storyName': oldRundown.segments[index].name, 
-								'story': oldRundown.segments[index].iNewsStory, 
-								'modified': oldRundown.segments[index].modified
-							}
-						}
-					})
+					resolve(Promise.all(dirList.map((ftpFileName: string, index: number) => {
+						return this.downloadINewsStory(index, queueName, ftpFileName, oldRundown)
+					})))
 				} else {
 					this._logger.error('Error downloading iNews rundown : ', error)
 					resolve([])
 				}
 			})
+		})
+	}
+	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
+		return new Promise((resolve) => {
+			let story: IRawStory
+			let oldModified = String(Date.now()) // To get a unique initializer
+			if (typeof(oldRundown) !== 'undefined') {
+				if (typeof(oldRundown.segments) !== 'undefined') {
+					if (oldRundown.segments.length >= index + 1) {
+						oldModified = oldRundown.segments[index].modified
+					}
+				}
+			}
+
+			if (String(storyFile.modified) !== String(oldModified)) {
+				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
+					console.log('DUMMY LOG : ', error)
+					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
+					story = {
+						'storyName': storyFile.storyName,
+						'story': story,
+						'modified': storyFile.modified
+					}
+					resolve(story)
+				})
+			} else {
+				story = {
+					'storyName': oldRundown.segments[index].name,
+					'story': oldRundown.segments[index].iNewsStory,
+					'modified': oldRundown.segments[index].modified
+				}
+				resolve(story)
+			}
 		})
 	}
 }

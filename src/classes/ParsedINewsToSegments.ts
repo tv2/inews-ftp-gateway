@@ -26,7 +26,7 @@ export class ParsedINewsIntoSegments {
 				story.modified,
 				story.story.id || '', 
 				segments.length, 
-				story.storyName || '', 
+				story.story.fields.title || '', 
 				false
 			)
 			segments.push(segment)

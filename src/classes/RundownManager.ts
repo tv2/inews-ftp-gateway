@@ -4,7 +4,7 @@ import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
 
 export interface IRawStory {
 	'storyName': string
-	'story': any 
+	'story': any
 	'modified': string
 }
 
@@ -63,7 +63,9 @@ export class RundownManager {
 		return new Promise((resolve) => {
 			let story: IRawStory
 			let oldModified = String(Date.now()) // To get a unique initializer
+			// tslint:disable-next-line: strict-type-predicates
 			if (typeof(oldRundown) !== 'undefined') {
+				// tslint:disable-next-line: strict-type-predicates
 				if (typeof(oldRundown.segments) !== 'undefined') {
 					if (oldRundown.segments.length >= index + 1) {
 						oldModified = oldRundown.segments[index].modified

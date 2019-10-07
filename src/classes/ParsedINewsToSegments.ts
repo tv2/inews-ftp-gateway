@@ -21,12 +21,12 @@ export class ParsedINewsIntoSegments {
 
 		inewsRaw.forEach(story => {
 			let segment = new RundownSegment(
-				sheetId, 
+				sheetId,
 				story.story,
 				story.modified,
-				story.story.id || '', 
-				segments.length, 
-				story.story.fields.title || '', 
+				story.story.id || '',
+				segments.length,
+				story.story.fields.title || '',
 				false
 			)
 			segments.push(segment)

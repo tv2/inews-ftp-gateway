@@ -6,13 +6,9 @@ import { CoreConnection,
 import * as Winston from 'winston'
 import * as fs from 'fs'
 import { Process } from './process'
-
 import * as _ from 'underscore'
-
 import { DeviceConfig } from './connector'
-import { IMediaDict } from './classes/datastructures/media'
-import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
-// import { STATUS_CODES } from 'http'
+
 export interface PeripheralDeviceCommand {
 	_id: string
 
@@ -32,12 +28,11 @@ export interface CoreConfig {
 	watchdog: boolean
 }
 /**
- * Represents a connection between mos-integration and Core
+ * Represents a connection between iNews-gateway and Core
  */
 export class CoreHandler {
 
 	public core: CoreConnection
-	public doReceiveAuthToken?: (authToken: string) => Promise<any>
 
 	private logger: Winston.LoggerInstance
 	private _observers: Array<any> = []
@@ -48,8 +43,6 @@ export class CoreHandler {
 	private _coreConfig?: CoreConfig
 	private _process?: Process
 	private _studioId: string
-	private _mediaPaths: IMediaDict = {}
-	private _outputLayers: IOutputLayer[] = []
 
 	constructor (logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
 		this.logger = logger
@@ -189,38 +182,6 @@ export class CoreHandler {
 		})
 		.then(() => {
 			this.setupObserverForPeripheralDeviceCommands()
-			this.setupObserverForPeripheralDevices()
-
-			return
-		})
-	}
-
-	/**
-	 * Subscribes to the 'mediaObjects' collection.
-	 * @param studioId The studio the media objects belong to.
-	 */
-	setupSubscriptionForMediaObjects (studioId: string): Promise<void> {
-		return Promise.all([
-			// Media found by the media scanner.
-			this.core.autoSubscribe('mediaObjects', studioId, {})
-		])
-		.then(() => {
-			this.setupObserverForMediaObjects()
-
-			return
-		})
-	}
-	/**
-	 * Subscribes to the 'showStyleBases' collection.
-	 * @param studioId The studio the showstyles belong to.
-	 */
-	setupSubscriptionForShowStyleBases (): Promise<void> {
-		return Promise.all([
-			this.core.autoSubscribe('showStyleBases', {}),
-			this.core.autoSubscribe('studios', {})
-		])
-		.then(() => {
-			this.setupObserverForShowStyleBases()
 
 			return
 		})
@@ -258,15 +219,6 @@ export class CoreHandler {
 	}
 	retireExecuteFunction (cmdId: string) {
 		delete this._executedFunctions[cmdId]
-	}
-	receiveAuthToken (authToken: string) {
-		console.log('received AuthToken', authToken)
-
-		if (this.doReceiveAuthToken) {
-			return this.doReceiveAuthToken(authToken)
-		} else {
-			throw new Error('doReceiveAuthToken not set!')
-		}
 	}
 
 	/**
@@ -308,169 +260,6 @@ export class CoreHandler {
 			}
 		})
 	}
-	/**
-	 * Subscribes to changes to media objects to populate spreadsheet data.
-	 */
-	setupObserverForMediaObjects () {
-		// Setup observer.
-		let observer = this.core.observe('mediaObjects')
-		this.killProcess(0)
-		this._observers.push(observer)
-
-		let addedChanged = (id: string) => {
-			// Check collection exists.
-			let media = this.core.getCollection('mediaObjects')
-			if (!media) throw Error('"mediaObjects" collection not found!')
-
-			// Add file path to list.
-			let file = media.findOne({ _id: id })
-			constructMediaObject(file)
-		}
-
-		// Formats the duration as HH:MM:SS
-		let formatDuration = (duration: number): string => {
-			let hours = Math.floor(duration / 3600)
-			duration -= hours * 3600
-			let minutes = Math.floor(duration / 60)
-			duration -= minutes * 60
-
-			return `${hours}:${minutes}:${duration}`
-		}
-
-		// Constructs a MediaInfo object from file information.
-		let constructMediaObject = (file: any) => {
-			if ('mediaPath' in file) {
-				let duration = 0
-				let name = file['mediaPath']
-
-				if ('mediainfo' in file) {
-					duration = Number(file['mediainfo']['format']['duration']) || 0
-					duration = Math.round(duration)
-					name = file['mediainfo']['name']
-				}
-
-				this._mediaPaths[file._id] = {
-					name: name,
-					path: file['mediaPath'],
-					duration: formatDuration(duration)
-				}
-			}
-		}
-
-		let removed = (id: string) => {
-			if (id in this._mediaPaths) {
-				delete this._mediaPaths[id]
-			}
-		}
-
-		observer.added = (id: string) => {
-			addedChanged(id)
-		}
-
-		observer.changed = (id: string) => {
-			addedChanged(id)
-		}
-
-		observer.removed = (id: string) => {
-			removed(id)
-		}
-
-		// Check collection exists.
-		let media = this.core.getCollection('mediaObjects')
-		if (!media) throw Error('"mediaObjects" collection not found!')
-
-		// Add all media files to dictionary.
-		media.find({}).forEach(file => {
-			constructMediaObject(file)
-		})
-	}
-	setupObserverForShowStyleBases () {
-		let observerStyles = this.core.observe('showStyleBases')
-		this.killProcess(0)
-		this._observers.push(observerStyles)
-
-		let observerStudios = this.core.observe('studios')
-		this.killProcess(0)
-		this._observers.push(observerStudios)
-
-		let addedChanged = () => {
-			let showStyles = this.core.getCollection('showStyleBases')
-			if (!showStyles) throw Error('"showStyleBases" collection not found!')
-
-			let studios = this.core.getCollection('studios')
-			if (!studios) throw Error('"studios" collection not found!')
-
-			let studio = studios.findOne({ _id: this._studioId })
-			if (studio) {
-
-				this._outputLayers = []
-
-				showStyles.find({})
-				.forEach(style => {
-					if ((studio['supportedShowStyleBase'] as Array<string>).indexOf(style._id) !== 1) {
-						(style['outputLayers'] as IOutputLayer[]).forEach(layer => {
-							if (!layer.isPGM) {
-								this._outputLayers.push(layer)
-							}
-						})
-					}
-				})
-			}
-		}
-
-		observerStyles.added = () => addedChanged()
-		observerStyles.changed = () => addedChanged()
-		observerStyles.removed = () => addedChanged()
-
-		observerStudios.added = () => addedChanged()
-		observerStudios.changed = () => addedChanged()
-		observerStudios.removed = () => addedChanged()
-
-		addedChanged()
-	}
-	/**
-	 * Subscribes to changes to the device to get its associated studio ID.
-	 */
-	setupObserverForPeripheralDevices () {
-		// Setup observer.
-		let observer = this.core.observe('peripheralDevices')
-		this.killProcess(0)
-		this._observers.push(observer)
-
-		let addedChanged = (id: string) => {
-			// Check that collection exists.
-			let devices = this.core.getCollection('peripheralDevices')
-			if (!devices) throw Error('"peripheralDevices" collection not found!')
-
-			// Find studio ID.
-			let dev = devices.findOne({ _id: id })
-			if ('studioId' in dev) {
-				if (dev['studioId'] !== this._studioId) {
-					this._studioId = dev['studioId']
-
-					// Subscribe to mediaObjects collection.
-					this.setupSubscriptionForMediaObjects(this._studioId).catch(er => {
-						this.logger.error(er)
-					})
-
-					this.setupSubscriptionForShowStyleBases().catch(er => {
-						this.logger.error(er)
-					})
-				}
-			} else {
-				throw Error('Could not get a studio for iNews-gateway')
-			}
-		}
-
-		observer.added = (id: string) => {
-			addedChanged(id)
-		}
-		observer.changed = (id: string) => {
-			addedChanged(id)
-		}
-
-		addedChanged(this.core.deviceId)
-	}
 	killProcess (actually: number) {
 		if (actually === 1) {
 			this.logger.info('KillProcess command received, shutting down in 1000ms!')
@@ -498,7 +287,6 @@ export class CoreHandler {
 
 		let dirNames = [
 			'tv-automation-server-core-integration'
-			// 'mos-connection'
 		]
 		try {
 			let nodeModulesDirectories = fs.readdirSync('node_modules')
@@ -518,17 +306,6 @@ export class CoreHandler {
 			this.logger.error(e)
 		}
 		return versions
-	}
-
-	/**
-	 * Returns the available media.
-	 */
-	public GetMedia (): IMediaDict {
-		return this._mediaPaths
-	}
-
-	public GetOutputLayers (): Array<IOutputLayer> {
-		return this._outputLayers
 	}
 
 	/**

@@ -66,11 +66,17 @@ export class InewsFTPHandler {
 		}
 	}
 
+	/**
+	 * Find this peripheral device in peripheralDevices collection.
+	 */
 	private getThisPeripheralDevice (): CollectionObj | undefined {
 		let peripheralDevices = this._coreHandler.core.getCollection('peripheralDevices')
 		return peripheralDevices.findOne(this._coreHandler.core.deviceId)
 	}
 
+	/**
+	 * Set up this device.
+	 */
 	private _setupDevices (): Promise<void> {
 		if (this._disposed) return Promise.resolve()
 		if (!this._settings) return Promise.resolve()
@@ -92,6 +98,9 @@ export class InewsFTPHandler {
 					this._logger.info(`Starting watch of `, q.queue)
 				})
 
+				/**
+				 * Get list of all rundowns and report good status.
+				 */
 				this.iNewsWatcher.checkINewsRundowns()
 				.then((queueList) => {
 					console.log('DUMMY LOG : ', queueList)
@@ -101,6 +110,9 @@ export class InewsFTPHandler {
 					console.log('Error in iNews Rundown list', e)
 				})
 
+				/**
+				 * When running as DEV, send a fake rundown (for testing detached from iNews).
+				 */
 				if (process.env.DEV) {
 					this.iNewsWatcher.fakeRundown()
 				}

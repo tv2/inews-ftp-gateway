@@ -6,9 +6,11 @@ import { CoreConnection,
 import * as Winston from 'winston'
 import * as fs from 'fs'
 import { Process } from './process'
-import * as _ from 'underscore'
-import { DeviceConfig } from './connector'
 
+import * as _ from 'underscore'
+
+import { DeviceConfig } from './connector'
+// import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
 	_id: string
 
@@ -28,11 +30,12 @@ export interface CoreConfig {
 	watchdog: boolean
 }
 /**
- * Represents a connection between iNews-gateway and Core
+ * Represents a connection between mos-integration and Core
  */
 export class CoreHandler {
 
 	public core: CoreConnection
+	public doReceiveAuthToken?: (authToken: string) => Promise<any>
 
 	private logger: Winston.LoggerInstance
 	private _observers: Array<any> = []
@@ -182,10 +185,12 @@ export class CoreHandler {
 		})
 		.then(() => {
 			this.setupObserverForPeripheralDeviceCommands()
+			this.setupObserverForPeripheralDevices()
 
 			return
 		})
 	}
+
 	executeFunction (cmd: PeripheralDeviceCommand, fcnObject: any) {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
@@ -259,6 +264,40 @@ export class CoreHandler {
 				this.executeFunction(cmd, this)
 			}
 		})
+	}
+	/**
+	 * Subscribes to changes to the device to get its associated studio ID.
+	 */
+	setupObserverForPeripheralDevices () {
+		// Setup observer.
+		let observer = this.core.observe('peripheralDevices')
+		this.killProcess(0)
+		this._observers.push(observer)
+
+		let addedChanged = (id: string) => {
+			// Check that collection exists.
+			let devices = this.core.getCollection('peripheralDevices')
+			if (!devices) throw Error('"peripheralDevices" collection not found!')
+
+			// Find studio ID.
+			let dev = devices.findOne({ _id: id })
+			if ('studioId' in dev) {
+				if (dev['studioId'] !== this._studioId) {
+					this._studioId = dev['studioId']
+				}
+			} else {
+				throw Error('Could not get a studio for iNews-gateway')
+			}
+		}
+
+		observer.added = (id: string) => {
+			addedChanged(id)
+		}
+		observer.changed = (id: string) => {
+			addedChanged(id)
+		}
+
+		addedChanged(this.core.deviceId)
 	}
 	killProcess (actually: number) {
 		if (actually === 1) {

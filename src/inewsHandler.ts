@@ -121,7 +121,15 @@ export class InewsFTPHandler {
 		let runningOrdersCache: { [runningOrderId: string]: InewsRundown } = {}
 
 		rundowns.forEach((rundownHeader: any) => {
-			let segments: ISegment[] = []
+			let segments = [new RundownSegment('','','','',0,'',false, [])]
+			let rundown = new InewsRundown(
+				rundownHeader.data.externalId,
+				rundownHeader.data.name,
+				rundownHeader.data.gatewayVersion,
+				rundownHeader.data.expectedStart,
+				rundownHeader.data.expectedEnd,
+				[]
+			)
 			coreCache.forEach((segment: any) => {
 				if (segment.rundownId === rundownHeader.rundownId && segment.type === 'segment') {
 					segments[segment.data.rank] = new RundownSegment(
@@ -136,9 +144,11 @@ export class InewsFTPHandler {
 					)
 				}
 			})
-			rundownHeader.segments = segments
-			runningOrdersCache[rundownHeader.data.name] = rundownHeader
-
+			if (segments[0].rundownId === '') {
+				segments = []
+			}
+			rundown.segments = segments
+			runningOrdersCache[rundownHeader.data.name] = rundown
 		})
 		return runningOrdersCache
 	}

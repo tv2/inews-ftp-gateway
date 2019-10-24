@@ -9,7 +9,7 @@ import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { InewsRundown } from './classes/datastructures/Rundown'
 import { mutatePart, mutateRundown, mutateSegment } from './mutate'
 import * as inews from '@johnsand/inews'
-import { ISegment, RundownSegment } from './classes/datastructures/Segment'
+import { RundownSegment } from './classes/datastructures/Segment'
 
 export interface INewsDeviceSettings {
 	hosts: Array<INewsHost>

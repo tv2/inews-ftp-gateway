@@ -6,8 +6,10 @@ import {
 } from 'tv-automation-server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
+import { InewsRundown } from './classes/datastructures/Rundown'
 import { mutatePart, mutateRundown, mutateSegment } from './mutate'
 import * as inews from '@johnsand/inews'
+import { ISegment, RundownSegment } from './classes/datastructures/Segment'
 
 export interface INewsDeviceSettings {
 	hosts: Array<INewsHost>
@@ -84,7 +86,7 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2')
+				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2', this.ingestDataToRunningOrders())
 
 				this.updateChanges(this.iNewsWatcher)
 
@@ -107,6 +109,38 @@ export class InewsFTPHandler {
 			}
 		}
 		return Promise.resolve()
+	}
+
+	/**
+	 *  Get the current rundown state from Core and convert it to runningOrders
+	 */
+	ingestDataToRunningOrders (): { [runningOrderId: string]: InewsRundown } {
+		// let coreRundowns = this._coreHandler.GetRundownList()
+		let coreCache = this._coreHandler.GetRundownCache()
+		let rundowns = coreCache.filter(item => item.type === 'rundown')
+		let runningOrdersCache: { [runningOrderId: string]: InewsRundown } = {}
+
+		rundowns.forEach((rundownHeader: any) => {
+			let segments: ISegment[] = []
+			coreCache.forEach((segment: any) => {
+				if (segment.rundownId === rundownHeader.rundownId && segment.type === 'segment') {
+					segments[segment.data.rank] = new RundownSegment(
+						segment.data.payload.rundownId,
+						segment.data.payload.iNewsStory,
+						segment.modified,
+						segment.data.payload.externalId,
+						segment.data.payload.rank,
+						segment.data.payload.name,
+						segment.data.payload.float,
+						[]
+					)
+				}
+			})
+			rundownHeader.segments = segments
+			runningOrdersCache[rundownHeader.data.name] = rundownHeader
+
+		})
+		return runningOrdersCache
 	}
 
 	updateChanges (iNewsWatcher: RunningOrderWatcher) {

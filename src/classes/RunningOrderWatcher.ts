@@ -34,8 +34,6 @@ export class RunningOrderWatcher extends EventEmitter {
 	public pollIntervalSlow: number = 10 * 1000
 	public pollIntervalMedia: number = 5 * 1000
 
-	private runningOrders: { [runningOrderId: string]: InewsRundown } = {}
-
 	private fastInterval: NodeJS.Timer | undefined
 	private slowinterval: NodeJS.Timer | undefined
 	private mediaPollInterval: NodeJS.Timer | undefined
@@ -57,6 +55,7 @@ export class RunningOrderWatcher extends EventEmitter {
 		private iNewsConnection: any,
 		private iNewsQueue: Array<INewsQueue>,
 		private gatewayVersion: string,
+		private runningOrders: { [runningOrderId: string]: InewsRundown },
 		delayStart?: boolean
 	) {
 		super()

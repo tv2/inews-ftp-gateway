@@ -39,6 +39,10 @@ export class RundownManager {
 		return rundown
 	}
 
+	/**
+	 * This is a workaround, as the buffers inside the iNewsFTP service is not
+	 * flushed after use.
+	 */
 	emptyInewsFtpBuffer () {
 		// TODO: This workaround clears the _queue inside johnsand@inews:
 		this.inewsConnection._queue.queuedJobList.list = {}

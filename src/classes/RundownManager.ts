@@ -66,24 +66,15 @@ export class RundownManager {
 	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
 		return new Promise((resolve) => {
 			let story: IRawStory
-			let oldModified = Date.now()/10000 // To get a unique initializer
-			// tslint:disable-next-line: strict-type-predicates
-			if (typeof(oldRundown) !== 'undefined') {
-				// tslint:disable-next-line: strict-type-predicates
-				if (typeof(oldRundown.segments) !== 'undefined') {
-					if (oldRundown.segments.length >= index + 1) {
-						oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate)/10)
-					}
-				}
-			}
-			// The date inside iNews is out of sync between FTP and iNews modifyDate
-			// So time time will be compared for changes within 1 minute. And if the
-			// story has been updates within the last minute.
-			let fileDate = Math.floor(Date.parse(storyFile.modified) / 10000)
-			if (storyFile.storyName === 'continuity') {
-				debugger
-			}
-			if (fileDate - oldModified > 30) {
+			let oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
+
+			// The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
+			// is per second. So time time will be compared for changes within 1 minute. And if the
+			// story has been updates within the last minute, it will keep updating for a whole minute.
+			let fileDate = Math.floor(Date.parse(storyFile.modified) / 100000)
+
+
+			if (fileDate - oldModified > 1 || Date.now() / 100000 - fileDate < 1) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)

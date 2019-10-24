@@ -66,18 +66,24 @@ export class RundownManager {
 	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
 		return new Promise((resolve) => {
 			let story: IRawStory
-			let oldModified = String(Date.now()) // To get a unique initializer
+			let oldModified = Date.now()/10000 // To get a unique initializer
 			// tslint:disable-next-line: strict-type-predicates
 			if (typeof(oldRundown) !== 'undefined') {
 				// tslint:disable-next-line: strict-type-predicates
 				if (typeof(oldRundown.segments) !== 'undefined') {
 					if (oldRundown.segments.length >= index + 1) {
-						oldModified = String(oldRundown.segments[index].modified)
+						oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate)/10)
 					}
 				}
 			}
-			let fileDate = Date.parse(storyFile.modified) / 1000
-			if (String(fileDate) !== String(oldModified)) {
+			// The date inside iNews is out of sync between FTP and iNews modifyDate
+			// So time time will be compared for changes within 1 minute. And if the
+			// story has been updates within the last minute.
+			let fileDate = Math.floor(Date.parse(storyFile.modified) / 10000)
+			if (storyFile.storyName === 'continuity') {
+				debugger
+			}
+			if (fileDate - oldModified > 30) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
@@ -92,7 +98,7 @@ export class RundownManager {
 				story = {
 					'storyName': oldRundown.segments[index].name,
 					'story': oldRundown.segments[index].iNewsStory,
-					'modified': oldRundown.segments[index].modified
+					'modified': oldRundown.segments[index].iNewsStory.fields.modifyDate
 				}
 				resolve(story)
 			}

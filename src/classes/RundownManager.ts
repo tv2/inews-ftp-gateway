@@ -72,19 +72,19 @@ export class RundownManager {
 				// tslint:disable-next-line: strict-type-predicates
 				if (typeof(oldRundown.segments) !== 'undefined') {
 					if (oldRundown.segments.length >= index + 1) {
-						oldModified = oldRundown.segments[index].modified
+						oldModified = String(oldRundown.segments[index].modified)
 					}
 				}
 			}
-
-			if (String(storyFile.modified) !== String(oldModified)) {
+			let fileDate = Date.parse(storyFile.modified) / 1000
+			if (String(fileDate) !== String(oldModified)) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
 					story = {
 						'storyName': storyFile.storyName,
 						'story': story,
-						'modified': storyFile.modified
+						'modified': story.fields.modifyDate
 					}
 					resolve(story)
 				})

@@ -135,7 +135,7 @@ export class InewsFTPHandler {
 					segments[segment.data.rank] = new RundownSegment(
 						segment.data.payload.rundownId,
 						segment.data.payload.iNewsStory,
-						segment.modified,
+						segment.data.payload.iNewsStory.fields.modifyDate,
 						segment.data.payload.externalId,
 						segment.data.payload.rank,
 						segment.data.payload.name,

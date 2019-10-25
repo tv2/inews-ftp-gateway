@@ -40,15 +40,10 @@ export class RundownManager {
 
 	fakeRundown (): Promise<InewsRundown> {
 		return new Promise((resolve) => {
-			// TODO: Remove for production
-			console.log('DEV MODE')
 			let ftpData = require('./fakeFTPData')
 			let rundown = this.convertRawtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default)
-			console.log(rundown)
 			resolve(rundown)
-			// this.emit('rundown_create', '135381b4-f11a-4689-8346-b298b966664f', rundown)
 		})
-
 	}
 
 	/**

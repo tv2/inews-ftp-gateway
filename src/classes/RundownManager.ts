@@ -50,7 +50,8 @@ export class RundownManager {
 	}
 
 	/**
-	 * Clear the FTP buffer to prevent memory leaks.
+	 * This is a workaround, as the buffers inside the iNewsFTP service is not
+	 * flushed after use.
 	 */
 	emptyInewsFtpBuffer () {
 		// TODO: This workaround clears the _queue inside johnsand@inews:
@@ -87,36 +88,42 @@ export class RundownManager {
 	 */
 	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
 		return new Promise((resolve) => {
-			let story: IRawStory
-			let oldModified = String(Date.now()) // To get a unique initializer
+			let rawStory: IRawStory
+			let oldModified = 0
 			// tslint:disable-next-line: strict-type-predicates
 			if (typeof(oldRundown) !== 'undefined') {
 				// tslint:disable-next-line: strict-type-predicates
 				if (typeof(oldRundown.segments) !== 'undefined') {
 					if (oldRundown.segments.length >= index + 1) {
-						oldModified = oldRundown.segments[index].modified
+						oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
+						// oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
 					}
 				}
 			}
 
-			if (String(storyFile.modified) !== String(oldModified)) {
+			// The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
+			// is per second. So time time will be compared for changes within 1 minute. And if the
+			// story has been updates within the last minute, it will keep updating for a whole minute.
+			let fileDate = Math.floor(Date.parse(storyFile.modified) / 100000)
+
+			if (fileDate - oldModified > 1 || Date.now() / 100000 - fileDate <= 1) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
-					story = {
+					rawStory = {
 						'storyName': storyFile.storyName,
 						'story': story,
-						'modified': storyFile.modified
+						'modified': String(Date.parse(storyFile.modified))
 					}
-					resolve(story)
+					resolve(rawStory)
 				})
 			} else {
-				story = {
+				rawStory = {
 					'storyName': oldRundown.segments[index].name,
 					'story': oldRundown.segments[index].iNewsStory,
-					'modified': oldRundown.segments[index].modified
+					'modified': String(Date.parse(storyFile.modified))
 				}
-				resolve(story)
+				resolve(rawStory)
 			}
 		})
 	}

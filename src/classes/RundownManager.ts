@@ -38,6 +38,10 @@ export class RundownManager {
 		})
 	}
 
+	/**
+	 * returns a promise with a fake rundown fir testing 
+	 * in detached mode
+	 */
 	fakeRundown (): Promise<InewsRundown> {
 		return new Promise((resolve) => {
 			let ftpData = require('./fakeFTPData')

@@ -193,6 +193,7 @@ export class CoreHandler {
 			}),
 			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
 			this.core.autoSubscribe('peripheralDevices', this.core.deviceId),
+			this.core.autoSubscribe('ingestDataCache', {}),
 			this.core.autoSubscribe('rundowns', {})
 		])
 		.then((subs) => {
@@ -385,6 +386,17 @@ export class CoreHandler {
 
 		let activeRundown = rundowns.findOne({ studioId: this._studioId, active: true })
 		return activeRundown.externalId
+	}
+
+	/**
+	 * Returns Sofie rundown orders state
+	 */
+	public GetRundownCache (): Array<any> {
+		let rundowns = this.core.getCollection('ingestDataCache')
+		if (!rundowns) throw Error('"ingestDataCache" collection not found!')
+
+		let fullIngestCache = rundowns.find({})
+		return fullIngestCache
 	}
 
 	/**

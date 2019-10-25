@@ -111,13 +111,6 @@ export class InewsFTPHandler {
 				.catch(e => {
 					console.log('Error in iNews Rundown list', e)
 				})
-
-				/**
-				 * When running as DEV, send a fake rundown (for testing detached from iNews).
-				 */
-				if (process.env.DEV) {
-					this.iNewsWatcher.fakeRundown()
-				}
 			}
 		}
 		return Promise.resolve()
@@ -131,8 +124,6 @@ export class InewsFTPHandler {
 		let coreCache = this._coreHandler.GetRundownCache()
 		let rundowns = coreCache.filter(item => item.type === 'rundown')
 		let runningOrdersCache: { [runningOrderId: string]: InewsRundown } = {}
-
-		return runningOrdersCache
 
 		rundowns.forEach((rundownHeader: any) => {
 			let segments = [new RundownSegment('','','','',0,'',false, [])]

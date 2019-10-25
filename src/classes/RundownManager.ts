@@ -21,11 +21,34 @@ export class RundownManager {
 	 * Downloads a running order by ID.
 	 */
 	downloadRunningOrder (rundownId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
+
+		/**
+		 * When running as DEV, send a fake rundown (for testing detached from iNews).
+		 */
+		if (process.env.DEV) {
+			return this.fakeRundown().
+			then((response: InewsRundown) => {
+				return response
+			})
+		}
 		return this.downloadINewsRundown(rundownId, oldRundown)
 		.then((rundownRaw: IRawStory[]) => {
 			this._logger.info(rundownId, ' Downloaded ')
 			return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
 		})
+	}
+
+	fakeRundown (): Promise<InewsRundown> {
+		return new Promise((resolve) => {
+			// TODO: Remove for production
+			console.log('DEV MODE')
+			let ftpData = require('./fakeFTPData')
+			let rundown = this.convertRawtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default)
+			console.log(rundown)
+			resolve(rundown)
+			// this.emit('rundown_create', '135381b4-f11a-4689-8346-b298b966664f', rundown)
+		})
+
 	}
 
 	/**

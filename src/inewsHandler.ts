@@ -132,6 +132,8 @@ export class InewsFTPHandler {
 		let rundowns = coreCache.filter(item => item.type === 'rundown')
 		let runningOrdersCache: { [runningOrderId: string]: InewsRundown } = {}
 
+		return runningOrdersCache
+
 		rundowns.forEach((rundownHeader: any) => {
 			let segments = [new RundownSegment('','','','',0,'',false, [])]
 			let rundown = new InewsRundown(
@@ -160,7 +162,7 @@ export class InewsFTPHandler {
 				segments = []
 			}
 			rundown.segments = segments
-			runningOrdersCache[rundownHeader.data.name] = rundown
+			runningOrdersCache[rundownHeader.data.externalId] = rundown
 		})
 		return runningOrdersCache
 	}

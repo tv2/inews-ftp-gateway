@@ -17,23 +17,33 @@ export class RundownManager {
 		this.inewsConnection = inewsConnection
 	}
 
-	downloadRunningOrder (rundownSheetId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
-		return this.downloadINewsRundown(rundownSheetId, oldRundown)
+	/**
+	 * Downloads a running order by ID.
+	 */
+	downloadRunningOrder (rundownId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
+		return this.downloadINewsRundown(rundownId, oldRundown)
 		.then((rundownRaw: IRawStory[]) => {
-			this._logger.info(rundownSheetId, ' Downloaded ')
-			return this.convertRawtoSofie(this._logger, rundownSheetId, rundownSheetId, rundownRaw)
+			this._logger.info(rundownId, ' Downloaded ')
+			return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
 		})
 	}
 
-	convertRawtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownRaw: IRawStory[]): InewsRundown {
+	/**
+	 * Convert a raw rundown from iNews to a sofie rundown.
+	 * @param _logger Logger instance.
+	 * @param runningOrderId ID of the running order.
+	 * @param name Rundown name.
+	 * @param rundownRaw Rundown to convert.
+	 */
+	convertRawtoSofie (_logger: Winston.LoggerInstance, runningOrderId: string, name: string, rundownRaw: IRawStory[]): InewsRundown {
 		_logger.info('START : ', name, ' convert to Sofie Rundown')
 		// where should these data come from?
 		let version = 'v0.2'
 		let startTime = 0
 		let endTime = 1
 
-		let rundown = new InewsRundown(sheetId, name, version, startTime, endTime)
-		let segments = ParsedINewsIntoSegments.parse(sheetId,rundownRaw)
+		let rundown = new InewsRundown(runningOrderId, name, version, startTime, endTime)
+		let segments = ParsedINewsIntoSegments.parse(runningOrderId,rundownRaw)
 		rundown.addSegments(segments)
 		_logger.info('DONE : ', name, ' converted to Sofie Rundown')
 		return rundown
@@ -49,6 +59,11 @@ export class RundownManager {
 		this.inewsConnection._queue.inprogressJobList.list = {}
 	}
 
+	/**
+	 * Download a rundown from iNews.
+	 * @param queueName Name of queue to download.
+	 * @param oldRundown Old rundown object.
+	 */
 	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<IRawStory>> {
 		return new Promise((resolve) => {
 			return this.inewsConnection.list(queueName, (error: any, dirList: any) => {
@@ -63,6 +78,14 @@ export class RundownManager {
 			})
 		})
 	}
+
+	/**
+	 * Download an iNews story.
+	 * @param index Number of story in rundown.
+	 * @param queueName Name of queue to download from.
+	 * @param storyFile File to download.
+	 * @param oldRundown Old rundown to overwrite.
+	 */
 	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
 		return new Promise((resolve) => {
 			let rawStory: IRawStory

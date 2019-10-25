@@ -95,6 +95,9 @@ export class CoreHandler {
 			this._isInitialized = true
 		})
 	}
+	/**
+	 * Destroy gateway
+	 */
 	dispose (): Promise<void> {
 		return this.core.setStatus({
 			statusCode: P.StatusCode.FATAL,
@@ -107,6 +110,9 @@ export class CoreHandler {
 			// nothing
 		})
 	}
+	/**
+	 * Report gateway status to core
+	 */
 	setStatus (statusCode: P.StatusCode, messages: string[]) {
 		this.core.setStatus({
 			statusCode: statusCode,
@@ -114,6 +120,9 @@ export class CoreHandler {
 		})
 		.catch(e => this.logger.warn('Error when setting status:' + e))
 	}
+	/**
+	 * Get options for connecting to core
+	 */
 	getCoreConnectionOptions (deviceOptions: DeviceConfig, name: string): CoreOptions {
 		let credentials: {
 			deviceId: string
@@ -147,6 +156,9 @@ export class CoreHandler {
 		options.versions = this._getVersions()
 		return options
 	}
+	/**
+	 * Called when reconnected to core
+	 */
 	onConnectionRestored () {
 		this.setupSubscriptionsAndObservers()
 		.catch((e) => {
@@ -155,6 +167,9 @@ export class CoreHandler {
 		if (this._onConnected) this._onConnected()
 
 	}
+	/**
+	 * Called when connected to core.
+	 */
 	onConnected (fcn: () => any) {
 		this._onConnected = fcn
 	}
@@ -191,7 +206,9 @@ export class CoreHandler {
 			return
 		})
 	}
-
+	/**
+	 * Executes a peripheral device command.
+	 */
 	executeFunction (cmd: PeripheralDeviceCommand, fcnObject: any) {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
@@ -300,6 +317,10 @@ export class CoreHandler {
 
 		addedChanged(this.core.deviceId)
 	}
+	/**
+	 * Kills the gateway.
+	 * @param actually Whether to actually kill the gateway, or just test this function.
+	 */
 	killProcess (actually: number) {
 		if (actually === 1) {
 			this.logger.info('KillProcess command received, shutting down in 1000ms!')
@@ -310,14 +331,22 @@ export class CoreHandler {
 		}
 		return 0
 	}
+	/**
+	 * Respond to ping from core.
+	 * @param message Response.
+	 */
 	pingResponse (message: string) {
 		this.core.setPingResponse(message)
 		return true
 	}
+	/** Get snapshot of the gateway. */
 	getSnapshot (): any {
 		this.logger.info('getSnapshot')
 		return {} // TODO: send some snapshot data?
 	}
+	/**
+	 * Get the versions of installed packages.
+	 */
 	private _getVersions () {
 		let versions: {[packageName: string]: string} = {}
 

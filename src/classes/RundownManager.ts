@@ -66,7 +66,17 @@ export class RundownManager {
 	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
 		return new Promise((resolve) => {
 			let rawStory: IRawStory
-			let oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100)
+			let oldModified = 0
+			// tslint:disable-next-line: strict-type-predicates
+			if (typeof(oldRundown) !== 'undefined') {
+				// tslint:disable-next-line: strict-type-predicates
+				if (typeof(oldRundown.segments) !== 'undefined') {
+					if (oldRundown.segments.length >= index + 1) {
+						oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
+						// oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
+					}
+				}
+			}
 
 			// The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
 			// is per second. So time time will be compared for changes within 1 minute. And if the

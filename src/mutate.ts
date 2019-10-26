@@ -1,8 +1,7 @@
 import * as _ from 'underscore'
 import { InewsRundown } from './classes/datastructures/Rundown'
-import { IngestRundown, IngestSegment, IngestPart } from 'tv-automation-sofie-blueprints-integration'
+import { IngestRundown, IngestSegment } from 'tv-automation-sofie-blueprints-integration'
 import { RundownSegment } from './classes/datastructures/Segment'
-import { RundownPart } from './classes/datastructures/Part'
 
 /** These are temorary mutation functions to convert sheet types to ingest types */
 export function mutateRundown (rundown: InewsRundown): IngestRundown {
@@ -20,14 +19,6 @@ export function mutateSegment (segment: RundownSegment): IngestSegment {
 		name: segment.name,
 		rank: segment.rank,
 		payload: _.omit(segment, 'parts'),
-		parts: _.values(segment.parts || {}).map(mutatePart)
-	}
-}
-export function mutatePart (part: RundownPart): IngestPart {
-	return {
-		externalId: part.externalId,
-		name: part.name,
-		rank: part.rank,
-		payload: part
+		parts: []
 	}
 }

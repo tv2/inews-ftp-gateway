@@ -35,7 +35,6 @@ export interface CoreConfig {
 export class CoreHandler {
 
 	public core: CoreConnection
-	public doReceiveAuthToken?: (authToken: string) => Promise<any>
 
 	private logger: Winston.LoggerInstance
 	private _observers: Array<any> = []

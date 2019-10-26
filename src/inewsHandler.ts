@@ -7,7 +7,7 @@ import {
 import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { InewsRundown } from './classes/datastructures/Rundown'
-import { mutatePart, mutateRundown, mutateSegment } from './mutate'
+import { mutateRundown, mutateSegment } from './mutate'
 import * as inews from '@johnsand/inews'
 import { RundownSegment } from './classes/datastructures/Segment'
 
@@ -92,7 +92,7 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2', this.ingestDataToRunningOrders('v0.2', 0, 1))
+				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2', this.ingestDataToRunningOrders('v0.2'))
 
 				this.updateChanges(this.iNewsWatcher)
 
@@ -119,20 +119,18 @@ export class InewsFTPHandler {
 	/**
 	 *  Get the current rundown state from Core and convert it to runningOrders
 	 */
-	ingestDataToRunningOrders (gatewayVersion: string, expectedStart: 0, expectedEnd: 1): { [runningOrderId: string]: InewsRundown } {
+	ingestDataToRunningOrders (gatewayVersion: string): { [runningOrderId: string]: InewsRundown } {
 		// let coreRundowns = this._coreHandler.GetRundownList()
 		let coreCache = this._coreHandler.GetRundownCache()
 		let rundowns = coreCache.filter(item => item.type === 'rundown')
 		let runningOrdersCache: { [runningOrderId: string]: InewsRundown } = {}
 
 		rundowns.forEach((rundownHeader: any) => {
-			let segments = [new RundownSegment('','','','',0,'',false, [])]
+			let segments = [new RundownSegment('','','','',0,'',false)]
 			let rundown = new InewsRundown(
 				rundownHeader.data.externalId,
 				rundownHeader.data.name,
 				gatewayVersion,
-				expectedStart,
-				expectedEnd,
 				[]
 			)
 			coreCache.forEach((segment: any) => {
@@ -144,8 +142,7 @@ export class InewsFTPHandler {
 						segment.data.payload.externalId,
 						segment.data.payload.rank,
 						segment.data.payload.name,
-						segment.data.payload.float,
-						[]
+						segment.data.payload.float
 					)
 				}
 			})
@@ -188,15 +185,5 @@ export class InewsFTPHandler {
 		.on('segment_update', (rundownExternalId, _sectionId, newSection) => {
 			this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
 		})
-		.on('part_delete', (rundownExternalId, sectionId, storyId) => {
-			this._coreHandler.core.callMethod(P.methods.dataPartDelete, [rundownExternalId, sectionId, storyId]).catch(this._logger.error)
-		})
-		.on('part_create', (rundownExternalId, sectionId, _storyId, newStory) => {
-			this._coreHandler.core.callMethod(P.methods.dataPartCreate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
-		})
-		.on('part_update', (rundownExternalId, sectionId, _storyId, newStory) => {
-			this._coreHandler.core.callMethod(P.methods.dataPartUpdate, [rundownExternalId, sectionId, mutatePart(newStory)]).catch(this._logger.error)
-		})
-
 	}
 }

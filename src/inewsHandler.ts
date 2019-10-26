@@ -131,8 +131,6 @@ export class InewsFTPHandler {
 				rundownHeader.data.externalId,
 				rundownHeader.data.name,
 				gatewayVersion,
-				expectedStart,
-				expectedEnd,
 				[]
 			)
 			coreCache.forEach((segment: any) => {

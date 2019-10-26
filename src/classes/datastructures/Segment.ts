@@ -1,4 +1,3 @@
-import { RundownPart } from './Part'
 
 export interface ISegment {
 	rundownId: string
@@ -18,8 +17,7 @@ export class RundownSegment implements ISegment {
 		public externalId: string,
 		public rank: number,
 		public name: string,
-		public float: boolean,
-		public parts: RundownPart[] = []
+		public float: boolean
 	) {}
 
 	serialize (): ISegment {
@@ -32,11 +30,5 @@ export class RundownSegment implements ISegment {
 			name:				this.name,
 			float:				this.float
 		}
-	}
-	addPart (part: RundownPart) {
-		this.parts.push(part)
-	}
-	addParts (parts: RundownPart[]) {
-		parts.forEach(story => this.addPart(story))
 	}
 }

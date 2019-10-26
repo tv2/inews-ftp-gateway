@@ -8,7 +8,7 @@ import { RundownManager } from '../RundownManager'
 describe('RunningOrders', () => {
 
 	it('should exist', () => {
-		let a = new InewsRundown('test', 'some name', 'v0.2', 1, 2)
+		let a = new InewsRundown('test', 'some name', 'v0.2')
 		expect(a).toBeTruthy()
 	})
 })

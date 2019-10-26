@@ -59,10 +59,8 @@ export class RundownManager {
 		_logger.info('START : ', name, ' convert to Sofie Rundown')
 		// where should these data come from?
 		let version = 'v0.2'
-		let startTime = 0
-		let endTime = 1
 
-		let rundown = new InewsRundown(runningOrderId, name, version, startTime, endTime)
+		let rundown = new InewsRundown(runningOrderId, name, version)
 		let segments = ParsedINewsIntoSegments.parse(runningOrderId,rundownRaw)
 		rundown.addSegments(segments)
 		_logger.info('DONE : ', name, ' converted to Sofie Rundown')

@@ -3,9 +3,7 @@ import * as Winston from 'winston'
 import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
 
 export interface IRawStory {
-	'storyName': string
 	'story': any
-	'modified': string
 }
 
 export class RundownManager {
@@ -39,7 +37,7 @@ export class RundownManager {
 	}
 
 	/**
-	 * returns a promise with a fake rundown fir testing 
+	 * returns a promise with a fake rundown for testing
 	 * in detached mode
 	 */
 	fakeRundown (): Promise<InewsRundown> {
@@ -133,17 +131,13 @@ export class RundownManager {
 					console.log('DUMMY LOG : ', error)
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
 					rawStory = {
-						'storyName': storyFile.storyName,
-						'story': story,
-						'modified': String(Date.parse(storyFile.modified))
+						'story': story
 					}
 					resolve(rawStory)
 				})
 			} else {
 				rawStory = {
-					'storyName': oldRundown.segments[index].name,
-					'story': oldRundown.segments[index].iNewsStory,
-					'modified': String(Date.parse(storyFile.modified))
+					'story': oldRundown.segments[index].iNewsStory
 				}
 				resolve(rawStory)
 			}

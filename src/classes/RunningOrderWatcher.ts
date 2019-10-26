@@ -4,7 +4,6 @@ import { InewsRundown } from './datastructures/Rundown'
 import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { RundownSegment } from './datastructures/Segment'
-import { RundownPart } from './datastructures/Part'
 import * as clone from 'clone'
 import * as Winston from 'winston'
 import { INewsQueue } from '../inewsHandler'
@@ -23,20 +22,12 @@ export class RunningOrderWatcher extends EventEmitter {
 
 		((event: 'segment_delete', listener: (runningOrderId: string, sectionId: string) => void) => this) &
 		((event: 'segment_create', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this) &
-		((event: 'segment_update', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this) &
-
-		((event: 'part_delete', listener: (runningOrderId: string, sectionId: string, storyId: string) => void) => this) &
-		((event: 'part_create', listener: (runningOrderId: string, sectionId: string, storyId: string, newStory: RundownPart) => void) => this) &
-		((event: 'part_update', listener: (runningOrderId: string, sectionId: string, storyId: string, newStory: RundownPart) => void) => this)
+		((event: 'segment_update', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this)
 
 	// Fast = list diffs, Slow = fetch All
-	public pollIntervalFast: number = 2 * 1000
-	public pollIntervalSlow: number = 10 * 1000
-	public pollIntervalMedia: number = 5 * 1000
+	public pollInterval: number = 2 * 1000
 
-	private fastInterval: NodeJS.Timer | undefined
-	private slowinterval: NodeJS.Timer | undefined
-	private mediaPollInterval: NodeJS.Timer | undefined
+	private pollTimer: NodeJS.Timer | undefined
 
 	private currentlyChecking: boolean = false
 	private rundownManager: RundownManager
@@ -76,7 +67,7 @@ export class RunningOrderWatcher extends EventEmitter {
 		this.stopWatcher()
 		this.logger.info('Start wathcers')
 
-		this.fastInterval = setInterval(() => {
+		this.pollTimer = setInterval(() => {
 			if (this.currentlyChecking) {
 				return
 			}
@@ -92,26 +83,19 @@ export class RunningOrderWatcher extends EventEmitter {
 				// console.log('slow check done')
 				this.currentlyChecking = false
 			}).catch(console.error)
-		}, this.pollIntervalFast)
+		}, this.pollInterval)
 	}
 
 	/**
 	 * Stop the watcher
 	 */
 	stopWatcher () {
-		if (this.fastInterval) {
-			clearInterval(this.fastInterval)
-			this.fastInterval = undefined
-		}
-		if (this.slowinterval) {
-			clearInterval(this.slowinterval)
-			this.slowinterval = undefined
-		}
-		if (this.mediaPollInterval) {
-			clearInterval(this.mediaPollInterval)
-			this.mediaPollInterval = undefined
+		if (this.pollTimer) {
+			clearInterval(this.pollTimer)
+			this.pollTimer = undefined
 		}
 	}
+
 	dispose () {
 		this.stopWatcher()
 	}
@@ -167,33 +151,6 @@ export class RunningOrderWatcher extends EventEmitter {
 						if (!_.isEqual(newSection.serialize(), oldSection.serialize())) {
 							console.log(newSection.serialize(), oldSection.serialize()) // debug
 							this.emit('segment_update', rundownId, segmentId, newSection)
-						} else {
-
-							// Go through the stories for changes:
-							_.uniq(
-								oldSection.parts.map(part => part.externalId).concat(
-								newSection.parts.map(part => part.externalId))
-							).forEach((storyId: string) => {
-
-								const oldStory: RundownPart = oldSection.parts.find(part => part.externalId === storyId) as RundownPart // TODO handle the possibility of a missing id better
-								const newStory: RundownPart = newSection.parts.find(part => part.externalId === storyId) as RundownPart
-
-								if (!newStory && oldStory) {
-									this.emit('part_delete', rundownId, segmentId, storyId)
-								} else if (newStory && !oldStory) {
-									this.emit('part_create', rundownId, segmentId, storyId, newStory)
-								} else if (newStory && oldStory) {
-
-									if (!_.isEqual(newStory.serialize(), oldStory.serialize())) {
-										console.log(newStory.serialize(), oldStory.serialize()) // debug
-										this.emit('part_update', rundownId, segmentId, storyId, newStory)
-									} else {
-
-										// At this point, we've determined that there are no changes.
-										// Do nothing
-									}
-								}
-							})
 						}
 					}
 				})

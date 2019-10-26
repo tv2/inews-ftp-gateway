@@ -92,7 +92,7 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2', this.ingestDataToRunningOrders('v0.2', 0, 1))
+				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2', this.ingestDataToRunningOrders('v0.2'))
 
 				this.updateChanges(this.iNewsWatcher)
 
@@ -119,7 +119,7 @@ export class InewsFTPHandler {
 	/**
 	 *  Get the current rundown state from Core and convert it to runningOrders
 	 */
-	ingestDataToRunningOrders (gatewayVersion: string, expectedStart: 0, expectedEnd: 1): { [runningOrderId: string]: InewsRundown } {
+	ingestDataToRunningOrders (gatewayVersion: string): { [runningOrderId: string]: InewsRundown } {
 		// let coreRundowns = this._coreHandler.GetRundownList()
 		let coreCache = this._coreHandler.GetRundownCache()
 		let rundowns = coreCache.filter(item => item.type === 'rundown')

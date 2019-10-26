@@ -49,13 +49,10 @@ export class Connector {
 			this._logger.info('Initializing Core...')
 			return this.initCore()
 		})
-		.then(() => {
-			this._logger.info('Initializing iNews-FTP-monitor...')
-			return this.initInewsFTPHandler()
-		})
+
 		.then(() => {
 			this.setupObserver()
-			this._logger.info('Initialization done')
+			this._logger.info('Initialization of FTP-monitor done')
 			return
 		})
 		.catch((e) => {

@@ -111,13 +111,6 @@ export class InewsFTPHandler {
 				.catch(e => {
 					console.log('Error in iNews Rundown list', e)
 				})
-
-				/**
-				 * When running as DEV, send a fake rundown (for testing detached from iNews).
-				 */
-				if (process.env.DEV) {
-					this.iNewsWatcher.fakeRundown()
-				}
 			}
 		}
 		return Promise.resolve()
@@ -160,7 +153,7 @@ export class InewsFTPHandler {
 				segments = []
 			}
 			rundown.segments = segments
-			runningOrdersCache[rundownHeader.data.name] = rundown
+			runningOrdersCache[rundownHeader.data.externalId] = rundown
 		})
 		return runningOrdersCache
 	}

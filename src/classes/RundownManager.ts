@@ -3,9 +3,7 @@ import * as Winston from 'winston'
 import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
 
 export interface IRawStory {
-	'storyName': string
 	'story': any
-	'modified': string
 }
 
 export class RundownManager {
@@ -21,10 +19,32 @@ export class RundownManager {
 	 * Downloads a running order by ID.
 	 */
 	downloadRunningOrder (rundownId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
+
+		/**
+		 * When running as DEV, send a fake rundown (for testing detached from iNews).
+		 */
+		if (process.env.DEV) {
+			return this.fakeRundown().
+			then((response: InewsRundown) => {
+				return response
+			})
+		}
 		return this.downloadINewsRundown(rundownId, oldRundown)
 		.then((rundownRaw: IRawStory[]) => {
 			this._logger.info(rundownId, ' Downloaded ')
 			return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
+		})
+	}
+
+	/**
+	 * returns a promise with a fake rundown for testing
+	 * in detached mode
+	 */
+	fakeRundown (): Promise<InewsRundown> {
+		return new Promise((resolve) => {
+			let ftpData = require('./fakeFTPData')
+			let rundown = this.convertRawtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default)
+			resolve(rundown)
 		})
 	}
 
@@ -111,17 +131,13 @@ export class RundownManager {
 					console.log('DUMMY LOG : ', error)
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
 					rawStory = {
-						'storyName': storyFile.storyName,
-						'story': story,
-						'modified': String(Date.parse(storyFile.modified))
+						'story': story
 					}
 					resolve(rawStory)
 				})
 			} else {
 				rawStory = {
-					'storyName': oldRundown.segments[index].name,
-					'story': oldRundown.segments[index].iNewsStory,
-					'modified': String(Date.parse(storyFile.modified))
+					'story': oldRundown.segments[index].iNewsStory
 				}
 				resolve(rawStory)
 			}

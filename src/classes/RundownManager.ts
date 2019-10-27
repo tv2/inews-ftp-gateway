@@ -124,7 +124,10 @@ export class RundownManager {
 			// story has been updates within the last minute, it will keep updating for a whole minute.
 			let fileDate = Math.floor(Date.parse(storyFile.modified) / 100000)
 
-			if (fileDate - oldModified > 1 || Date.now() / 100000 - fileDate <= 1) {
+			if (fileDate - oldModified > 1
+				|| Date.now() / 100000 - fileDate <= 1
+				|| queueName !== oldRundown.segments[index].iNewsStory.id
+			) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)

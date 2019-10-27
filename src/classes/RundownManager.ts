@@ -113,23 +113,29 @@ export class RundownManager {
 				// tslint:disable-next-line: strict-type-predicates
 				if (typeof(oldRundown.segments) !== 'undefined') {
 					if (oldRundown.segments.length >= index + 1) {
-						oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
-						// oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
+						// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
+						oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
 					}
 				}
 			}
 
-			// The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
-			// is per second. So time time will be compared for changes within 1 minute. And if the
-			// story has been updates within the last minute, it will keep updating for a whole minute.
+			/** The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
+			 * is per second. So time time will be compared for changes within 1 minute. And if the
+			 * story has been updates within the last minute, it will keep updating for a whole minute.
+			 */
 			let fileDate = Math.floor(Date.parse(storyFile.modified) / 100000)
 
 			if (fileDate - oldModified > 1
 				|| Date.now() / 100000 - fileDate <= 1
-				|| queueName !== oldRundown.segments[index].iNewsStory.id
+				|| storyFile.file !== oldRundown.segments[index].iNewsStory.id
 			) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
+					/**
+					 * Change id and modifyDate to ftp reference in storyFile
+					 */
+					story.id = storyFile.file
+					story.fields.modifyDate = storyFile.modified / 1000
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
 					rawStory = {
 						'story': story

@@ -23,7 +23,7 @@ export class ParsedINewsIntoSegments {
 			let segment = new RundownSegment(
 				sheetId,
 				story.story,
-				story.story.fields.modifyDatemodified,
+				story.story.fields.modifyDate,
 				story.story.id || '',
 				segments.length,
 				story.story.fields.title || '',

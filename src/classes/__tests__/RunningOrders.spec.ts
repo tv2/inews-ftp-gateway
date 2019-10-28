@@ -19,6 +19,8 @@ describe('RundownManager', () => {
 		let logger = new winston.Logger()
 		let manager = new RundownManager(logger, {})
 		let managerParsedData = manager.convertRawtoSofie(logger, id, id, JSON.parse(JSON.stringify(ftpData)))
+		// Uncomment to update parsedData:
+		// fs.writeFileSync('src/classes/__tests__/__mocks__/updatedParsedData.json', JSON.stringify(managerParsedData))
 		expect(managerParsedData).toEqual(parsedData)
 	})
 })

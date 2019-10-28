@@ -127,14 +127,15 @@ export class RundownManager {
 
 			if (fileDate - oldModified > 1
 				|| Date.now() / 100000 - fileDate <= 1
-				|| storyFile.file !== oldRundown.segments[index].iNewsStory.id
+				|| storyFile.file !== oldRundown.segments[index].iNewsStory.fileId
 			) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
+					this._logger.info('UPDATING : ' + queueName + ' ' + storyFile.name)
 					/**
-					 * Change id and modifyDate to ftp reference in storyFile
+					 * Add fileId and update modifyDate to ftp reference in storyFile
 					 */
-					story.id = storyFile.file
+					story.fileId = storyFile.file
 					story.fields.modifyDate = storyFile.modified / 1000
 					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
 					rawStory = {

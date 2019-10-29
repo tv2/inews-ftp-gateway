@@ -137,15 +137,29 @@ export class RunningOrderWatcher extends EventEmitter {
 				newRundown.segments.forEach((segment: RundownSegment) => {
 					let oldSegment: RundownSegment = oldRundown.segments.find(item => item.externalId === segment.externalId) as RundownSegment // TODO: handle better
 					if (!oldSegment) {
-						let tempSegment = oldRundown.segments.find(item => item.name === segment.name) as RundownSegment
-						if (tempSegment) {
-							if (tempSegment.externalId.substring(0, 8) === segment.externalId.substring(0, 8)) {
-								oldSegment = tempSegment
-								segment.externalId = tempSegment.externalId
+						// If name and first part of of ID is the same:
+						let tempOldSegment = oldRundown.segments.find(item => item.name === segment.name) as RundownSegment
+						if (tempOldSegment) {
+							if (tempOldSegment.externalId.substring(0, 8) === segment.externalId.substring(0, 8)) {
+								oldSegment = tempOldSegment
+								segment.externalId = tempOldSegment.externalId
+							}
+						} else {
+							// If everything except name, id, fileId and modifyDate is the same:
+							let tempNewSegment: RundownSegment = clone(segment)
+							let tempOldSegment = oldRundown.segments.find(item => item.rank === segment.rank) as RundownSegment
+							tempNewSegment.iNewsStory.id = tempOldSegment.iNewsStory.id
+							tempNewSegment.iNewsStory.fileId = tempOldSegment.iNewsStory.fileId
+							tempNewSegment.iNewsStory.fields.title = tempOldSegment.iNewsStory.fields.title
+							tempNewSegment.iNewsStory.fields.modifyDate = tempOldSegment.iNewsStory.fields.modifyDate
+							if (JSON.stringify(tempNewSegment.iNewsStory) === JSON.stringify(tempOldSegment.iNewsStory)) {
+								oldSegment = tempOldSegment
+								segment.externalId = tempOldSegment.externalId
 							}
 						}
 					}
 
+					// Update if needed:
 					if (segment && !oldSegment) {
 						this.emit('segment_create', rundownId, segment.externalId, segment)
 					} else {

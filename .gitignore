@@ -5,5 +5,4 @@ credentials.json
 token.json
 .env
 src/DEFAULTS.ts
-yarn.lock
 npm-debug.log

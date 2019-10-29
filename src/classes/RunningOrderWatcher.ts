@@ -121,7 +121,6 @@ export class RunningOrderWatcher extends EventEmitter {
 		// Check if runningOrders have changed:
 		if (!rundown && oldRundown) {
 			this.emit('rundown_delete', rundownId)
-
 		} else if (rundown && !oldRundown) {
 			this.emit('rundown_create', rundownId, rundown)
 		} else if (rundown && oldRundown) {
@@ -134,24 +133,32 @@ export class RunningOrderWatcher extends EventEmitter {
 			} else {
 				const newRundown: InewsRundown = rundown
 
-				// Go through the sections for changes:
-				_.uniq(
-					oldRundown.segments.map(segment => segment.externalId).concat(
-					newRundown.segments.map(segment => segment.externalId))
-				).forEach((segmentId: string) => {
-					const oldSection: RundownSegment = oldRundown.segments.find(segment => segment.externalId === segmentId) as RundownSegment // TODO: handle better
-					const newSection: RundownSegment = rundown.segments.find(segment => segment.externalId === segmentId) as RundownSegment
-
-					if (!newSection && oldSection) {
-						this.emit('segment_delete', rundownId, segmentId)
-					} else if (newSection && !oldSection) {
-						this.emit('segment_create', rundownId, segmentId, newSection)
-					} else if (newSection && oldSection) {
-
-						if (!_.isEqual(newSection.serialize(), oldSection.serialize())) {
-							console.log(newSection.serialize(), oldSection.serialize()) // debug
-							this.emit('segment_update', rundownId, segmentId, newSection)
+				// Go through the new segments for changes:
+				newRundown.segments.forEach((segment: RundownSegment) => {
+					let oldSegment: RundownSegment = oldRundown.segments.find(item => item.externalId === segment.externalId) as RundownSegment // TODO: handle better
+					if (!oldSegment) {
+						let tempSegment = oldRundown.segments.find(item => item.name === segment.name) as RundownSegment
+						if (tempSegment) {
+							if (tempSegment.externalId.substring(0, 8) === segment.externalId.substring(0, 8)) {
+								oldSegment = tempSegment
+								segment.externalId = tempSegment.externalId
+							}
 						}
+					}
+
+					if (segment && !oldSegment) {
+						this.emit('segment_create', rundownId, segment.externalId, segment)
+					} else {
+						if (!_.isEqual(segment.serialize(), oldSegment.serialize())) {
+							this.emit('segment_update', rundownId, segment.externalId, segment)
+						}
+					}
+				})
+
+				// Go through the old segments for changes:
+				oldRundown.segments.forEach((oldSegment: RundownSegment) => {
+					if (!rundown.segments.find(segment => segment.externalId === oldSegment.externalId)) {
+						this.emit('segment_delete', rundownId, oldSegment.externalId)
 					}
 				})
 			}

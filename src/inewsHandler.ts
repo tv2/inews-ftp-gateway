@@ -82,6 +82,8 @@ export class InewsFTPHandler {
 	private _setupDevices (): Promise<void> {
 		if (this._disposed) return Promise.resolve()
 		if (!this._settings) return Promise.resolve()
+		if (!this._settings.hosts) return Promise.reject('No hosts available')
+		if (!this._settings.queues) return Promise.reject('No queues set')
 		this.iNewsConnection = inews({
 			'hosts': this._settings.hosts.map(host => host.host),
 			'user': this._settings.user,

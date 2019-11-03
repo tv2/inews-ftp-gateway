@@ -136,7 +136,7 @@ export class InewsFTPHandler {
 				[]
 			)
 			coreCache.forEach((segment: any) => {
-				if (segment.rundownId === rundownHeader.rundownId && segment.type === 'segment') {
+				if (segment.rundownId === rundownHeader.rundownId && segment.type === 'segment' && segment.data.payload.iNewsStory) {
 					segments[segment.data.rank] = new RundownSegment(
 						segment.data.payload.rundownId,
 						segment.data.payload.iNewsStory,

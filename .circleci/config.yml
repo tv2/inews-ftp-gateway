@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:8.11.4
+      - image: circleci/node:8.16.2
     steps:
       - checkout
       - restore_cache:
@@ -45,7 +45,7 @@ jobs:
           at: .
       - run:
           name: Build Docker Image
-          command: docker build -f Dockerfile.circle . -t inews-ftp-gateway:$CIRCLE_TAG
+          command: docker build -f Dockerfile . -t inews-ftp-gateway:$CIRCLE_TAG
       - run:
            name: Publish Docker Image to Docker Hub
            command: |
@@ -77,7 +77,7 @@ jobs:
           at: .
       - run:
           name: Build Docker Image
-          command: docker build -f Dockerfile.circle . -t inews-ftp-gateway:$CIRCLE_BRANCH
+          command: docker build -f Dockerfile . -t inews-ftp-gateway:$CIRCLE_BRANCH
       - run:
            name: Publish Docker Image to Docker Hub
            command: |

@@ -36,6 +36,7 @@ export class Connector {
 		this._process = new Process(this._logger)
 		this.coreHandler = new CoreHandler(this._logger, this._config.device)
 		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this.coreHandler)
+		this.coreHandler.iNewsHandler = this.iNewsFTPHandler
 	}
 
 	init (): Promise<void> {
@@ -83,8 +84,11 @@ export class Connector {
 		return this.coreHandler.init(this._config.device, this._config.core, this._process)
 	}
 	initInewsFTPHandler (): Promise<void> {
-		return this.iNewsFTPHandler.init(this.coreHandler)
-
+		return this.iNewsFTPHandler.init(this.coreHandler).then(() => {
+			this.coreHandler.iNewsHandler = this.iNewsFTPHandler
+		}).catch((err) => {
+			if (err) throw err
+		})
 	}
 	dispose (): Promise<void> {
 		return (

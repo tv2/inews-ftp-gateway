@@ -35,7 +35,7 @@ export class InewsFTPHandler {
 	public passWord: string
 	public debugLogging: boolean = false
 
-	private iNewsWatcher?: RunningOrderWatcher
+	public iNewsWatcher?: RunningOrderWatcher
 
 	private _logger: Winston.LoggerInstance
 	private _disposed: boolean = false

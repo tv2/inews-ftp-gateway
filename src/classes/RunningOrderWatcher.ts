@@ -30,7 +30,7 @@ export class RunningOrderWatcher extends EventEmitter {
 	private pollTimer: NodeJS.Timer | undefined
 
 	private currentlyChecking: boolean = false
-	private rundownManager: RundownManager
+	public rundownManager: RundownManager
 	private _logger: Winston.LoggerInstance
 
 	/**
@@ -104,6 +104,11 @@ export class RunningOrderWatcher extends EventEmitter {
 		return Promise.all(this.iNewsQueue.map(roId => {
 			return this.checkINewsRundownById(roId.queue)
 		}))
+	}
+
+	public async DownloadRunningOrderById (runningOrderId: string) {
+		delete this.runningOrders[runningOrderId]
+		return this.rundownManager.downloadRunningOrder(runningOrderId, this.runningOrders[runningOrderId])
 	}
 
 	async checkINewsRundownById (runningOrderId: string): Promise<InewsRundown> {

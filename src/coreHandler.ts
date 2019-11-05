@@ -10,6 +10,8 @@ import { Process } from './process'
 import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
+import { InewsFTPHandler } from './inewsHandler'
+import { mutateRundown } from './mutate'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -45,6 +47,7 @@ export class CoreHandler {
 	private _coreConfig?: CoreConfig
 	private _process?: Process
 	private _studioId: string
+	public iNewsHandler?: InewsFTPHandler
 
 	constructor (logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
 		this.logger = logger
@@ -342,6 +345,25 @@ export class CoreHandler {
 	getSnapshot (): any {
 		this.logger.info('getSnapshot')
 		return {} // TODO: send some snapshot data?
+	}
+	/** Reload a running order */
+	triggerGetRunningOrder (roId: string): Promise<any> {
+		if (this.iNewsHandler) {
+			if (this.iNewsHandler.iNewsWatcher) {
+				const rundown = this.iNewsHandler.iNewsWatcher.DownloadRunningOrderById(roId)
+				.then((ro) => {
+					return mutateRundown(ro)
+				})
+				.catch((err) => {
+					throw err
+				})
+				return Promise.all([rundown])
+			} else {
+				return Promise.reject('iNews is not connected')
+			}
+		} else {
+			return Promise.reject('iNews is not connected')
+		}
 	}
 	/**
 	 * Get the versions of installed packages.

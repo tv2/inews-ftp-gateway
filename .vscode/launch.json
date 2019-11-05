@@ -26,7 +26,7 @@
                 "${workspaceRoot}/node_modules/.bin/jest",
                 "--runInBand",
                 "--config",
-                "${workspaceRoot}/jest.config.jso"
+                "${workspaceRoot}/jest.config.js"
             ],
             "windows": {
                 "args": [

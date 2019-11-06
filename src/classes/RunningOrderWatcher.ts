@@ -107,7 +107,9 @@ export class RunningOrderWatcher extends EventEmitter {
 	}
 
 	public async DownloadRunningOrderById (runningOrderId: string) {
-		delete this.runningOrders[runningOrderId]
+		if (this.runningOrders[runningOrderId]) {
+			delete this.runningOrders[runningOrderId]
+		}
 		return this.rundownManager.downloadRunningOrder(runningOrderId, this.runningOrders[runningOrderId])
 	}
 

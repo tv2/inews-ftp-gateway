@@ -32,7 +32,7 @@ export class RundownManager {
 		return this.downloadINewsRundown(rundownId, oldRundown)
 		.then((rundownRaw: IRawStory[]) => {
 			this._logger.info(rundownId, ' Downloaded ')
-			return this.convertRawtoSofie(this._logger, rundownId, (oldRundown ? oldRundown.name : 'fixme'), rundownRaw)
+			return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
 		})
 	}
 
@@ -60,7 +60,7 @@ export class RundownManager {
 		// where should these data come from?
 		let version = 'v0.2'
 
-		let rundown = new InewsRundown(runningOrderId, name, version)
+		let rundown = new InewsRundown(runningOrderId, runningOrderId, version)
 		let segments = ParsedINewsIntoSegments.parse(runningOrderId,rundownRaw)
 		rundown.addSegments(segments)
 		_logger.info('DONE : ', name, ' converted to Sofie Rundown')

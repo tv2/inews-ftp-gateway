@@ -352,6 +352,11 @@ export class CoreHandler {
 			if (this.iNewsHandler.iNewsWatcher) {
 				const rundown = this.iNewsHandler.iNewsWatcher.DownloadRunningOrderById(roId)
 				.then((ro) => {
+					if (this.iNewsHandler) {
+						if (this.iNewsHandler.iNewsWatcher) {
+							this.iNewsHandler.iNewsWatcher.rundownManager.emptyInewsFtpBuffer()
+						}
+					}
 					return mutateRundown(ro)
 				})
 				.catch((err) => {

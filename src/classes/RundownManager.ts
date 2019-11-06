@@ -9,7 +9,7 @@ export interface IRawStory {
 export class RundownManager {
 
 	private _logger: Winston.LoggerInstance
-	public  queueLock: boolean
+	public queueLock: boolean
 
 	constructor (private logger: Winston.LoggerInstance, private inewsConnection: any) {
 		this._logger = this.logger
@@ -91,7 +91,9 @@ export class RundownManager {
 	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<IRawStory>> {
 		return new Promise((resolve) => {
 			// tslint:disable-next-line: no-unused-expression no-empty
-			while (this.queueLock) { () => {} }
+			if (this.queueLock) {
+				return resolve([])
+			}
 			this.queueLock = true
 			return this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {

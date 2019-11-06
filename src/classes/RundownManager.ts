@@ -90,10 +90,6 @@ export class RundownManager {
 	 */
 	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<IRawStory>> {
 		return new Promise((resolve) => {
-			// tslint:disable-next-line: no-unused-expression no-empty
-			if (this.queueLock) {
-				return resolve([])
-			}
 			this.queueLock = true
 			return this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {

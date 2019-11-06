@@ -32,7 +32,7 @@ export class RundownManager {
 		return this.downloadINewsRundown(rundownId, oldRundown)
 		.then((rundownRaw: IRawStory[]) => {
 			this._logger.info(rundownId, ' Downloaded ')
-			return this.convertRawtoSofie(this._logger, rundownId, oldRundown.name, rundownRaw)
+			return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
 		})
 	}
 
@@ -43,7 +43,7 @@ export class RundownManager {
 	fakeRundown (): Promise<InewsRundown> {
 		return new Promise((resolve) => {
 			let ftpData = require('./fakeFTPData')
-			let rundown = this.convertRawtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', 'Fake Rundown', ftpData.default)
+			let rundown = this.convertRawtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default)
 			resolve(rundown)
 		})
 	}

@@ -9,10 +9,12 @@ export interface IRawStory {
 export class RundownManager {
 
 	private _logger: Winston.LoggerInstance
+	public  queueLock: boolean
 
 	constructor (private logger: Winston.LoggerInstance, private inewsConnection: any) {
 		this._logger = this.logger
 		this.inewsConnection = inewsConnection
+		this.queueLock = false
 	}
 
 	/**
@@ -71,10 +73,14 @@ export class RundownManager {
 	 * This is a workaround, as the buffers inside the iNewsFTP service is not
 	 * flushed after use.
 	 */
-	emptyInewsFtpBuffer () {
-		// TODO: This workaround clears the _queue inside johnsand@inews:
-		this.inewsConnection._queue.queuedJobList.list = {}
-		this.inewsConnection._queue.inprogressJobList.list = {}
+	public EmptyInewsFtpBuffer () {
+		if (!this.queueLock) {
+			this.queueLock = true
+			// TODO: This workaround clears the _queue inside johnsand@inews:
+			this.inewsConnection._queue.queuedJobList.list = {}
+			this.inewsConnection._queue.inprogressJobList.list = {}
+			this.queueLock = false
+		}
 	}
 
 	/**
@@ -84,13 +90,19 @@ export class RundownManager {
 	 */
 	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<IRawStory>> {
 		return new Promise((resolve) => {
+			// tslint:disable-next-line: no-unused-expression no-empty
+			while (this.queueLock) { () => {} }
+			this.queueLock = true
 			return this.inewsConnection.list(queueName, (error: any, dirList: any) => {
 				if (!error && dirList.length > 0) {
 					resolve(Promise.all(dirList.map((ftpFileName: string, index: number) => {
-						return this.downloadINewsStory(index, queueName, ftpFileName, oldRundown)
+						const story = this.downloadINewsStory(index, queueName, ftpFileName, oldRundown)
+						this.queueLock = false
+						return story
 					})))
 				} else {
 					this._logger.error('Error downloading iNews rundown : ', error)
+					this.queueLock = false
 					resolve([])
 				}
 			})

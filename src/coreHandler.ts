@@ -354,7 +354,7 @@ export class CoreHandler {
 				.then((ro) => {
 					if (this.iNewsHandler) {
 						if (this.iNewsHandler.iNewsWatcher) {
-							this.iNewsHandler.iNewsWatcher.rundownManager.emptyInewsFtpBuffer()
+							this.iNewsHandler.iNewsWatcher.rundownManager.EmptyInewsFtpBuffer()
 						}
 					}
 					return mutateRundown(ro)

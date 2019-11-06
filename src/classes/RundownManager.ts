@@ -32,7 +32,7 @@ export class RundownManager {
 		return this.downloadINewsRundown(rundownId, oldRundown)
 		.then((rundownRaw: IRawStory[]) => {
 			this._logger.info(rundownId, ' Downloaded ')
-			return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
+			return this.convertRawtoSofie(this._logger, rundownId, (oldRundown ? oldRundown.name : 'fixme'), rundownRaw)
 		})
 	}
 

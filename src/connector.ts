@@ -122,6 +122,7 @@ export class Connector {
 
 			if (dev) {
 				let settings: INewsDeviceSettings = dev.settings || {}
+				settings.queues = settings.queues.filter(q => q.queue !== '')
 				if (!this._settings || !_.isEqual(settings, this._settings)) {
 					this.iNewsFTPHandler.dispose()
 					.then(() => {

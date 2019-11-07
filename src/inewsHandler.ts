@@ -128,7 +128,7 @@ export class InewsFTPHandler {
 		let runningOrdersCache: { [runningOrderId: string]: InewsRundown } = {}
 
 		rundowns.forEach((rundownHeader: any) => {
-			let segments = [new RundownSegment('','','0','',0,'',false)]
+			let segments = [new RundownSegment('','','0',0,'',false)]
 			let rundown = new InewsRundown(
 				rundownHeader.data.externalId,
 				rundownHeader.data.name,

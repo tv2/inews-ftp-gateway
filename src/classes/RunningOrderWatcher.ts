@@ -154,14 +154,20 @@ export class RunningOrderWatcher extends EventEmitter {
 						} else {
 							// If everything except name, id, fileId and modifyDate is the same:
 							let tempNewSegment: RundownSegment = clone(segment)
-							let tempOldSegment = oldRundown.segments.find(item => item.rank === segment.rank) as RundownSegment
-							tempNewSegment.iNewsStory.id = tempOldSegment.iNewsStory.id
-							tempNewSegment.iNewsStory.fileId = tempOldSegment.iNewsStory.fileId
-							tempNewSegment.iNewsStory.fields.title = tempOldSegment.iNewsStory.fields.title
-							tempNewSegment.iNewsStory.fields.modifyDate = tempOldSegment.iNewsStory.fields.modifyDate
-							if (JSON.stringify(tempNewSegment.iNewsStory) === JSON.stringify(tempOldSegment.iNewsStory)) {
-								oldSegment = tempOldSegment
-								segment.externalId = tempOldSegment.externalId
+							let tempOldSegment = oldRundown.segments.find(item => item.rank === segment.rank)
+							if (tempOldSegment) {
+								if (!tempNewSegment.iNewsStory) {
+									// tslint:disable-next-line: whitespace
+									tempNewSegment.iNewsStory = { id: tempOldSegment.iNewsStory?.id ?? '', fileId: tempOldSegment.iNewsStory?.fileId ?? '', fields: tempOldSegment.iNewsStory?.fields ?? {}, cues: tempOldSegment.iNewsStory?.cues ?? [], body: tempOldSegment.iNewsStory?.body ?? '', meta: tempOldSegment.iNewsStory?.meta ?? { words: 0, rate: 0 } }
+								}
+								tempNewSegment.iNewsStory.id = tempOldSegment.iNewsStory?.id ?? ''
+								tempNewSegment.iNewsStory.fileId = tempOldSegment.iNewsStory?.fileId ?? ''
+								tempNewSegment.iNewsStory.fields.title = tempOldSegment.iNewsStory?.fields.title
+								tempNewSegment.iNewsStory.fields.modifyDate = tempOldSegment.iNewsStory?.fields.modifyDate
+								if (JSON.stringify(tempNewSegment.iNewsStory) === JSON.stringify(tempOldSegment.iNewsStory)) {
+									oldSegment = tempOldSegment
+									segment.externalId = tempOldSegment.externalId
+								}
 							}
 						}
 					}

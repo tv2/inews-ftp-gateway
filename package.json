@@ -85,7 +85,7 @@
   },
   "resolutions": {
     "typedoc/**/marked": "^0.7.0",
-    "handlebars":"^4.3.0"
+    "handlebars": "^4.3.0"
   },
   "devDependencies": {
     "@types/clone": "^0.1.30",
@@ -108,7 +108,7 @@
     "tslint": "^5.11.0",
     "tslint-config-standard": "^8.0.1",
     "typedoc": "^0.14.2",
-    "typescript": "^3.3.3333"
+    "typescript": "^3.7.2"
   },
   "standard-version": {
     "message": "chore(release): %s [skip ci]",

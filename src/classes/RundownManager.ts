@@ -123,9 +123,8 @@ export class RundownManager {
 				// tslint:disable-next-line: strict-type-predicates
 				if (typeof(oldRundown.segments) !== 'undefined') {
 					if (oldRundown.segments.length >= index + 1) {
-						if (oldRundown.segments[index] && oldRundown.segments[index].iNewsStory && oldRundown.segments[index].iNewsStory?.fields) {
-							oldModified = Math.floor(Number(oldRundown.segments[index].iNewsStory?.fields.modifyDate ?? 0) / 100)
-						}
+						// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
+						oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
 					}
 				}
 			}
@@ -138,7 +137,7 @@ export class RundownManager {
 
 			if (fileDate - oldModified > 1
 				|| Date.now() / 100000 - fileDate <= 1
-				|| storyFile.file !== oldRundown.segments[index].iNewsStory?.fileId
+				|| storyFile.file !== oldRundown.segments[index].iNewsStory.fileId
 			) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)

@@ -1,44 +1,7 @@
 
-export interface INewsFields {
-	pageNumber?: string,
-	title?: string,
-	var2?: string,
-	var3?: string,
-	videoId?: number,
-	tapeTime?: number,
-	audioTime?: number,
-	totalTime?: number,
-	modifyDate?: number,
-	presenter?: string,
-	modifyBy?: string,
-	var16?: string,
-	ready?: string,
-	runsTime?: number,
-	onair?: string,
-	typecode?: string,
-	programtitle?: string,
-	noarchive?: string,
-	starttid?: string,
-	layout?: string,
-	airDate?: number
-}
-
-export interface INewsStory {
-	id: string,
-	fileId: string,
-	fields: INewsFields,
-	cues: Array<string[]>,
-	body: string,
-	meta: {
-		words: number,
-		rate: number,
-		float?: 'float'
-	}
-}
-
 export interface ISegment {
 	rundownId: string
-	iNewsStory?: INewsStory
+	iNewsStory: any
 	modified: string
 	externalId: string // unique within the parent runningOrder
 	rank: number
@@ -49,12 +12,12 @@ export interface ISegment {
 export class RundownSegment implements ISegment {
 	constructor (
 		public rundownId: string,
+		public iNewsStory: any,
 		public modified: string,
 		public externalId: string,
 		public rank: number,
 		public name: string,
-		public float: boolean,
-		public iNewsStory?: INewsStory
+		public float: boolean
 	) {}
 
 	serialize (): ISegment {

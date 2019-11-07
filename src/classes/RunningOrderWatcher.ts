@@ -142,7 +142,7 @@ export class RunningOrderWatcher extends EventEmitter {
 				let segmentsToCreate: RundownSegment[] = []
 				// Go through the new segments for changes:
 				newRundown.segments.forEach((segment: RundownSegment) => {
-					let oldSegment = oldRundown.segments.find(item => item.externalId === segment.externalId)
+					let oldSegment: RundownSegment = oldRundown.segments.find(item => item.externalId === segment.externalId) as RundownSegment // TODO: handle better
 					if (!oldSegment) {
 						// If name and first part of of ID is the same:
 						let tempOldSegment = oldRundown.segments.find(item => item.name === segment.name) as RundownSegment
@@ -157,6 +157,7 @@ export class RunningOrderWatcher extends EventEmitter {
 							let tempOldSegment = oldRundown.segments.find(item => item.rank === segment.rank)
 							if (tempOldSegment) {
 								if (!tempNewSegment.iNewsStory) {
+									// tslint:disable-next-line: whitespace
 									tempNewSegment.iNewsStory = { id: tempOldSegment.iNewsStory?.id ?? '', fileId: tempOldSegment.iNewsStory?.fileId ?? '', fields: tempOldSegment.iNewsStory?.fields ?? {}, cues: tempOldSegment.iNewsStory?.cues ?? [], body: tempOldSegment.iNewsStory?.body ?? '', meta: tempOldSegment.iNewsStory?.meta ?? { words: 0, rate: 0 } }
 								}
 								tempNewSegment.iNewsStory.id = tempOldSegment.iNewsStory?.id ?? ''
@@ -175,7 +176,7 @@ export class RunningOrderWatcher extends EventEmitter {
 					if (segment && !oldSegment) {
 						segmentsToCreate.push(segment)
 					} else {
-						if (!_.isEqual(segment.serialize(), oldSegment?.serialize())) {
+						if (!_.isEqual(segment.serialize(), oldSegment.serialize())) {
 							this.emit('segment_update', rundownId, segment.externalId, segment)
 						}
 					}

@@ -11,7 +11,6 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateRundown } from './mutate'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -348,22 +347,21 @@ export class CoreHandler {
 	}
 	/** Reload a running order */
 	triggerGetRunningOrder (roId: string): Promise<any> {
-		if (this.iNewsHandler) {
-			if (this.iNewsHandler.iNewsWatcher) {
-				const rundown = this.iNewsHandler.iNewsWatcher.DownloadRunningOrderById(roId)
-				.then((ro) => {
-					return mutateRundown(ro)
-				})
-				.catch((err) => {
-					throw err
-				})
-				return Promise.all([rundown])
-			} else {
-				return Promise.reject('iNews is not connected')
+
+		// INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
+		// If empty it should automatically reload in the setInterval timer.
+
+		// PROMISE AND roID should be removed - only here so we do not change the Core
+		// IT WILL ALSO GIVE A WRONG MESSAGE IN THE GUI RIGHT NOW
+		console.log('DUMMMY - roId :', roId)
+		return new Promise((resolve: any) => {
+			if (this.iNewsHandler) {
+				if (this.iNewsHandler.iNewsWatcher) {
+					delete this.iNewsHandler.iNewsWatcher.runningOrders[roId]
+				}
 			}
-		} else {
-			return Promise.reject('iNews is not connected')
-		}
+			return resolve('iNews is updated')
+		})
 	}
 	/**
 	 * Get the versions of installed packages.

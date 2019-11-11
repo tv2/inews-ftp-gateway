@@ -46,7 +46,7 @@ export class RunningOrderWatcher extends EventEmitter {
 		private iNewsConnection: any,
 		private iNewsQueue: Array<INewsQueue>,
 		private gatewayVersion: string,
-		private runningOrders: { [runningOrderId: string]: InewsRundown },
+		public runningOrders: { [runningOrderId: string]: InewsRundown },
 		delayStart?: boolean
 	) {
 		super()

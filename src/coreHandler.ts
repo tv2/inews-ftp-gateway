@@ -351,7 +351,8 @@ export class CoreHandler {
 		// INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
 		// If empty it should automatically reload in the setInterval timer.
 
-		// PROMISE AND roID should be removed - only here so we do not change the Core
+		// PROMISE should be removed - only here so we do not change the Core
+		// A return statement or errorhandling?
 		// IT WILL ALSO GIVE A WRONG MESSAGE IN THE GUI RIGHT NOW
 		console.log('DUMMMY - roId :', roId)
 		return new Promise((resolve: any) => {

@@ -77,8 +77,12 @@ export class RundownManager {
 		if (!this.queueLock) {
 			this.queueLock = true
 			// TODO: This workaround clears the _queue inside johnsand@inews:
-			this.inewsConnection._queue.queuedJobList.list = {}
-			this.inewsConnection._queue.inprogressJobList.list = {}
+			try {
+				this.inewsConnection._queue.queuedJobList.list = {}
+				this.inewsConnection._queue.inprogressJobList.list = {}
+			} catch (error) {
+				this._logger.error('Error flushing FTP Connection : ', error)
+			}
 			this.queueLock = false
 		}
 	}
@@ -143,7 +147,7 @@ export class RundownManager {
 			) {
 				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
 					console.log('DUMMY LOG : ', error)
-					this._logger.info('UPDATING : ' + queueName + ' ' + storyFile.name)
+					this._logger.info('UPDATING : ' + queueName + ' :' + storyFile.file)
 					/**
 					 * Add fileId and update modifyDate to ftp reference in storyFile
 					 */

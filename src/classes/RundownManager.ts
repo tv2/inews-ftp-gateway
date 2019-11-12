@@ -127,10 +127,12 @@ export class RundownManager {
 			if (typeof(oldRundown) !== 'undefined') {
 				// tslint:disable-next-line: strict-type-predicates
 				if (typeof(oldRundown.segments) !== 'undefined') {
-					oldFileId = oldRundown.segments[index].iNewsStory.fileId
-					if (oldRundown.segments.length >= index + 1) {
-						// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
-						oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
+					if (oldRundown.segments[index]) {
+						oldFileId = oldRundown.segments[index].iNewsStory.fileId
+						if (oldRundown.segments.length >= index + 1) {
+							// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
+							oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
+						}
 					}
 				}
 			}

@@ -3,7 +3,7 @@ import * as Winston from 'winston'
 import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
 
 export interface IRawStory {
-	'story': any
+	story: any // REFACTOR - can this have more typing?
 }
 
 export class RundownManager {
@@ -20,6 +20,7 @@ export class RundownManager {
 	/**
 	 * Downloads a running order by ID.
 	 */
+	// REFACTOR - async/await
 	downloadRunningOrder (rundownId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
 
 		/**
@@ -42,6 +43,7 @@ export class RundownManager {
 	 * returns a promise with a fake rundown for testing
 	 * in detached mode
 	 */
+	// REFACTOR - maybe async/await? May move the require?
 	fakeRundown (): Promise<InewsRundown> {
 		return new Promise((resolve) => {
 			let ftpData = require('./fakeFTPData')
@@ -70,7 +72,7 @@ export class RundownManager {
 	}
 
 	/**
-	 * This is a workaround, as the buffers inside the iNewsFTP service is not
+	 * This is a workaround, as the buffers inside the iNewsFTP service are not
 	 * flushed after use.
 	 */
 	public EmptyInewsFtpBuffer () {
@@ -92,6 +94,7 @@ export class RundownManager {
 	 * @param queueName Name of queue to download.
 	 * @param oldRundown Old rundown object.
 	 */
+	// REFACTOR - better async/awwait - promisify callbacks - reject handling
 	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<IRawStory>> {
 		return new Promise((resolve) => {
 			this.queueLock = true
@@ -118,6 +121,7 @@ export class RundownManager {
 	 * @param storyFile File to download.
 	 * @param oldRundown Old rundown to overwrite.
 	 */
+	// REFACTOR - async / await - promisify callbacks - rejections
 	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
 		return new Promise((resolve) => {
 			let rawStory: IRawStory

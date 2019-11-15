@@ -1,7 +1,7 @@
 
 export interface ISegment {
 	rundownId: string
-	iNewsStory: any
+	iNewsStory: any // REFACTOR add light typing?
 	modified: string
 	externalId: string // unique within the parent runningOrder
 	rank: number

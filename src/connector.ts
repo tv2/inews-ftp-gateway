@@ -4,6 +4,7 @@ import { CoreHandler, CoreConfig } from './coreHandler'
 import * as Winston from 'winston'
 import * as _ from 'underscore'
 import { Process } from './process'
+import { Observer } from 'tv-automation-server-core-integration'
 
 export interface Config {
 	process: ProcessConfig
@@ -23,7 +24,7 @@ export interface DeviceConfig {
 export class Connector {
 
 	private iNewsFTPHandler: InewsFTPHandler
-	private _observers: Array<any> = []
+	private _observers: Array<Observer> = []
 	private coreHandler: CoreHandler
 	private _config: Config
 	private _logger: Winston.LoggerInstance
@@ -39,6 +40,7 @@ export class Connector {
 		this.coreHandler.iNewsHandler = this.iNewsFTPHandler
 	}
 
+	// REFCATOR async/await
 	init (): Promise<void> {
 		return Promise.resolve()
 		.then(() => {
@@ -52,24 +54,26 @@ export class Connector {
 		})
 
 		.then(() => {
+			// REFACTOR - this is not async
 			this.setupObserver()
 			this._logger.info('Initialization of FTP-monitor done')
 			return
 		})
 		.catch((e) => {
-			this._logger.error('Error during initialization:', e, e.stack)
+			this._logger.error('Error during initialization:', e, e.stack) // REFACTOR -
 			// this._logger.error(e)
 			// this._logger.error(e.stack)
 
 			this._logger.info('Shutting down in 10 seconds!')
 
-			try {
+			try { // REFACTOR try in catch with catch
 				this.dispose()
 				.catch(e => this._logger.error(e))
 			} catch (e) {
 				this._logger.error(e)
 			}
 
+			// REFACTOR - why wait? and why not configurable?
 			setTimeout(() => {
 				process.exit(0)
 			}, 10 * 1000)
@@ -77,12 +81,15 @@ export class Connector {
 			return
 		})
 	}
+	// REFACTOR not a promise
 	initProcess () {
 		return this._process.init(this._config.process)
 	}
+	//  REFACTOR - return type and promise - awync/awat
 	initCore () {
 		return this.coreHandler.init(this._config.device, this._config.core, this._process)
 	}
+	// REFACTOR async/await
 	initInewsFTPHandler (): Promise<void> {
 		return this.iNewsFTPHandler.init(this.coreHandler).then(() => {
 			this.coreHandler.iNewsHandler = this.iNewsFTPHandler
@@ -90,6 +97,7 @@ export class Connector {
 			if (err) throw err
 		})
 	}
+	// REFACTOR async/await
 	dispose (): Promise<void> {
 		return (
 			this.iNewsFTPHandler ?
@@ -103,7 +111,7 @@ export class Connector {
 				: Promise.resolve()
 			)
 		})
-		.then(() => {
+		.then(() => { // NOP
 			return
 		})
 	}
@@ -112,6 +120,7 @@ export class Connector {
 		let observer = this.coreHandler.core.observe('peripheralDevices')
 		this._observers.push(observer)
 
+		// REFACTOR - hidden async work - core does not expect this to be async
 		let addedChanged = (id: string) => {
 			// Check that collection exists.
 			let devices = this.coreHandler.core.getCollection('peripheralDevices')

@@ -47,6 +47,7 @@ export class InewsFTPHandler {
 		this._coreHandler = coreHandler
 	}
 
+	// REFACTOR - asynv/await
 	init (coreHandler: CoreHandler): Promise<void> {
 		return coreHandler.core.getPeripheralDevice()
 		.then((peripheralDevice: any) => {
@@ -59,6 +60,7 @@ export class InewsFTPHandler {
 		})
 	}
 
+	// REFACTOR - async/await
 	dispose (): Promise<void> {
 		this._disposed = true
 		if (this.iNewsWatcher) {
@@ -79,6 +81,7 @@ export class InewsFTPHandler {
 	/**
 	 * Set up this device.
 	 */
+	// REFACTOR - async/await - hidden work
 	private _setupDevices (): Promise<void> {
 		if (this._disposed) return Promise.resolve()
 		if (!this._settings) return Promise.resolve()

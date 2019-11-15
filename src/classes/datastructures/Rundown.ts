@@ -14,7 +14,7 @@ export class InewsRundown implements IRundown {
 		public externalId: string,
 		public name: string,
 		public gatewayVersion: string,
-		public segments: RundownSegment[] = []
+		public segments: RundownSegment[] = [] // REFACTOR - invariant ... uniqueness of segment by id?
 	) {}
 
 	serialize (): IRundown {
@@ -24,6 +24,7 @@ export class InewsRundown implements IRundown {
 		}
 	}
 
+	// REFACTOR - side effect and arrow function
 	addSegments (segments: RundownSegment[]) {
 		segments.forEach(segment => this.segments.push(segment))
 	}

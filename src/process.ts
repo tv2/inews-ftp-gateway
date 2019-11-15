@@ -11,6 +11,7 @@ export class Process {
 	constructor (logger: LoggerInstance) {
 		this.logger = logger
 	}
+	// REFACTOR - Probably should be async
 	init (processConfig: ProcessConfig) {
 
 		if (processConfig.unsafeSSL) {
@@ -23,7 +24,7 @@ export class Process {
 			this.logger.info(`Loading certificates...`)
 			_.each(processConfig.certificates, (certificate) => {
 				try {
-					this.certificates.push(fs.readFileSync(certificate))
+					this.certificates.push(fs.readFileSync(certificate))  // REFACTOR - sync file operation
 					this.logger.info(`Using certificate "${certificate}"`)
 				} catch (error) {
 					this.logger.error(`Error loading certificate "${certificate}"`, error)

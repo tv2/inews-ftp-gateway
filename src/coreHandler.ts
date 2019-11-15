@@ -1,7 +1,8 @@
 import { CoreConnection,
 	CoreOptions,
 	PeripheralDeviceAPI as P,
-	DDPConnectorOptions
+	DDPConnectorOptions,
+  CollectionObj
 } from 'tv-automation-server-core-integration'
 import * as Winston from 'winston'
 import * as fs from 'fs'
@@ -53,6 +54,7 @@ export class CoreHandler {
 		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'iNews Gateway'))
 	}
 
+  // REFACTOR - async/await
 	init (_deviceOptions: DeviceConfig, config: CoreConfig, process: Process): Promise<void> {
 		// this.logger.info('========')
 
@@ -99,6 +101,7 @@ export class CoreHandler {
 	/**
 	 * Destroy gateway
 	 */
+	 // REFACTOR - async / await
 	dispose (): Promise<void> {
 		return this.core.setStatus({
 			statusCode: P.StatusCode.FATAL,
@@ -114,6 +117,7 @@ export class CoreHandler {
 	/**
 	 * Report gateway status to core
 	 */
+	// REFACTOR - hidden async operation
 	setStatus (statusCode: P.StatusCode, messages: string[]) {
 		this.core.setStatus({
 			statusCode: statusCode,
@@ -160,13 +164,14 @@ export class CoreHandler {
 	/**
 	 * Called when reconnected to core
 	 */
+	// REFACTOR - hidden async work
 	onConnectionRestored () {
 		this.setupSubscriptionsAndObservers()
 		.catch((e) => {
 			this.logger.error(e)
 		})
+		// REFACTOR - should this wait for previous to complete?
 		if (this._onConnected) this._onConnected()
-
 	}
 	/**
 	 * Called when connected to core.
@@ -177,6 +182,7 @@ export class CoreHandler {
 	/**
 	 * Subscribes to events in the core.
 	 */
+	// REFACTOR - async/await
 	setupSubscriptionsAndObservers (): Promise<void> {
 		if (this._observers.length) {
 			this.logger.info('Core: Clearing observers..')
@@ -210,6 +216,7 @@ export class CoreHandler {
 	/**
 	 * Executes a peripheral device command.
 	 */
+	// RERACTOR - hidden async work
 	executeFunction (cmd: PeripheralDeviceCommand, fcnObject: any) {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
@@ -224,7 +231,7 @@ export class CoreHandler {
 					this.logger.error(e)
 				})
 			}
-			// @ts-ignore
+			// @ts-ignore - REFACTOR - why?
 			let fcn: Function = fcnObject[cmd.functionName]
 			try {
 				if (!fcn) throw Error('Function "' + cmd.functionName + '" not found!')
@@ -248,6 +255,7 @@ export class CoreHandler {
 	/**
 	 * Listen for commands and execute.
 	 */
+	// REFACTOR - hidden async work
 	setupObserverForPeripheralDeviceCommands () {
 		let observer = this.core.observe('peripheralDeviceCommands')
 		this.killProcess(0) // just make sure it exists
@@ -346,6 +354,7 @@ export class CoreHandler {
 		return {} // TODO: send some snapshot data?
 	}
 	/** Reload a running order */
+	// REFACTOR - what calls this?
 	triggerGetRunningOrder (roId: string): Promise<any> {
 
 		// INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
@@ -378,12 +387,12 @@ export class CoreHandler {
 			'tv-automation-server-core-integration'
 		]
 		try {
-			let nodeModulesDirectories = fs.readdirSync('node_modules')
+			let nodeModulesDirectories = fs.readdirSync('node_modules') // REFACTOR - sync FS code
 			_.each(nodeModulesDirectories, (dir) => {
 				try {
 					if (dirNames.indexOf(dir) !== -1) {
 						let file = 'node_modules/' + dir + '/package.json'
-						file = fs.readFileSync(file, 'utf8')
+						file = fs.readFileSync(file, 'utf8') // REFACTOR - more sync FS code
 						let json = JSON.parse(file)
 						versions[dir] = json.version || 'N/A'
 					}
@@ -411,7 +420,7 @@ export class CoreHandler {
 	/**
 	 * Returns Sofie rundown orders state
 	 */
-	public GetRundownCache (): Array<any> {
+	public GetRundownCache (): Array<CollectionObj> {
 		let rundowns = this.core.getCollection('ingestDataCache')
 		if (!rundowns) throw Error('"ingestDataCache" collection not found!')
 
@@ -420,7 +429,7 @@ export class CoreHandler {
 	}
 
 	/**
-	 * Checks if a rundown is acrtive.
+	 * Checks if a rundown is active.
 	 * @param externalId External ID of the active rundown.
 	 */
 	public IsRundownLive (externalId: string): boolean {

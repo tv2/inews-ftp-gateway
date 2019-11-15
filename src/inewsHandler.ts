@@ -108,6 +108,10 @@ export class InewsFTPHandler {
 				/**
 				 * Get list of all rundowns and report good status.
 				 */
+
+				// REFACTOR:
+				// calling checkINewsRundowns here is running in parallel with the setInterval()
+				// initiated when creating this.iNewsWatcher, and setStatus should be moved to the setIntervasl loop
 				this.iNewsWatcher.checkINewsRundowns()
 				.then((queueList) => {
 					console.log('DUMMY LOG : ', queueList)

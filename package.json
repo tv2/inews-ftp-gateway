@@ -71,6 +71,7 @@
     "@types/xml2js": "^0.4.4",
     "clone": "^2.1.2",
     "dotenv": "^8.0.0",
+    "handlebars": "^4.3.0",
     "lodash": "^4.17.15",
     "marked": "^0.7.0",
     "request": "^2.88.0",

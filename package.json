@@ -78,7 +78,7 @@
     "request-promise": "^4.2.4",
     "timeline-state-resolver-types": "^3.0.1",
     "tv-automation-server-core-integration": "git+https://github.com/olzzon/tv-automation-server-core-integration.git#dist",
-    "tv-automation-sofie-blueprints-integration": "^0.23.0",
+    "tv-automation-sofie-blueprints-integration": "^1.0.0",
     "underscore": "^1.9.1",
     "uuid": "^3.3.2",
     "winston": "^2.4.2",

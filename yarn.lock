@@ -5408,7 +5408,7 @@ through@2, "through@>=2.2.7 <3":
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
   integrity sha1-DdTJ/6q8NXlgsbckEV1+Doai4fU=
 
-timeline-state-resolver-types@^3.0.1:
+timeline-state-resolver-types@^3.0.1, timeline-state-resolver-types@^3.14.0:
   version "3.14.0"
   resolved "https://registry.yarnpkg.com/timeline-state-resolver-types/-/timeline-state-resolver-types-3.14.0.tgz#4cb6ad003803e1b89a2a5d3676f12460f66e65d8"
   integrity sha512-34I2GKCoWPFJG5iXqzol9gAe4F8j8XCNVoS1UT2bv4dnuaZ19Dw7xDvtkCZtD+eX34aXa6wQnWMcT4kHb2S9tA==
@@ -5624,12 +5624,13 @@ tunnel-agent@^0.6.0:
     tslib "^1.9.3"
     underscore "^1.9.1"
 
-tv-automation-sofie-blueprints-integration@^0.23.0:
-  version "0.23.0"
-  resolved "https://registry.yarnpkg.com/tv-automation-sofie-blueprints-integration/-/tv-automation-sofie-blueprints-integration-0.23.0.tgz#8d29ce2c9f8a0e53fd0074e8c4617daf93d0442e"
-  integrity sha512-e1YXE2QqnSaTrFINQp0WCohwT8uHMs5d372yGbxqlJAeEdsVsnMGNs9ioZQStrK3XzjIZsGrApbvSDDfdZ555g==
+tv-automation-sofie-blueprints-integration@^1.0.0:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/tv-automation-sofie-blueprints-integration/-/tv-automation-sofie-blueprints-integration-1.2.1.tgz#950331b02ff5dbf4b72a8694d445e9bd0e321bef"
+  integrity sha512-03eRdYIibdflDia0GXebMDPg1+fc6eaoT5wcmM+aJI3vpxawtyg9m8xDYDeL2ea4jF+fxX4dwDw8oS+Cub0DAQ==
   dependencies:
     moment "^2.22.2"
+    timeline-state-resolver-types "^3.14.0"
     tslib "^1.9.3"
     underscore "^1.9.1"
 

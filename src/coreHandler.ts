@@ -2,7 +2,8 @@ import { CoreConnection,
 	CoreOptions,
 	PeripheralDeviceAPI as P,
 	DDPConnectorOptions,
-  CollectionObj
+  CollectionObj,
+  Observer
 } from 'tv-automation-server-core-integration'
 import * as Winston from 'winston'
 import * as fs from 'fs'
@@ -39,7 +40,7 @@ export class CoreHandler {
 	public core: CoreConnection
 
 	private logger: Winston.LoggerInstance
-	private _observers: Array<any> = []
+	private _observers: Array<Observer> = []
 	private _onConnected?: () => any
 	private _subscriptions: Array<any> = []
 	private _isInitialized: boolean = false
@@ -54,8 +55,7 @@ export class CoreHandler {
 		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'iNews Gateway'))
 	}
 
-  // REFACTOR - async/await
-	init (_deviceOptions: DeviceConfig, config: CoreConfig, process: Process): Promise<void> {
+	async init (_deviceOptions: DeviceConfig, config: CoreConfig, process: Process): Promise<void> {
 		// this.logger.info('========')
 
 		this._coreConfig = config
@@ -63,7 +63,7 @@ export class CoreHandler {
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
-			if (this._isInitialized) this.onConnectionRestored()
+			if (this._isInitialized) this.onConnectionRestored().catch(e => this.logger.error('onConnected error', e, e.stack))
 		})
 		this.core.onDisconnected(() => {
 			this.logger.info('Core Disconnected!')
@@ -81,49 +81,39 @@ export class CoreHandler {
 				ca: this._process.certificates
 			}
 		}
-		return this.core.init(ddpConfig).then((id: string) => {
-			id = id // tsignore
+		await this.core.init(ddpConfig)
 
-			this.core.setStatus({
-				statusCode: P.StatusCode.UNKNOWN,
-				messages: ['Starting up']
-			})
-			.catch(e => this.logger.warn('Error when setting status:' + e))
-			// nothing
-		})
-		.then(() => {
-			return this.setupSubscriptionsAndObservers()
-		})
-		.then(() => {
-			this._isInitialized = true
-		})
+		await this.setStatus(P.StatusCode.UNKNOWN, ['Starting up'])
+		await this.setupSubscriptionsAndObservers()
+
+		this._isInitialized = true
 	}
 	/**
 	 * Destroy gateway
 	 */
-	 // REFACTOR - async / await
-	dispose (): Promise<void> {
-		return this.core.setStatus({
+	async dispose (): Promise<void> {
+		await this.core.setStatus({
 			statusCode: P.StatusCode.FATAL,
 			messages: ['Shutting down']
 		})
-		.then(() => {
-			return this.core.destroy()
-		})
-		.then(() => {
-			// nothing
-		})
+		await this.core.destroy()
 	}
 	/**
 	 * Report gateway status to core
 	 */
-	// REFACTOR - hidden async operation
-	setStatus (statusCode: P.StatusCode, messages: string[]) {
-		this.core.setStatus({
-			statusCode: statusCode,
-			messages: messages
-		})
-		.catch(e => this.logger.warn('Error when setting status:' + e))
+	async setStatus (statusCode: P.StatusCode, messages: string[]): Promise<P.StatusObject> {
+		try {
+			return this.core.setStatus({
+				statusCode: statusCode,
+				messages: messages
+			})
+		} catch (e) {
+			this.logger.warn(`Error when setting status: + ${e}`)
+			return {
+				statusCode: P.StatusCode.WARNING_MAJOR,
+				messages: [ 'Error when setting status', e ]
+			}
+		}
 	}
 	/**
 	 * Get options for connecting to core
@@ -165,13 +155,14 @@ export class CoreHandler {
 	 * Called when reconnected to core
 	 */
 	// REFACTOR - hidden async work
-	onConnectionRestored () {
-		this.setupSubscriptionsAndObservers()
-		.catch((e) => {
-			this.logger.error(e)
-		})
-		// REFACTOR - should this wait for previous to complete?
+	async onConnectionRestored () {
+		// The following command was placed after subscription setup but being
+		// executed before it.
 		if (this._onConnected) this._onConnected()
+		await this.setupSubscriptionsAndObservers()
+		.catch((e) => {
+			this.logger.error('setupSubscriptionsAndObservers error', e, e.stack)
+		})
 	}
 	/**
 	 * Called when connected to core.
@@ -182,11 +173,10 @@ export class CoreHandler {
 	/**
 	 * Subscribes to events in the core.
 	 */
-	// REFACTOR - async/await
-	setupSubscriptionsAndObservers (): Promise<void> {
+	async setupSubscriptionsAndObservers (): Promise<void> {
 		if (this._observers.length) {
 			this.logger.info('Core: Clearing observers..')
-			this._observers.forEach((obs) => {
+			this._observers.forEach((obs: Observer) => {
 				obs.stop()
 			})
 			this._observers = []
@@ -194,7 +184,7 @@ export class CoreHandler {
 		this._subscriptions = []
 
 		this.logger.info('Core: Setting up subscriptions for ' + this.core.deviceId + '..')
-		return Promise.all([
+		let subs = await Promise.all([
 			this.core.autoSubscribe('peripheralDevices', {
 				_id: this.core.deviceId
 			}),
@@ -203,59 +193,48 @@ export class CoreHandler {
 			this.core.autoSubscribe('ingestDataCache', {}),
 			this.core.autoSubscribe('rundowns', {})
 		])
-		.then((subs) => {
-			this._subscriptions = this._subscriptions.concat(subs)
-		})
-		.then(() => {
-			this.setupObserverForPeripheralDeviceCommands()
-			this.setupObserverForPeripheralDevices()
-
-			return
-		})
+		this._subscriptions = this._subscriptions.concat(subs)
+		this.setupObserverForPeripheralDeviceCommands() // Sets up observers
+		this.executePeripheralDeviceCommands()
+		  .catch(e => this.logger.error(`executePeripheralDeviceCommands error`, e, e.stack)) // Runs any commands async
+		this.setupObserverForPeripheralDevices()
 	}
 	/**
 	 * Executes a peripheral device command.
 	 */
-	// RERACTOR - hidden async work
-	executeFunction (cmd: PeripheralDeviceCommand, fcnObject: any) {
+	// REFACTOR - why fcnObject an any?
+	async executeFunction (cmd: PeripheralDeviceCommand, fcnObject: any): Promise<void> {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
 			this.logger.debug(cmd.functionName, cmd.args)
 			this._executedFunctions[cmd._id] = true
-			let cb = (err: any, res?: any) => {
-				if (err) {
-					this.logger.error('executeFunction error', err, err.stack)
-				}
-				this.core.callMethod(P.methods.functionReply, [cmd._id, err, res])
-				.catch((e) => {
-					this.logger.error(e)
-				})
-			}
-			// @ts-ignore - REFACTOR - why?
 			let fcn: Function = fcnObject[cmd.functionName]
+			let success = false
+
 			try {
 				if (!fcn) throw Error('Function "' + cmd.functionName + '" not found!')
-
-				Promise.resolve(fcn.apply(fcnObject, cmd.args))
-				.then((result) => {
-					cb(null, result)
-				})
-				.catch((e) => {
-					cb(e.toString(), null)
-				})
-			} catch (e) {
-				cb(e.toString(), null)
+				// Assume function is to run off main loop
+				let result = await Promise.resolve(fcn.apply(fcnObject, cmd.args))
+				success = true
+				await this.core.callMethod(P.methods.functionReply, [cmd._id, null, result])
+			} catch (err) {
+				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, err.stack)
+				if (!success) {
+					await this.core.callMethod(P.methods.functionReply, [cmd._id, err.toString(), null])
+					  .catch(e => this.logger.error('executeFunction reply error after execution failure', e, e.stack))
+				}
 			}
 		}
 	}
+
 	retireExecuteFunction (cmdId: string) {
 		delete this._executedFunctions[cmdId]
 	}
 
 	/**
-	 * Listen for commands and execute.
+	 * Listen for commands.
 	 */
-	// REFACTOR - hidden async work
+	// Made async as it does async work ...
 	setupObserverForPeripheralDeviceCommands () {
 		let observer = this.core.observe('peripheralDeviceCommands')
 		this.killProcess(0) // just make sure it exists
@@ -265,14 +244,16 @@ export class CoreHandler {
 		 * Called when a command is added/changed. Executes that command.
 		 * @param {string} id Command id to execute.
 		 */
-		let addedChangedCommand = (id: string) => {
+		// Note: Oberver is not expecting a promise.
+		let addedChangedCommand = (id: string): Promise<void> | undefined => {
 			let cmds = this.core.getCollection('peripheralDeviceCommands')
 			if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 			let cmd = cmds.findOne(id) as PeripheralDeviceCommand
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
 			if (cmd.deviceId === this.core.deviceId) {
-				this.executeFunction(cmd, this)
+				return this.executeFunction(cmd, this)
 			}
+			return
 		}
 		observer.added = (id: string) => {
 			addedChangedCommand(id)
@@ -283,15 +264,23 @@ export class CoreHandler {
 		observer.removed = (id: string) => {
 			this.retireExecuteFunction(id)
 		}
+	}
+
+	/**
+	 *  Execute all relevant commands now
+	 */
+	async executePeripheralDeviceCommands (): Promise<void> {
 		let cmds = this.core.getCollection('peripheralDeviceCommands')
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
-		cmds.find({}).forEach((cmd0) => {
+		await Promise.all(cmds.find({}).map((cmd0) => {
 			let cmd = cmd0 as PeripheralDeviceCommand
 			if (cmd.deviceId === this.core.deviceId) {
-				this.executeFunction(cmd, this)
+				return this.executeFunction(cmd, this)
 			}
-		})
+			return
+		}))
 	}
+
 	/**
 	 * Subscribes to changes to the device to get its associated studio ID.
 	 */
@@ -355,7 +344,7 @@ export class CoreHandler {
 	}
 	/** Reload a running order */
 	// REFACTOR - what calls this?
-	triggerGetRunningOrder (roId: string): Promise<any> {
+	async triggerGetRunningOrder (roId: string): Promise<string> {
 
 		// INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
 		// If empty it should automatically reload in the setInterval timer.
@@ -364,18 +353,15 @@ export class CoreHandler {
 		// A return statement or errorhandling?
 		// IT WILL ALSO GIVE A WRONG MESSAGE IN THE GUI RIGHT NOW
 		console.log('DUMMMY - roId :', roId)
-		return new Promise((resolve: any) => {
-			if (this.iNewsHandler) {
-				if (this.iNewsHandler.iNewsWatcher) {
-					delete this.iNewsHandler.iNewsWatcher.runningOrders[roId]
-				}
-			}
-			return resolve('iNews is updated')
-		})
+		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
+			delete this.iNewsHandler.iNewsWatcher.runningOrders[roId]
+		}
+		return 'iNews is updated'
 	}
 	/**
 	 * Get the versions of installed packages.
 	 */
+	// Allowing sync methods here as only called during initialization
 	private _getVersions () {
 		let versions: {[packageName: string]: string} = {}
 
@@ -387,12 +373,12 @@ export class CoreHandler {
 			'tv-automation-server-core-integration'
 		]
 		try {
-			let nodeModulesDirectories = fs.readdirSync('node_modules') // REFACTOR - sync FS code
+			let nodeModulesDirectories = fs.readdirSync('node_modules')
 			_.each(nodeModulesDirectories, (dir) => {
 				try {
 					if (dirNames.indexOf(dir) !== -1) {
 						let file = 'node_modules/' + dir + '/package.json'
-						file = fs.readFileSync(file, 'utf8') // REFACTOR - more sync FS code
+						file = fs.readFileSync(file, 'utf8')
 						let json = JSON.parse(file)
 						versions[dir] = json.version || 'N/A'
 					}

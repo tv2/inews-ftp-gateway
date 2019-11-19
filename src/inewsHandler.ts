@@ -8,7 +8,7 @@ import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { InewsRundown } from './classes/datastructures/Rundown'
 import { mutateRundown, mutateSegment } from './mutate'
-import * as inews from '@johnsand/inews'
+import { inews } from '@johnsand/inews'
 import { RundownSegment } from './classes/datastructures/Segment'
 
 export interface INewsDeviceSettings {
@@ -47,26 +47,22 @@ export class InewsFTPHandler {
 		this._coreHandler = coreHandler
 	}
 
-	// REFACTOR - asynv/await
-	init (coreHandler: CoreHandler): Promise<void> {
-		return coreHandler.core.getPeripheralDevice()
-		.then((peripheralDevice: any) => {
-			this._settings = peripheralDevice.settings || {}
+	async init (coreHandler: CoreHandler): Promise<void> {
+		let peripheralDevice = await coreHandler.core.getPeripheralDevice()
+		this._settings = peripheralDevice.settings || {}
 
-			return this._setupDevices()
-			.catch(e => {
-				if (e) throw e // otherwise just swallow it
-			})
-		})
+		try {
+			await this._setupDevices()
+		} catch (err) {
+			this._logger.error('Error during setup devices', err, err.stack)
+		}
 	}
 
-	// REFACTOR - async/await
-	dispose (): Promise<void> {
+	// Why is this async?
+	async dispose (): Promise<void> {
 		this._disposed = true
 		if (this.iNewsWatcher) {
-			return Promise.resolve(this.iNewsWatcher.dispose())
-		} else {
-			return Promise.resolve()
+			return this.iNewsWatcher.dispose()
 		}
 	}
 
@@ -81,27 +77,26 @@ export class InewsFTPHandler {
 	/**
 	 * Set up this device.
 	 */
-	// REFACTOR - async/await - hidden work
-	private _setupDevices (): Promise<void> {
-		if (this._disposed) return Promise.resolve()
-		if (!this._settings) return Promise.resolve()
-		if (!this._settings.hosts) return Promise.reject('No hosts available')
-		if (!this._settings.queues) return Promise.reject('No queues set')
+	private async _setupDevices (): Promise<void> {
+		if (this._disposed) return
+		if (!this._settings) return
+		if (!this._settings.hosts) throw new Error('No hosts available')
+		if (!this._settings.queues) throw new Error('No queues set')
 		this.iNewsConnection = inews({
-			'hosts': this._settings.hosts.map(host => host.host),
-			'user': this._settings.user,
-			'password': this._settings.password
+			hosts: this._settings.hosts.map(host => host.host),
+			user: this._settings.user,
+			password: this._settings.password
 		})
 
 		if (!this.iNewsWatcher) {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
-				this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
+				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2', this.ingestDataToRunningOrders('v0.2'))
 
 				this.updateChanges(this.iNewsWatcher)
 
-				this._settings.queues.map((q) => {
+				this._settings.queues.forEach((q) => {
 					this._logger.info(`Starting watch of `, q.queue)
 				})
 
@@ -112,17 +107,17 @@ export class InewsFTPHandler {
 				// REFACTOR:
 				// calling checkINewsRundowns here is running in parallel with the setInterval()
 				// initiated when creating this.iNewsWatcher, and setStatus should be moved to the setIntervasl loop
-				this.iNewsWatcher.checkINewsRundowns()
-				.then((queueList) => {
+				try {
+					let queueList = this.iNewsWatcher.checkINewsRundowns()
 					console.log('DUMMY LOG : ', queueList)
-					if (this._settings) this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
-				})
-				.catch(e => {
-					console.log('Error in iNews Rundown list', e)
-				})
+					if (this._settings) {
+						await this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
+					}
+				} catch (err) {
+					this._logger.error('Error in iNews Rundown list', err)
+				}
 			}
 		}
-		return Promise.resolve()
 	}
 
 	/**
@@ -175,7 +170,6 @@ export class InewsFTPHandler {
 		.on('warning', (warning: any) => {
 			this._logger.error(warning)
 		})
-		// TODO - these event types should operate on the correct types and with better parameters
 		.on('rundown_delete', (rundownExternalId) => {
 			this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
 		})

@@ -1,6 +1,5 @@
 import { RundownSegment } from './datastructures/Segment'
 import { IRawStory } from './RundownManager'
-import * as _ from 'underscore'
 
 export interface IParsedElement {
 	data: {

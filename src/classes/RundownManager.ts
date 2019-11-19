@@ -1,42 +1,35 @@
 import { InewsRundown } from './datastructures/Rundown'
 import * as Winston from 'winston'
 import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
-
-export interface IRawStory {
-	story: any // REFACTOR - can this have more typing?
-}
+import { INewsClient, INewsStory, INewsDirItem } from '@johnsand/inews'
+import { promisify } from 'util'
 
 export class RundownManager {
 
-	private _logger: Winston.LoggerInstance
 	public queueLock: boolean
+	private _listStories: (queueName: string) => Promise<Array<INewsDirItem>>
+	private _getStory: (queueName: string, story: string) => Promise<INewsStory>
 
-	constructor (private logger: Winston.LoggerInstance, private inewsConnection: any) {
-		this._logger = this.logger
-		this.inewsConnection = inewsConnection
+	constructor (private _logger: Winston.LoggerInstance, private inewsConnection: INewsClient) {
 		this.queueLock = false
+		this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
+		this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
 	}
 
 	/**
 	 * Downloads a running order by ID.
 	 */
-	// REFACTOR - async/await
-	downloadRunningOrder (rundownId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
+	async downloadRunningOrder (rundownId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
 
 		/**
 		 * When running as DEV, send a fake rundown (for testing detached from iNews).
 		 */
 		if (process.env.DEV) {
-			return this.fakeRundown().
-			then((response: InewsRundown) => {
-				return response
-			})
+			return this.fakeRundown()
 		}
-		return this.downloadINewsRundown(rundownId, oldRundown)
-		.then((rundownRaw: IRawStory[]) => {
-			this._logger.info(rundownId, ' Downloaded ')
-			return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
-		})
+		let rundownRaw = await this.downloadINewsRundown(rundownId, oldRundown)
+		this._logger.info(rundownId, ' Downloaded ')
+		return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
 	}
 
 	/**
@@ -59,15 +52,15 @@ export class RundownManager {
 	 * @param name Rundown name.
 	 * @param rundownRaw Rundown to convert.
 	 */
-	convertRawtoSofie (_logger: Winston.LoggerInstance, runningOrderId: string, name: string, rundownRaw: IRawStory[]): InewsRundown {
-		_logger.info('START : ', name, ' convert to Sofie Rundown')
+	convertRawtoSofie (runningOrderId: string, name: string, rundownRaw: INewsStory[]): InewsRundown {
+		this._logger.info('START : ', name, ' convert to Sofie Rundown')
 		// where should these data come from?
 		let version = 'v0.2'
 
 		let rundown = new InewsRundown(runningOrderId, runningOrderId, version)
-		let segments = ParsedINewsIntoSegments.parse(runningOrderId,rundownRaw)
+		let segments = ParsedINewsIntoSegments.parse(runningOrderId, rundownRaw)
 		rundown.addSegments(segments)
-		_logger.info('DONE : ', name, ' converted to Sofie Rundown')
+		this._logger.info('DONE : ', name, ' converted to Sofie Rundown')
 		return rundown
 	}
 
@@ -94,24 +87,25 @@ export class RundownManager {
 	 * @param queueName Name of queue to download.
 	 * @param oldRundown Old rundown object.
 	 */
-	// REFACTOR - better async/awwait - promisify callbacks - reject handling
-	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<IRawStory>> {
-		return new Promise((resolve) => {
-			this.queueLock = true
-			return this.inewsConnection.list(queueName, (error: any, dirList: any) => {
-				if (!error && dirList.length > 0) {
-					resolve(Promise.all(dirList.map((ftpFileName: string, index: number) => {
-						const story = this.downloadINewsStory(index, queueName, ftpFileName, oldRundown)
-						this.queueLock = false
-						return story
-					})))
-				} else {
-					this._logger.error('Error downloading iNews rundown : ', error)
-					this.queueLock = false
-					resolve([])
-				}
-			})
-		})
+	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<INewsStory>> {
+		this.queueLock = true
+		let stories: Array<INewsStory> = []
+		try {
+			let dirList = await this._listStories(queueName)
+			if (dirList.length > 0) {
+				stories = await Promise.all(
+					dirList.map((ftpFileName: INewsFile, index: number) => {
+						return this.downloadINewsStory(index, queueName, ftpFileName, oldRundown)
+					}))
+			} else {
+				this._logger.error('Downloaded empty iNews rundown.')
+			}
+		} catch (err) {
+			this._logger.error('Error downloading iNews rundown: ', err, err.stack)
+		} finally {
+			this.queueLock = false
+		}
+		return stories
 	}
 
 	/**
@@ -122,9 +116,9 @@ export class RundownManager {
 	 * @param oldRundown Old rundown to overwrite.
 	 */
 	// REFACTOR - async / await - promisify callbacks - rejections
-	downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<IRawStory> {
+	async downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<INewsStory> {
 		return new Promise((resolve) => {
-			let rawStory: IRawStory
+			let rawStory: INewsStory
 			let oldModified = 0
 			let oldFileId = ''
 			// tslint:disable-next-line: strict-type-predicates

@@ -40,81 +40,50 @@ export class Connector {
 		this.coreHandler.iNewsHandler = this.iNewsFTPHandler
 	}
 
-	// REFCATOR async/await
-	init (): Promise<void> {
-		return Promise.resolve()
-		.then(() => {
+	async init (): Promise<void> {
+		try {
 			this._logger.info('Initializing Process...')
-			return this.initProcess()
-		})
-		.then(() => {
+			await this.initProcess()
 			this._logger.info('Process initialized')
 			this._logger.info('Initializing Core...')
-			return this.initCore()
-		})
-
-		.then(() => {
-			// REFACTOR - this is not async
+			await this.initCore()
+			this._logger.info('Core is initialized')
 			this.setupObserver()
 			this._logger.info('Initialization of FTP-monitor done')
-			return
-		})
-		.catch((e) => {
-			this._logger.error('Error during initialization:', e, e.stack) // REFACTOR -
-			// this._logger.error(e)
-			// this._logger.error(e.stack)
+		} catch (err) {
+			this._logger.error('Error during initialization:', err, err.stack)
 
 			this._logger.info('Shutting down in 10 seconds!')
+			this.dispose().catch(e => this._logger.error(e))
 
-			try { // REFACTOR try in catch with catch
-				this.dispose()
-				.catch(e => this._logger.error(e))
-			} catch (e) {
-				this._logger.error(e)
-			}
-
-			// REFACTOR - why wait? and why not configurable?
 			setTimeout(() => {
 				process.exit(0)
 			}, 10 * 1000)
-
-			return
-		})
+		}
 	}
-	// REFACTOR not a promise
-	initProcess () {
+
+	async initProcess (): Promise<void> {
 		return this._process.init(this._config.process)
 	}
-	//  REFACTOR - return type and promise - awync/awat
-	initCore () {
-		return this.coreHandler.init(this._config.device, this._config.core, this._process)
+
+	async initCore (): Promise<void> {
+		await this.coreHandler.init(this._config.device, this._config.core, this._process)
 	}
-	// REFACTOR async/await
-	initInewsFTPHandler (): Promise<void> {
-		return this.iNewsFTPHandler.init(this.coreHandler).then(() => {
-			this.coreHandler.iNewsHandler = this.iNewsFTPHandler
-		}).catch((err) => {
-			if (err) throw err
-		})
+
+	async initInewsFTPHandler (): Promise<void> {
+		await this.iNewsFTPHandler.init(this.coreHandler)
+		this.coreHandler.iNewsHandler = this.iNewsFTPHandler
 	}
-	// REFACTOR async/await
-	dispose (): Promise<void> {
-		return (
-			this.iNewsFTPHandler ?
-			this.iNewsFTPHandler.dispose()
-			: Promise.resolve()
-		)
-		.then(() => {
-			return (
-				this.coreHandler ?
-				this.coreHandler.dispose()
-				: Promise.resolve()
-			)
-		})
-		.then(() => { // NOP
-			return
-		})
+
+	async dispose (): Promise<void> {
+		if (this.iNewsFTPHandler) {
+			await this.iNewsFTPHandler.dispose()
+		}
+		if (this.coreHandler) {
+			await this.coreHandler.dispose()
+		}
 	}
+
 	setupObserver () {
 		// Setup observer.
 		let observer = this.coreHandler.core.observe('peripheralDevices')
@@ -136,8 +105,7 @@ export class Connector {
 					this.iNewsFTPHandler.dispose()
 					.then(() => {
 						this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this.coreHandler)
-						this.initInewsFTPHandler()
-						.catch((error) => this._logger.error(error))
+						return this.initInewsFTPHandler()
 					})
 					.catch((error) => {
 						this._logger.error(error)

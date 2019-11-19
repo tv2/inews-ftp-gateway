@@ -1,5 +1,4 @@
 import { RundownSegment } from './Segment'
-import * as _ from 'underscore'
 
 export interface IRundown {
 	externalId: string
@@ -24,8 +23,7 @@ export class InewsRundown implements IRundown {
 		}
 	}
 
-	// REFACTOR - side effect and arrow function
 	addSegments (segments: RundownSegment[]) {
-		segments.forEach(segment => this.segments.push(segment))
+		segments.forEach(segment => { this.segments.push(segment) })
 	}
 }

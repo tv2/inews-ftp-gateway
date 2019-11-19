@@ -7,6 +7,7 @@ import { RundownSegment } from './datastructures/Segment'
 import * as clone from 'clone'
 import * as Winston from 'winston'
 import { INewsQueue } from '../inewsHandler'
+import { INewsClient } from '@johnsand/inews'
 
 dotenv.config()
 
@@ -43,7 +44,7 @@ export class RunningOrderWatcher extends EventEmitter {
 	 */
 	constructor (
 		private logger: Winston.LoggerInstance,
-		private iNewsConnection: any,
+		private iNewsConnection: INewsClient,
 		private iNewsQueue: Array<INewsQueue>,
 		private gatewayVersion: string,
 		public runningOrders: { [runningOrderId: string]: InewsRundown },

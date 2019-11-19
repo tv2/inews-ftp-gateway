@@ -245,13 +245,13 @@ export class CoreHandler {
 		 * @param {string} id Command id to execute.
 		 */
 		// Note: Oberver is not expecting a promise.
-		let addedChangedCommand = (id: string): Promise<void> | undefined => {
+		let addedChangedCommand = (id: string): void => {
 			let cmds = this.core.getCollection('peripheralDeviceCommands')
 			if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 			let cmd = cmds.findOne(id) as PeripheralDeviceCommand
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
 			if (cmd.deviceId === this.core.deviceId) {
-				return this.executeFunction(cmd, this)
+				this.executeFunction(cmd, this).catch(e => this.logger.error('addedChangedCommand executeFunction error', e, e.stack))
 			}
 			return
 		}

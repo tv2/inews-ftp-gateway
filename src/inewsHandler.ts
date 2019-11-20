@@ -8,8 +8,13 @@ import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { InewsRundown } from './classes/datastructures/Rundown'
 import { mutateRundown, mutateSegment } from './mutate'
-import { inews, INewsOptions, INewsClient } from '@johnsand/inews'
+import * as inews from '@johnsand/inews'
+// @ts-ignore
+// import inews from '@johnsand/inews'
 import { RundownSegment, INewsStoryGW } from './classes/datastructures/Segment'
+
+type INewsClient = inews.INewsClient
+type INewsOptions = inews.INewsOptions
 
 const emptyStory = (): INewsStoryGW => {
 	return { fields: {}, meta: {}, cues: [], fileId: '' }

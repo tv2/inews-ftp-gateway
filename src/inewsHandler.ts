@@ -96,30 +96,16 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-				this.iNewsWatcher = new RunningOrderWatcher(this._logger, this.iNewsConnection, this._settings.queues, 'v0.2', this.ingestDataToRunningOrders('v0.2'))
+				this.iNewsWatcher = new RunningOrderWatcher(
+					this._logger, this.iNewsConnection,
+					this._coreHandler, this._settings.queues,
+					'v0.2', this.ingestDataToRunningOrders('v0.2'))
 
 				this.updateChanges(this.iNewsWatcher)
 
 				this._settings.queues.forEach((q) => {
 					this._logger.info(`Starting watch of `, q.queue)
 				})
-
-				/**
-				 * Get list of all rundowns and report good status.
-				 */
-
-				// REFACTOR:
-				// calling checkINewsRundowns here is running in parallel with the setInterval()
-				// initiated when creating this.iNewsWatcher, and setStatus should be moved to the setIntervasl loop
-				try {
-					let queueList = this.iNewsWatcher.checkINewsRundowns()
-					console.log('DUMMY LOG : ', queueList)
-					if (this._settings) {
-						await this._coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
-					}
-				} catch (err) {
-					this._logger.error('Error in iNews Rundown list', err)
-				}
 			}
 		}
 	}

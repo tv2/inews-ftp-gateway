@@ -19,7 +19,6 @@ export class ParsedINewsIntoSegments {
 
 		for (let x = 0 ; x < inewsRaw.length ; x++) {
 			let story = inewsRaw[x]
-			console.log(story)
 			let segment = new RundownSegment(
 				sheetId,
 				story,

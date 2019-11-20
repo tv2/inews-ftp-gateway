@@ -201,7 +201,7 @@ export class CoreHandler {
 	/**
 	 * Executes a peripheral device command.
 	 */
-	// REFACTOR - why fcnObject an any?
+	// TODO - why fcnObject an any?
 	async executeFunction (cmd: PeripheralDeviceCommand, fcnObject: any): Promise<void> {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
@@ -342,10 +342,10 @@ export class CoreHandler {
 		return {} // TODO: send some snapshot data?
 	}
 	/** Reload a running order */
-	// REFACTOR - what calls this?
+	// TODO - check what calls this?
 	async triggerGetRunningOrder (roId: string): Promise<string> {
 
-		// INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
+		// FIXME: INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
 		// If empty it should automatically reload in the setInterval timer.
 
 		// PROMISE should be removed - only here so we do not change the Core

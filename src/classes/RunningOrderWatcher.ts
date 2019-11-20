@@ -8,6 +8,8 @@ import * as clone from 'clone'
 import * as Winston from 'winston'
 import { INewsQueue } from '../inewsHandler'
 import { INewsClient } from '@johnsand/inews'
+import { CoreHandler } from '../coreHandler'
+import { PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
 
 dotenv.config()
 
@@ -45,6 +47,7 @@ export class RunningOrderWatcher extends EventEmitter {
 	constructor (
 		private logger: Winston.LoggerInstance,
 		private iNewsConnection: INewsClient,
+		private coreHandler: CoreHandler,
 		private iNewsQueue: Array<INewsQueue>,
 		private gatewayVersion: string,
 		public runningOrders: { [runningOrderId: string]: InewsRundown },
@@ -67,23 +70,44 @@ export class RunningOrderWatcher extends EventEmitter {
 		this.logger.info('Clear all wathcers')
 		this.stopWatcher()
 		this.logger.info('Start wathcers')
+		let passoverTimings = 0
+		// First run
+		this.currentlyChecking = true
+		this.checkINewsRundowns().then(queueList => {
+			console.log('DUMMY LOG : ', queueList)
+			this.currentlyChecking = false
+			return this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
+		}, err => {
+			this._logger.error('Error in iNews Rundown list', err)
+			this.currentlyChecking = false
+		}).catch(this._logger.error)
 
+		// Subsequent runs
 		this.pollTimer = setInterval(() => {
 			if (this.currentlyChecking) {
+				if (passoverTimings++ > 10) {
+					this._logger.warning(`Check iNews rundown has been skipped ${passoverTimings} times.`)
+					this.coreHandler.setStatus(P.StatusCode.WARNING_MINOR,
+						[`Check iNews not run for ${passoverTimings * this.pollInterval}ms`]).catch(this.logger.error)
+				}
 				return
+			} else {
+				passoverTimings = 0
 			}
 			this.logger.info('Check rundowns for updates')
 			this.currentlyChecking = true
 
-			this.checkINewsRundowns()
-			.catch(error => {
-				this.logger.error('Something went wrong during check', error, error.stack)
-			})
-			.then(() => {
+			this.checkINewsRundowns().then(() => {
 				this.rundownManager.EmptyInewsFtpBuffer()
 				// console.log('slow check done')
 				this.currentlyChecking = false
-			}).catch(console.error)
+				return this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
+
+			}, error => {
+				this.logger.error('Something went wrong during check', error, error.stack)
+				this.currentlyChecking = false
+				return this.coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['Check INews rundows failed'])
+			}).catch(this._logger.error)
 		}, this.pollInterval)
 	}
 

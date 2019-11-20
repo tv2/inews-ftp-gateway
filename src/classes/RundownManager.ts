@@ -3,6 +3,7 @@ import * as Winston from 'winston'
 import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
 import { INewsClient, INewsStory, INewsDirItem, INewsFile } from '@johnsand/inews'
 import { promisify } from 'util'
+import { INewsStoryGW } from './datastructures/Segment'
 
 function isFile (f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -14,10 +15,12 @@ export class RundownManager {
 	private _listStories: (queueName: string) => Promise<Array<INewsDirItem>>
 	private _getStory: (queueName: string, story: string) => Promise<INewsStory>
 
-	constructor (private _logger: Winston.LoggerInstance, private inewsConnection: INewsClient) {
+	constructor (private _logger: Winston.LoggerInstance, private inewsConnection?: INewsClient) {
 		this.queueLock = false
-		this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
-		this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
+		if (this.inewsConnection) {
+			this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
+			this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
+		}
 	}
 
 	/**
@@ -29,7 +32,7 @@ export class RundownManager {
 		 * When running as DEV, send a fake rundown (for testing detached from iNews).
 		 */
 		if (process.env.DEV) {
-			return this.fakeRundown()
+			return Promise.resolve(this.fakeRundown())
 		}
 		let rundownRaw = await this.downloadINewsRundown(rundownId, oldRundown)
 		this._logger.info(rundownId, ' Downloaded ')
@@ -40,13 +43,15 @@ export class RundownManager {
 	 * returns a promise with a fake rundown for testing
 	 * in detached mode
 	 */
-	// REFACTOR - maybe async/await? May move the require?
-	fakeRundown (): Promise<InewsRundown> {
-		return new Promise((resolve) => {
-			let ftpData = require('./fakeFTPData')
-			let rundown = this.convertRawtoSofie('135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default)
-			resolve(rundown)
-		})
+	fakeRundown (id: string = '135381b4-f11a-4689-8346-b298b966664f'): InewsRundown {
+		let ftpData: { default: { story: INewsStory, storyName: string}[] } = require('./fakeFTPData')
+		let stories: INewsStoryGW[] = ftpData.default.map(x =>
+			Object.assign(x.story, { fileId: x.storyName }))
+		let rundown = this.convertRawtoSofie(
+			id,
+			id,
+			stories)
+	  return rundown
 	}
 
 	/**
@@ -56,7 +61,7 @@ export class RundownManager {
 	 * @param name Rundown name.
 	 * @param rundownRaw Rundown to convert.
 	 */
-	convertRawtoSofie (runningOrderId: string, name: string, rundownRaw: INewsStory[]): InewsRundown {
+	convertRawtoSofie (runningOrderId: string, name: string, rundownRaw: INewsStoryGW[]): InewsRundown {
 		this._logger.info('START : ', name, ' convert to Sofie Rundown')
 		// where should these data come from?
 		let version = 'v0.2'
@@ -77,8 +82,10 @@ export class RundownManager {
 			this.queueLock = true
 			// TODO: This workaround clears the _queue inside johnsand@inews:
 			try {
-				this.inewsConnection._queue.queuedJobList.list = {}
-				this.inewsConnection._queue.inprogressJobList.list = {}
+				if (this.inewsConnection) {
+					this.inewsConnection._queue.queuedJobList.list = {}
+					this.inewsConnection._queue.inprogressJobList.list = {}
+				}
 			} catch (error) {
 				this._logger.error('Error flushing FTP Connection : ', error)
 			}
@@ -91,9 +98,9 @@ export class RundownManager {
 	 * @param queueName Name of queue to download.
 	 * @param oldRundown Old rundown object.
 	 */
-	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<INewsStory>> {
+	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<INewsStoryGW>> {
 		this.queueLock = true
-		let stories: Array<INewsStory> = []
+		let stories: Array<INewsStoryGW> = []
 		try {
 			let dirList = await this._listStories(queueName)
 			if (dirList.length > 0) {
@@ -119,16 +126,17 @@ export class RundownManager {
 	 * @param storyFile File to download.
 	 * @param oldRundown Old rundown to overwrite.
 	 */
-	async downloadINewsStory (index: number, queueName: string, storyFile: INewsDirItem, oldRundown: InewsRundown): Promise<INewsStory> {
+	async downloadINewsStory (index: number, queueName: string, storyFile: INewsDirItem, oldRundown: InewsRundown): Promise<INewsStoryGW> {
 		let oldModified = 0
 		let oldFileId: string | undefined
 
-		if (oldRundown && oldRundown.segments && oldRundown.segments[index]) {
+		if (oldRundown
+			&& Array.isArray(oldRundown.segments)
+			&& oldRundown.segments.length > index
+		) {
 			oldFileId = oldRundown.segments[index].iNewsStory.fileId
-			if (oldRundown.segments.length >= index + 1) {
-				// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
-				oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
-			}
+			// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
+			oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
 		}
 
 		/** The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
@@ -141,10 +149,12 @@ export class RundownManager {
 			|| Date.now() / 100000 - fileDate <= 1
 			|| storyFile.file !== oldFileId
 		) {
-			let story: INewsStory
+			let story: INewsStoryGW
 			let error: Error | null = null
 			try {
-				story = await this._getStory(queueName, storyFile.file)
+				story = Object.assign(
+					await this._getStory(queueName, storyFile.file),
+					{ fileId: storyFile.file })
 			} catch (err) {
 				console.log('DUMMY LOG : ', err)
 				error = err
@@ -152,13 +162,13 @@ export class RundownManager {
 					fields: {},
 					meta: {},
 					cues: [],
+					fileId: storyFile.file,
 					error: err.message()
 				}
 			}
 
 			this._logger.info('UPDATING : ' + queueName + ' :' + storyFile.file)
 			/* Add fileId and update modifyDate to ftp reference in storyFile */
-			story.fileId = storyFile.file
 			story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
 			this._logger.debug('Queue : ', queueName, error || '', ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
 			return story

@@ -1,5 +1,4 @@
-import { RundownSegment } from './datastructures/Segment'
-import { INewsStory } from '@johnsand/inews'
+import { RundownSegment, INewsStoryGW } from './datastructures/Segment'
 
 export interface IParsedElement {
 	data: {
@@ -15,11 +14,12 @@ export interface IParsedElement {
 }
 export class ParsedINewsIntoSegments {
 
-	static parse (sheetId: string, inewsRaw: INewsStory[]): RundownSegment[] {
+	static parse (sheetId: string, inewsRaw: INewsStoryGW[]): RundownSegment[] {
 		let segments: RundownSegment[] = []
 
 		for (let x = 0 ; x < inewsRaw.length ; x++) {
 			let story = inewsRaw[x]
+			console.log(story)
 			let segment = new RundownSegment(
 				sheetId,
 				story,

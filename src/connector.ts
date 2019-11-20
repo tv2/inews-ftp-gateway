@@ -89,7 +89,6 @@ export class Connector {
 		let observer = this.coreHandler.core.observe('peripheralDevices')
 		this._observers.push(observer)
 
-		// REFACTOR - hidden async work - core does not expect this to be async
 		let addedChanged = (id: string) => {
 			// Check that collection exists.
 			let devices = this.coreHandler.core.getCollection('peripheralDevices')

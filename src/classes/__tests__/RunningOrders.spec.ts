@@ -1,5 +1,5 @@
 let fs = require('fs')
-let ftpData = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/ftpData.json'))
+// let ftpData = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/ftpData.json'))
 let parsedData = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/parsedData.json'))
 import { InewsRundown } from '../datastructures/Rundown'
 import winston = require('winston')
@@ -17,10 +17,11 @@ describe('RundownManager', () => {
 	it('SplitRawDataToElements', () => {
 		let id = '00000000000001'
 		let logger = new winston.Logger()
-		let manager = new RundownManager(logger, {})
-		let managerParsedData = manager.convertRawtoSofie(logger, id, id, JSON.parse(JSON.stringify(ftpData)))
+		let manager = new RundownManager(logger)
+		let convertedRundown = manager.fakeRundown(id)
+		// let managerParsedData = manager.convertRawtoSofie(id, id, JSON.parse(JSON.stringify(ftpData)))
 		// Uncomment to update parsedData:
 		// fs.writeFileSync('src/classes/__tests__/__mocks__/updatedParsedData.json', JSON.stringify(managerParsedData))
-		expect(managerParsedData).toEqual(parsedData)
+		expect(convertedRundown).toMatchObject(parsedData)
 	})
 })

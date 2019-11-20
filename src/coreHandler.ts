@@ -154,7 +154,6 @@ export class CoreHandler {
 	/**
 	 * Called when reconnected to core
 	 */
-	// REFACTOR - hidden async work
 	async onConnectionRestored () {
 		// The following command was placed after subscription setup but being
 		// executed before it.

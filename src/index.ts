@@ -3,7 +3,7 @@ import { Connector, Config } from './connector'
 import * as Winston from 'winston'
 import _ = require('underscore')
 
-// REFACTOR: Consider using yargs
+// TODO: Consider using yargs
 
 // CLI arguments / Environment variables --------------
 let host: string 		= process.env.CORE_HOST 					|| '127.0.0.1'

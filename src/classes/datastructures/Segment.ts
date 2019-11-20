@@ -1,7 +1,8 @@
+import { INewsStory } from '@johnsand/inews'
 
 export interface ISegment {
 	rundownId: string
-	iNewsStory: any // REFACTOR add light typing?
+	iNewsStory: INewsStory
 	modified: string
 	externalId: string // unique within the parent runningOrder
 	rank: number
@@ -12,7 +13,7 @@ export interface ISegment {
 export class RundownSegment implements ISegment {
 	constructor (
 		public rundownId: string,
-		public iNewsStory: any,
+		public iNewsStory: INewsStory,
 		public modified: string,
 		public externalId: string,
 		public rank: number,

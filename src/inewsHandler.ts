@@ -8,11 +8,11 @@ import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { InewsRundown } from './classes/datastructures/Rundown'
 import { mutateRundown, mutateSegment } from './mutate'
-import { inews, INewsOptions, INewsClient, INewsStory } from '@johnsand/inews'
-import { RundownSegment } from './classes/datastructures/Segment'
+import { inews, INewsOptions, INewsClient } from '@johnsand/inews'
+import { RundownSegment, INewsStoryGW } from './classes/datastructures/Segment'
 
-const emptyStory = (): INewsStory => {
-	return { fields: {}, meta: {}, cues: [] }
+const emptyStory = (): INewsStoryGW => {
+	return { fields: {}, meta: {}, cues: [], fileId: '' }
 }
 
 export interface INewsDeviceSettings {

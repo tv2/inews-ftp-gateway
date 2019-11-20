@@ -13,7 +13,7 @@ export class InewsRundown implements IRundown {
 		public externalId: string,
 		public name: string,
 		public gatewayVersion: string,
-		public segments: RundownSegment[] = [] // REFACTOR - invariant ... uniqueness of segment by id?
+		public segments: RundownSegment[] = []
 	) {}
 
 	serialize (): IRundown {

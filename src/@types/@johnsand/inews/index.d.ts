@@ -15,8 +15,6 @@ declare module '@johnsand/inews' {
 		meta: { [key: string]: string }
 		cues: Array<Array<string | null>>
 		body?: string
-		fileId?: string // Added by RundownManager - not from underlying library
-		error?: string // Error message associated with failed retrieval of story
 	}
 
 	export interface INewsDirItem {
@@ -37,6 +35,8 @@ declare module '@johnsand/inews' {
 		filetype: 'queue'
 	}
 
+	export type status = 'connecting' | 'connected' | 'error' | 'disconnected'
+
 	export interface INewsClient extends EventEmitter {
 		_queue: { // Expose queue so if can be flsuhed after used
 			queuedJobList: { list: object },
@@ -45,5 +45,10 @@ declare module '@johnsand/inews' {
 		list (queneName: string, cb: (error: Error | null, dirList: Array<INewsDirItem>) => void): void
 		story (queueName: string, file: string, cb: (error: Error | null, rawStory: INewsStory) => void): void
 		storyNsml (queueName: string, file: string, cb: (error: Error | null, nsml: string) => void): void
+		on: ((event: 'status', listener: (status: string) => void) => this) &
+		  ((event: 'ready', listener: () => void) => this) &
+			((event: 'error', listener: (err: Error) => void) => this) &
+			((event: 'close', listener: (hadErr?: boolean) => void) => this) &
+			((event: 'end', listener: () => void) => this)
 	}
 }

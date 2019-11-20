@@ -1,8 +1,13 @@
 import { INewsStory } from '@johnsand/inews'
 
+export interface INewsStoryGW extends INewsStory {
+	fileId: string // Added by RundownManager - not from underlying library
+	error?: string // Error message associated with failed retrieval of story
+}
+
 export interface ISegment {
 	rundownId: string
-	iNewsStory: INewsStory
+	iNewsStory: INewsStoryGW
 	modified: string
 	externalId: string // unique within the parent runningOrder
 	rank: number
@@ -13,7 +18,7 @@ export interface ISegment {
 export class RundownSegment implements ISegment {
 	constructor (
 		public rundownId: string,
-		public iNewsStory: INewsStory,
+		public iNewsStory: INewsStoryGW,
 		public modified: string,
 		public externalId: string,
 		public rank: number,

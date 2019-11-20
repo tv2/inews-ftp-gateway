@@ -8,8 +8,12 @@ import { CoreHandler } from './coreHandler'
 import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
 import { InewsRundown } from './classes/datastructures/Rundown'
 import { mutateRundown, mutateSegment } from './mutate'
-import { inews } from '@johnsand/inews'
+import { inews, INewsOptions, INewsClient, INewsStory } from '@johnsand/inews'
 import { RundownSegment } from './classes/datastructures/Segment'
+
+const emptyStory = (): INewsStory => {
+	return { fields: {}, meta: {}, cues: [] }
+}
 
 export interface INewsDeviceSettings {
 	hosts: Array<INewsHost>
@@ -30,7 +34,7 @@ export interface INewsQueue {
 
 export class InewsFTPHandler {
 
-	public iNewsConnection: any
+	public iNewsConnection: INewsClient
 	public userName: string
 	public passWord: string
 	public debugLogging: boolean = false
@@ -86,7 +90,7 @@ export class InewsFTPHandler {
 			hosts: this._settings.hosts.map(host => host.host),
 			user: this._settings.user,
 			password: this._settings.password
-		})
+		} as INewsOptions)
 
 		if (!this.iNewsWatcher) {
 			let peripheralDevice = this.getThisPeripheralDevice()
@@ -130,7 +134,7 @@ export class InewsFTPHandler {
 		let runningOrdersCache: { [runningOrderId: string]: InewsRundown } = {}
 
 		rundowns.forEach((rundownHeader: any) => {
-			let segments = [new RundownSegment('','','0','',0,'',false)]
+			let segments = [new RundownSegment('',emptyStory(),'0','',0,'',false)]
 			let rundown = new InewsRundown(
 				rundownHeader.data.externalId,
 				rundownHeader.data.name,

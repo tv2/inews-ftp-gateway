@@ -1,8 +1,12 @@
 import { InewsRundown } from './datastructures/Rundown'
 import * as Winston from 'winston'
 import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
-import { INewsClient, INewsStory, INewsDirItem } from '@johnsand/inews'
+import { INewsClient, INewsStory, INewsDirItem, INewsFile } from '@johnsand/inews'
 import { promisify } from 'util'
+
+function isFile (f: INewsDirItem): f is INewsFile {
+	return f.filetype === 'file'
+}
 
 export class RundownManager {
 
@@ -29,7 +33,7 @@ export class RundownManager {
 		}
 		let rundownRaw = await this.downloadINewsRundown(rundownId, oldRundown)
 		this._logger.info(rundownId, ' Downloaded ')
-		return this.convertRawtoSofie(this._logger, rundownId, rundownId, rundownRaw)
+		return this.convertRawtoSofie(rundownId, rundownId, rundownRaw)
 	}
 
 	/**
@@ -40,7 +44,7 @@ export class RundownManager {
 	fakeRundown (): Promise<InewsRundown> {
 		return new Promise((resolve) => {
 			let ftpData = require('./fakeFTPData')
-			let rundown = this.convertRawtoSofie(this._logger, '135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default)
+			let rundown = this.convertRawtoSofie('135381b4-f11a-4689-8346-b298b966664f', '135381b4-f11a-4689-8346-b298b966664f', ftpData.default)
 			resolve(rundown)
 		})
 	}
@@ -115,56 +119,51 @@ export class RundownManager {
 	 * @param storyFile File to download.
 	 * @param oldRundown Old rundown to overwrite.
 	 */
-	// REFACTOR - async / await - promisify callbacks - rejections
-	async downloadINewsStory (index: number, queueName: string, storyFile: any, oldRundown: InewsRundown): Promise<INewsStory> {
-		return new Promise((resolve) => {
-			let rawStory: INewsStory
-			let oldModified = 0
-			let oldFileId = ''
-			// tslint:disable-next-line: strict-type-predicates
-			if (typeof(oldRundown) !== 'undefined') {
-				// tslint:disable-next-line: strict-type-predicates
-				if (typeof(oldRundown.segments) !== 'undefined') {
-					if (oldRundown.segments[index]) {
-						oldFileId = oldRundown.segments[index].iNewsStory.fileId
-						if (oldRundown.segments.length >= index + 1) {
-							// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
-							oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
-						}
-					}
+	async downloadINewsStory (index: number, queueName: string, storyFile: INewsDirItem, oldRundown: InewsRundown): Promise<INewsStory> {
+		let oldModified = 0
+		let oldFileId: string | undefined
+
+		if (oldRundown && oldRundown.segments && oldRundown.segments[index]) {
+			oldFileId = oldRundown.segments[index].iNewsStory.fileId
+			if (oldRundown.segments.length >= index + 1) {
+				// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
+				oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
+			}
+		}
+
+		/** The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
+		 * is per second. So time time will be compared for changes within 1 minute. And if the
+		 * story has been updates within the last minute, it will keep updating for a whole minute.
+		 */
+		let fileDate = storyFile.modified ? Math.floor(storyFile.modified.getTime() / 100000) : 0
+
+		if (fileDate - oldModified > 1
+			|| Date.now() / 100000 - fileDate <= 1
+			|| storyFile.file !== oldFileId
+		) {
+			let story: INewsStory
+			let error: Error | null = null
+			try {
+				story = await this._getStory(queueName, storyFile.file)
+			} catch (err) {
+				console.log('DUMMY LOG : ', err)
+				error = err
+				story = { // Create an empty story when an error occurs
+					fields: {},
+					meta: {},
+					cues: [],
+					error: err.message()
 				}
 			}
 
-			/** The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
-			 * is per second. So time time will be compared for changes within 1 minute. And if the
-			 * story has been updates within the last minute, it will keep updating for a whole minute.
-			 */
-			let fileDate = Math.floor(Date.parse(storyFile.modified) / 100000)
-
-			if (fileDate - oldModified > 1
-				|| Date.now() / 100000 - fileDate <= 1
-				|| storyFile.file !== oldFileId
-			) {
-				this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
-					console.log('DUMMY LOG : ', error)
-					this._logger.info('UPDATING : ' + queueName + ' :' + storyFile.file)
-					/**
-					 * Add fileId and update modifyDate to ftp reference in storyFile
-					 */
-					story.fileId = storyFile.file
-					story.fields.modifyDate = storyFile.modified / 1000
-					this._logger.debug('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
-					rawStory = {
-						'story': story
-					}
-					resolve(rawStory)
-				})
-			} else {
-				rawStory = {
-					'story': oldRundown.segments[index].iNewsStory
-				}
-				resolve(rawStory)
-			}
-		})
+			this._logger.info('UPDATING : ' + queueName + ' :' + storyFile.file)
+			/* Add fileId and update modifyDate to ftp reference in storyFile */
+			story.fileId = storyFile.file
+			story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
+			this._logger.debug('Queue : ', queueName, error || '', ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
+			return story
+		} else {
+			return oldRundown.segments[index].iNewsStory
+		}
 	}
 }

@@ -131,12 +131,12 @@ export class RunningOrderWatcher extends EventEmitter {
 		}))
 	}
 
-	public async DownloadRunningOrderById (runningOrderId: string) {
-		if (this.runningOrders[runningOrderId]) {
-			delete this.runningOrders[runningOrderId]
-		}
-		return this.rundownManager.downloadRunningOrder(runningOrderId, this.runningOrders[runningOrderId])
-	}
+	// public async DownloadRunningOrderById (runningOrderId: string) {
+	// 	if (this.runningOrders[runningOrderId]) {
+	// 		delete this.runningOrders[runningOrderId]
+	// 	}
+	// 	return this.rundownManager.downloadRunningOrder(runningOrderId, this.runningOrders[runningOrderId])
+	// }
 
 	async checkINewsRundownById (runningOrderId: string): Promise<InewsRundown> {
 		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId, this.runningOrders[runningOrderId])

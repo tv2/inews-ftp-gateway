@@ -78,6 +78,7 @@ export class RundownManager {
 	 * flushed after use.
 	 */
 	public EmptyInewsFtpBuffer () {
+		console.log(`QUEUE LENGTH at empty request: ${this.inewsConnection ? this.inewsConnection.queueLength() : -1}`)
 		if (!this.queueLock) {
 			this.queueLock = true
 			// TODO: This workaround clears the _queue inside johnsand@inews:
@@ -105,7 +106,7 @@ export class RundownManager {
 			let dirList = await this._listStories(queueName)
 			if (dirList.length > 0) {
 				stories = await Promise.all(
-					dirList.map((ftpFileName: INewsFile, index: number) => {
+					dirList.map((ftpFileName: INewsDirItem, index: number) => {
 						return this.downloadINewsStory(index, queueName, ftpFileName, oldRundown)
 					}))
 			} else {

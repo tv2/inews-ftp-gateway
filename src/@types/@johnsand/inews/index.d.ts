@@ -47,6 +47,7 @@ declare module '@johnsand/inews' {
 			list (queneName: string, cb: (error: Error | null, dirList: Array<INewsDirItem>) => void): void
 			story (queueName: string, file: string, cb: (error: Error | null, rawStory: INewsStory) => void): void
 			storyNsml (queueName: string, file: string, cb: (error: Error | null, nsml: string) => void): void
+			queueLength (): number
 			on: ((event: 'status', listener: (status: string) => void) => this) &
 			  ((event: 'ready', listener: () => void) => this) &
 				((event: 'error', listener: (err: Error) => void) => this) &

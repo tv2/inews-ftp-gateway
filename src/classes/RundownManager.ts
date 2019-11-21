@@ -11,12 +11,12 @@ function isFile (f: INewsDirItem): f is INewsFile {
 
 export class RundownManager {
 
-	public queueLock: boolean
+	// public queueLock: boolean
 	private _listStories: (queueName: string) => Promise<Array<INewsDirItem>>
 	private _getStory: (queueName: string, story: string) => Promise<INewsStory>
 
 	constructor (private _logger: Winston.LoggerInstance, private inewsConnection?: INewsClient) {
-		this.queueLock = false
+		// this.queueLock = false
 		if (this.inewsConnection) {
 			this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
 			this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
@@ -77,7 +77,7 @@ export class RundownManager {
 	 * This is a workaround, as the buffers inside the iNewsFTP service are not
 	 * flushed after use.
 	 */
-	public EmptyInewsFtpBuffer () {
+	/* public EmptyInewsFtpBuffer () {
 		console.log(`QUEUE LENGTH at empty request: ${this.inewsConnection ? this.inewsConnection.queueLength() : -1}`)
 		if (!this.queueLock) {
 			this.queueLock = true
@@ -92,7 +92,7 @@ export class RundownManager {
 			}
 			this.queueLock = false
 		}
-	}
+	} */
 
 	/**
 	 * Download a rundown from iNews.
@@ -100,7 +100,7 @@ export class RundownManager {
 	 * @param oldRundown Old rundown object.
 	 */
 	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<INewsStoryGW>> {
-		this.queueLock = true
+		// this.queueLock = true
 		let stories: Array<INewsStoryGW> = []
 		try {
 			let dirList = await this._listStories(queueName)
@@ -114,9 +114,9 @@ export class RundownManager {
 			}
 		} catch (err) {
 			this._logger.error('Error downloading iNews rundown: ', err, err.stack)
-		} finally {
+		} /* finally {
 			this.queueLock = false
-		}
+		} */
 		return stories
 	}
 

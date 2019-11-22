@@ -86,7 +86,7 @@ export class RunningOrderWatcher extends EventEmitter {
 		this.pollTimer = setInterval(() => {
 			if (this.currentlyChecking) {
 				if (passoverTimings++ > 10) {
-					this._logger.warning(`Check iNews rundown has been skipped ${passoverTimings} times.`)
+					this._logger.warn(`Check iNews rundown has been skipped ${passoverTimings} times.`)
 					this.coreHandler.setStatus(P.StatusCode.WARNING_MINOR,
 						[`Check iNews not run for ${passoverTimings * this.pollInterval}ms`]).catch(this.logger.error)
 				}

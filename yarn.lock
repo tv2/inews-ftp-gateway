@@ -3237,7 +3237,7 @@ jest@^24.5.0:
 
 jobs-queue@0.0.x, "jobs-queue@git+https://github.com/sparkpunkd/node-jobs-queue.git#master":
   version "0.0.4"
-  resolved "git+https://github.com/sparkpunkd/node-jobs-queue.git#e02d6f2124faad48168a72fac55135ede2890739"
+  resolved "git+https://github.com/sparkpunkd/node-jobs-queue.git#bc9d67065fa9fd534ba105fa64d660b7e4ed34df"
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"

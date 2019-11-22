@@ -183,13 +183,17 @@ export class RunningOrderWatcher extends EventEmitter {
 							// If everything except name, id, fileId and modifyDate is the same:
 							let tempNewSegment: RundownSegment = clone(segment)
 							let tempOldSegment = oldRundown.segments.find(item => item.rank === segment.rank) as RundownSegment
-							tempNewSegment.iNewsStory.id = tempOldSegment.iNewsStory.id
-							tempNewSegment.iNewsStory.fileId = tempOldSegment.iNewsStory.fileId
-							tempNewSegment.iNewsStory.fields.title = tempOldSegment.iNewsStory.fields.title
-							tempNewSegment.iNewsStory.fields.modifyDate = tempOldSegment.iNewsStory.fields.modifyDate
-							if (JSON.stringify(tempNewSegment.iNewsStory) === JSON.stringify(tempOldSegment.iNewsStory)) {
-								oldSegment = tempOldSegment
-								segment.externalId = tempOldSegment.externalId
+							if (!tempOldSegment) {
+								this.logger.warn(`Failed to find old rundown segment with rank ${segment.rank}.`)
+							} else {
+								tempNewSegment.iNewsStory.id = tempOldSegment.iNewsStory.id
+								tempNewSegment.iNewsStory.fileId = tempOldSegment.iNewsStory.fileId
+								tempNewSegment.iNewsStory.fields.title = tempOldSegment.iNewsStory.fields.title
+								tempNewSegment.iNewsStory.fields.modifyDate = tempOldSegment.iNewsStory.fields.modifyDate
+								if (JSON.stringify(tempNewSegment.iNewsStory) === JSON.stringify(tempOldSegment.iNewsStory)) {
+									oldSegment = tempOldSegment
+									segment.externalId = tempOldSegment.externalId
+								}
 							}
 						}
 					}

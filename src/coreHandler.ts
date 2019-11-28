@@ -13,6 +13,7 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
+import { mutateRundown } from './mutate'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -339,7 +340,17 @@ export class CoreHandler {
 	/** Get snapshot of the gateway. */
 	getSnapshot (): any {
 		this.logger.info('getSnapshot')
-		return {} // TODO: send some snapshot data?
+		if (this.iNewsHandler?.iNewsWatcher?.runningOrders) {
+			const ret: any = {}
+			Object.keys(this.iNewsHandler.iNewsWatcher.runningOrders).forEach(key => {
+				if (this.iNewsHandler?.iNewsWatcher?.runningOrders[key]) {
+					ret[key] = mutateRundown(this.iNewsHandler.iNewsWatcher.runningOrders[key])
+				}
+			})
+			return ret
+		}
+
+		return {}
 	}
 	/** Reload a running order */
 	// TODO - check what calls this?

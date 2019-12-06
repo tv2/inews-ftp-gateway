@@ -164,7 +164,7 @@ export class RundownManager {
 					meta: {},
 					cues: [],
 					fileId: storyFile.file,
-					error: err.message()
+					error: (err as Error).message
 				}
 			}
 

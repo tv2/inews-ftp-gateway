@@ -170,7 +170,7 @@ export class RunningOrderWatcher extends EventEmitter {
 				let segmentsToCreate: RundownSegment[] = []
 				// Go through the new segments for changes:
 				newRundown.segments.forEach((segment: RundownSegment) => {
-					let oldSegment: RundownSegment = oldRundown.segments.find(item => item.externalId === segment.externalId) as RundownSegment // TODO: handle better
+					let oldSegment: RundownSegment | undefined = oldRundown ? oldRundown.segments.find(item => item.externalId === segment.externalId) as RundownSegment : undefined // TODO: handle better
 					if (!oldSegment) {
 						// If name and first part of of ID is the same:
 						let tempOldSegment = oldRundown.segments.find(item => item.name === segment.name) as RundownSegment
@@ -202,7 +202,7 @@ export class RunningOrderWatcher extends EventEmitter {
 					if (segment && !oldSegment) {
 						segmentsToCreate.push(segment)
 					} else {
-						if (!_.isEqual(segment.serialize(), oldSegment.serialize())) {
+						if (oldSegment && !_.isEqual(segment.serialize(), oldSegment.serialize())) {
 							this.emit('segment_update', rundownId, segment.externalId, segment)
 						}
 					}

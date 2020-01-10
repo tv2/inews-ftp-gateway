@@ -203,6 +203,7 @@ export class RunningOrderWatcher extends EventEmitter {
 						segmentsToCreate.push(segment)
 					} else {
 						if (oldSegment && !_.isEqual(segment.serialize(), oldSegment.serialize())) {
+							this.logger.info(`Updating segment ${segment.name} with externalId ${segment.externalId}`)
 							this.emit('segment_update', rundownId, segment.externalId, segment)
 						}
 					}

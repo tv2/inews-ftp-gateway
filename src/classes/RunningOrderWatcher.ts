@@ -175,7 +175,7 @@ export class RunningOrderWatcher extends EventEmitter {
 						// If name and first part of of ID is the same:
 						let tempOldSegment = oldRundown.segments.find(item => item.name === segment.name) as RundownSegment
 						if (tempOldSegment) {
-							if (tempOldSegment.externalId.substring(0, 8) === segment.externalId.substring(0, 8)) {
+							if (tempOldSegment.externalId === segment.externalId) {
 								oldSegment = tempOldSegment
 								segment.externalId = tempOldSegment.externalId
 							}

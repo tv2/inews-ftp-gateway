@@ -23,7 +23,7 @@ export class ParsedINewsIntoSegments {
 				sheetId,
 				story,
 				story.fields.modifyDate,
-				story.id || `${sheetId}-${inewsRaw[x].fileId}${inewsRaw[x].fields.pageNumber ? `-${inewsRaw[x].fields.pageNumber}` : ''}`,
+				story.id || `${inewsRaw[x].identifier}`,
 				x,
 				story.fields.title || '',
 				false

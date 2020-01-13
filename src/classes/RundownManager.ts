@@ -74,27 +74,6 @@ export class RundownManager {
 	}
 
 	/**
-	 * This is a workaround, as the buffers inside the iNewsFTP service are not
-	 * flushed after use.
-	 */
-	/* public EmptyInewsFtpBuffer () {
-		console.log(`QUEUE LENGTH at empty request: ${this.inewsConnection ? this.inewsConnection.queueLength() : -1}`)
-		if (!this.queueLock) {
-			this.queueLock = true
-			// TODO: This workaround clears the _queue inside johnsand@inews:
-			try {
-				if (this.inewsConnection) {
-					this.inewsConnection._queue.queuedJobList.list = {}
-					this.inewsConnection._queue.inprogressJobList.list = {}
-				}
-			} catch (error) {
-				this._logger.error('Error flushing FTP Connection : ', error)
-			}
-			this.queueLock = false
-		}
-	} */
-
-	/**
 	 * Download a rundown from iNews.
 	 * @param queueName Name of queue to download.
 	 * @param oldRundown Old rundown object.
@@ -153,9 +132,7 @@ export class RundownManager {
 			let story: INewsStoryGW
 			let error: Error | null = null
 			try {
-				story = Object.assign(
-					await this._getStory(queueName, storyFile.file),
-					{ fileId: storyFile.file })
+				story = { ...await this._getStory(queueName, storyFile.file), fileId: storyFile.file, identifier: (storyFile as INewsFile).identifier }
 			} catch (err) {
 				console.log('DUMMY LOG : ', err)
 				error = err
@@ -164,7 +141,8 @@ export class RundownManager {
 					meta: {},
 					cues: [],
 					fileId: storyFile.file,
-					error: (err as Error).message
+					error: (err as Error).message,
+					identifier: ''
 				}
 			}
 

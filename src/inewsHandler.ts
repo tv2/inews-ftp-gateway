@@ -17,7 +17,7 @@ type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions
 
 const emptyStory = (): INewsStoryGW => {
-	return { fields: {}, meta: {}, cues: [], fileId: '' }
+	return { fields: {}, meta: {}, cues: [], fileId: '', identifier: '' }
 }
 
 export interface INewsDeviceSettings {

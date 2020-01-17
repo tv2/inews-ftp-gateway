@@ -1,6 +1,6 @@
 import { InewsRundown } from './datastructures/Rundown'
 import * as Winston from 'winston'
-import { ParsedINewsIntoSegments } from './ParsedINewsToSegments'
+import { ParsedINewsIntoSegments, SegmentRankings } from './ParsedINewsToSegments'
 import { INewsClient, INewsStory, INewsDirItem, INewsFile } from '@johnsand/inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
@@ -10,6 +10,8 @@ function isFile (f: INewsDirItem): f is INewsFile {
 }
 
 export class RundownManager {
+
+	private previousRanks: SegmentRankings = {}
 
 	// public queueLock: boolean
 	private _listStories: (queueName: string) => Promise<Array<INewsDirItem>>
@@ -67,7 +69,14 @@ export class RundownManager {
 		let version = 'v0.2'
 
 		let rundown = new InewsRundown(runningOrderId, runningOrderId, version)
-		let segments = ParsedINewsIntoSegments.parse(runningOrderId, rundownRaw)
+		let segments = ParsedINewsIntoSegments.parse(runningOrderId, rundownRaw, this.previousRanks)
+		this.previousRanks = {}
+		segments.forEach((segment, position) => {
+			this.previousRanks[segment.externalId] = {
+				rank: segment.rank,
+				position: position + 1
+			}
+		})
 		rundown.addSegments(segments)
 		this._logger.info('DONE : ', name, ' converted to Sofie Rundown')
 		return rundown

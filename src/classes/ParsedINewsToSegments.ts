@@ -14,7 +14,12 @@ export interface IParsedElement {
 }
 
 export interface SegmentRankings {
-	[segmentId: string]: number
+	[segmentId: string]: {
+		/** Assigned rank */
+		rank: number,
+		/** Position in arra */
+		position: number
+	}
 }
 
 export class ParsedINewsIntoSegments {
@@ -25,23 +30,28 @@ export class ParsedINewsIntoSegments {
 		let rank = 1
 		let movedPieces = 0
 		let lastKnownIdent = ''
+		let lastAssignedRank = 0
 		inewsRaw.forEach((rawSegment) => {
+			// Segment previously existed
 			if (Object.keys(previousRankings).includes(rawSegment.identifier)) {
+
 				// Segment hasn't moved
-				if (rank - movedPieces === previousRankings[rawSegment.identifier]) {
+				if (rank - movedPieces === previousRankings[rawSegment.identifier].position) {
 					segments.push(
 						new RundownSegment(
 							rundownId,
 							rawSegment,
 							rawSegment.fields.modifyDate,
 							rawSegment.id || `${rawSegment.identifier}`,
-							rank - movedPieces,
+							previousRankings[rawSegment.identifier].rank,
 							rawSegment.fields.title || '',
 							false
 						)
 					)
+					lastAssignedRank = previousRankings[rawSegment.identifier].rank
 					rank += 1
 					lastKnownIdent = rawSegment.identifier
+					movedPieces = 0
 				} else {
 					segments.push(
 						new RundownSegment(
@@ -49,20 +59,23 @@ export class ParsedINewsIntoSegments {
 							rawSegment,
 							rawSegment.fields.modifyDate,
 							rawSegment.id || `${rawSegment.identifier}`,
-							(rank - 1 + this.findNextDefinedRank(lastKnownIdent, previousRankings)) / 2,
+							(rank - 1 + this.findNextDefinedRank(lastKnownIdent, previousRankings, lastAssignedRank)) / 2,
 							rawSegment.fields.title || '',
 							false
 						)
 					)
 
+					lastAssignedRank = (rank - 1 + this.findNextDefinedRank(lastKnownIdent, previousRankings, lastAssignedRank)) / 2
 					rank += 1
 					movedPieces += 1
 				}
 			} else {
-				let newrank = this.findNextDefinedRank(lastKnownIdent, previousRankings)
+				let newrank = this.findNextDefinedRank(lastKnownIdent, previousRankings, lastAssignedRank)
 
-				if (segments.some(segment => segment.rank === newrank) || Object.values(lastKnownIdent).indexOf(newrank.toString())) {
-					newrank = (this.getLastKnownRank(lastKnownIdent, previousRankings) + this.findNextDefinedRank(lastKnownIdent, previousRankings)) / 2
+				let lastAttempt = newrank
+				while (segments.some(segment => segment.rank === newrank) || Object.values(previousRankings).some(rank => rank.rank === newrank)) {
+					newrank = (lastAssignedRank + lastAttempt) / 2
+					lastAttempt = newrank
 				}
 
 				let story = rawSegment
@@ -75,6 +88,7 @@ export class ParsedINewsIntoSegments {
 					story.fields.title || '',
 					false
 				)
+				lastAssignedRank = newrank
 				segments.push(segment)
 			}
 		})
@@ -82,28 +96,28 @@ export class ParsedINewsIntoSegments {
 		return segments.sort((a, b) => a.rank < b.rank ? -1 : 1)
 	}
 
-	static findNextDefinedRank (lastKnownIdent: string, previousRanks: SegmentRankings): number {
+	static findNextDefinedRank (lastKnownIdent: string, previousRanks: SegmentRankings, lastAssignedRank: number): number {
 		if (!Object.keys(previousRanks).length) {
-			return 1
+			return Math.floor(lastAssignedRank + 1)
 		}
 
 		if (!lastKnownIdent.length) {
-			return previousRanks[Object.keys(previousRanks)[0]]
+			return previousRanks[Object.keys(previousRanks)[0]].rank
 		}
 
 		const lastPosition = Object.keys(previousRanks).indexOf(lastKnownIdent)
 
 		if (lastPosition === -1) {
-			return 1
+			return Math.floor(lastAssignedRank + 1)
 		}
 
 		const nextPosition = previousRanks[Object.keys(previousRanks)[lastPosition + 1]]
 
 		if (nextPosition) {
-			return nextPosition
+			return nextPosition.rank
 		}
 
-		return previousRanks[Object.keys(previousRanks)[lastPosition]] + 1
+		return previousRanks[Object.keys(previousRanks)[lastPosition]].rank + 1
 	}
 
 	static getLastKnownRank (lastKnownIdent: string, previousRanks: SegmentRankings): number {
@@ -114,7 +128,7 @@ export class ParsedINewsIntoSegments {
 		const val = previousRanks[lastKnownIdent]
 
 		// tslint:disable-next-line: strict-type-predicates
-		if (val !== undefined) return val
+		if (val !== undefined) return val.rank
 
 		return 0
 	}

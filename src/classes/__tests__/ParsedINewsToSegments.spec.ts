@@ -132,15 +132,15 @@ describe('ParsedINewsIntoSegments', () => {
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, {}).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
 			{
-				rank: 1,
+				rank: 101,
 				externalId: 'segment-01'
 			},
 			{
-				rank: 2,
+				rank: 102,
 				externalId: 'segment-02'
 			},
 			{
-				rank: 3,
+				rank: 103,
 				externalId: 'segment-03'
 			}
 		])

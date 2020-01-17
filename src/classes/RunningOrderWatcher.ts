@@ -194,77 +194,44 @@ export class RunningOrderWatcher extends EventEmitter {
 	}
 
 	private processUpdatedRunningOrder (rundownId: string, rundown: InewsRundown | null) {
+		const updates = ProcessUpdatedRunningOrder(rundownId, rundown, this.runningOrders, this.logger)
 
-		const oldRundown = this.runningOrders[rundownId]
-
-		// Check if runningOrders have changed:
-		if (!rundown && oldRundown) {
-			this.emit('rundown_delete', rundownId)
-		} else if (rundown && !oldRundown) {
-			this.emit('rundown_create', rundownId, rundown)
-		} else if (rundown && oldRundown) {
-
-			if (!_.isEqual(rundown.serialize(), oldRundown.serialize())) {
-
-				console.log(rundown.serialize()) // debug
-
-				this.emit('rundown_update', rundownId, rundown)
-			} else {
-				const newRundown: InewsRundown = rundown
-				let segmentsToCreate: RundownSegment[] = []
-				// Go through the new segments for changes:
-				newRundown.segments.forEach((segment: RundownSegment) => {
-					let oldSegment: RundownSegment | undefined = oldRundown ? oldRundown.segments.find(item => item && segment && item.externalId === segment.externalId) as RundownSegment : undefined // TODO: handle better
-					if (!oldSegment && oldRundown) {
-						// If name and first part of of ID is the same:
-						let tempOldSegment = oldRundown.segments.find(item => item.name === segment.name) as RundownSegment
-						if (tempOldSegment) {
-							if (tempOldSegment.externalId.substring(0, 8) === segment.externalId.substring(0, 8)) {
-								oldSegment = tempOldSegment
-								segment.externalId = tempOldSegment.externalId
-							}
-						} else {
-							// If everything except name, id, fileId and modifyDate is the same:
-							let tempNewSegment: RundownSegment = clone(segment)
-							let tempOldSegment = oldRundown.segments.find(item => item.rank === segment.rank) as RundownSegment
-							if (!tempOldSegment) {
-								this.logger.warn(`Failed to find old rundown segment with rank ${segment.rank}.`)
-							} else {
-								tempNewSegment.iNewsStory.id = tempOldSegment.iNewsStory.id
-								tempNewSegment.iNewsStory.fileId = tempOldSegment.iNewsStory.fileId
-								tempNewSegment.iNewsStory.fields.title = tempOldSegment.iNewsStory.fields.title
-								tempNewSegment.iNewsStory.fields.modifyDate = tempOldSegment.iNewsStory.fields.modifyDate
-								if (JSON.stringify(tempNewSegment.iNewsStory) === JSON.stringify(tempOldSegment.iNewsStory)) {
-									oldSegment = tempOldSegment
-									segment.externalId = tempOldSegment.externalId
-								}
-							}
-						}
-					}
-
-					// Update if needed:
-					if (segment && !oldSegment) {
-						segmentsToCreate.push(segment)
-					} else {
-						if (oldSegment && !_.isEqual(segment.serialize(), oldSegment.serialize())) {
-							this.logger.info(`Updating segment ${segment.name} with externalId ${segment.externalId}`)
-							this.emit('segment_update', rundownId, segment.externalId, segment)
-						}
-					}
-				})
-
-				// Go through the old segments for deletion:
-				oldRundown.segments.forEach((oldSegment: RundownSegment) => {
-					if (!rundown.segments.find(segment => segment.externalId === oldSegment.externalId)) {
-						this.emit('segment_delete', rundownId, oldSegment.externalId)
-					}
-				})
-				// Go through the segments for creation:
-				segmentsToCreate.forEach((segment: RundownSegment) => {
-					this.emit('segment_create', rundownId, segment.externalId, segment)
-				})
+		updates.forEach((update) => {
+			switch (update.type) {
+				case RundownChangeType.RUNDOWN_DELETE:
+					this.emit('rundown_delete', update.rundownExternalId)
+					break
+				case RundownChangeType.RUNDOWN_CREATE:
+					this.emit('rundown_create', update.rundownExternalId, this.runningOrders[update.rundownExternalId])
+					break
+				case RundownChangeType.RUNDOWN_UPDATE:
+					this.emit('rundown_update', update.rundownExternalId, this.runningOrders[update.rundownExternalId])
+					break
+				case RundownChangeType.SEGMENT_UPDATE:
+					this.emit(
+						'segment_update',
+						update.rundownExternalId,
+						update.segmentExternalId,
+						this.runningOrders[update.rundownExternalId].segments.find((segment) => segment.externalId === update.segmentExternalId)
+					)
+					break
+				case RundownChangeType.SEGMENT_DELETE:
+					this.emit(
+						'segment_delete',
+						update.rundownExternalId,
+						update.segmentExternalId
+					)
+					break
+				case RundownChangeType.SEGMENT_CREATE:
+					this.emit(
+						'segment_create',
+						update.rundownExternalId,
+						update.segmentExternalId,
+						this.runningOrders[update.rundownExternalId].segments.find((segment) => segment.externalId === update.segmentExternalId)
+					)
+					break
 			}
-		}
+		})
 
 		// Update the stored data:
 		if (rundown) {
@@ -292,13 +259,11 @@ export function ProcessUpdatedRunningOrder (
 			type: RundownChangeType.RUNDOWN_DELETE,
 			rundownExternalId: rundownId
 		})
-		// this.emit('rundown_delete', rundownId)
 	} else if (rundown && !oldRundown) {
 		changes.push({
 			type: RundownChangeType.RUNDOWN_CREATE,
 			rundownExternalId: rundownId
 		})
-		// this.emit('rundown_create', rundownId, rundown)
 	} else if (rundown && oldRundown) {
 
 		if (!_.isEqual(rundown.serialize(), oldRundown.serialize())) {
@@ -306,7 +271,6 @@ export function ProcessUpdatedRunningOrder (
 				type: RundownChangeType.RUNDOWN_UPDATE,
 				rundownExternalId: rundownId
 			})
-			// this.emit('rundown_update', rundownId, rundown)
 		} else {
 			const newRundown: InewsRundown = rundown
 			let segmentsToCreate: RundownSegment[] = []
@@ -326,7 +290,6 @@ export function ProcessUpdatedRunningOrder (
 						let tempNewSegment: RundownSegment = clone(segment)
 						let tempOldSegment = oldRundown.segments.find(item => item.rank === segment.rank) as RundownSegment
 						if (!tempOldSegment) {
-							// TODO: Replace with logger
 							logger?.warn(`Failed to find old rundown segment with rank ${segment.rank}.`)
 						} else {
 							tempNewSegment.iNewsStory.id = tempOldSegment.iNewsStory.id
@@ -351,8 +314,7 @@ export function ProcessUpdatedRunningOrder (
 							rundownExternalId: rundownId,
 							segmentExternalId: segment.externalId
 						})
-						// this.logger.info(`Updating segment ${segment.name} with externalId ${segment.externalId}`)
-						// this.emit('segment_update', rundownId, segment.externalId, segment)
+						logger?.info(`Updating segment ${segment.name} with externalId ${segment.externalId}`)
 					}
 				}
 			})
@@ -365,7 +327,6 @@ export function ProcessUpdatedRunningOrder (
 						rundownExternalId: rundownId,
 						segmentExternalId: oldSegment.externalId
 					})
-					// this.emit('segment_delete', rundownId, oldSegment.externalId)
 				}
 			})
 			// Go through the segments for creation:
@@ -375,18 +336,9 @@ export function ProcessUpdatedRunningOrder (
 					rundownExternalId: rundownId,
 					segmentExternalId: segment.externalId
 				})
-				// this.emit('segment_create', rundownId, segment.externalId, segment)
 			})
 		}
 	}
-
-	// Update the stored data:
-	// TODO: Move to caller function
-	/*if (rundown) {
-		runningOrders[rundownId] = clone(rundown)
-	} else {
-		delete runningOrders[rundownId]
-	}*/
 
 	return changes
 }

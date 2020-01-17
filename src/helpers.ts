@@ -1,3 +1,3 @@
-export function literal<T>(o: T) {
+export function literal<T> (o: T) {
 	return o
 }

@@ -27,6 +27,24 @@ export class ParsedINewsIntoSegments {
 	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings): RundownSegment[] {
 		let segments: RundownSegment[] = []
 
+		// Initial startup of gateway
+		if (JSON.stringify(previousRankings) === JSON.stringify({})) {
+			inewsRaw.forEach((rawSegment, position) => {
+				segments.push(
+					new RundownSegment(
+						rundownId,
+						rawSegment,
+						rawSegment.fields.modifyDate,
+						rawSegment.id || `${rawSegment.identifier}`,
+						position + 101, // Offset from 0 to allow for stories arriving out of order
+						rawSegment.fields.title || '',
+						false
+					)
+				)
+			})
+			return segments
+		}
+
 		let rank = 1
 		let movedPieces = 0
 		let lastKnownIdent = ''

@@ -17,7 +17,7 @@
   "author": "SuperFly.tv",
   "scripts": {
     "info": "npm-scripts-info",
-    "build": "trash dist && yarn build:main",
+    "build": "trash dist && yarn test && yarn build:main",
     "buildstart": "yarn build && yarn start",
     "buildstart:dev": "yarn build && DEV=true yarn start",
     "buildinspect": "yarn build && yarn inspect",
@@ -87,7 +87,7 @@
   "resolutions": {
     "typedoc/**/marked": "^0.7.0",
     "handlebars": "^4.3.0",
-		"jobs-queue": "git+https://github.com/sparkpunkd/node-jobs-queue.git#master"
+    "jobs-queue": "git+https://github.com/sparkpunkd/node-jobs-queue.git#master"
   },
   "devDependencies": {
     "@types/clone": "^0.1.30",

@@ -96,6 +96,7 @@ export class ParsedINewsIntoSegments {
 					lastAssignedRank = (rank - 1 + this.findNextDefinedRank(lastKnownIdent, previousRankings, lastAssignedRank)) / 2
 					rank += 1
 					movedPieces += 1
+					lastKnownIdent = rawSegment.identifier
 				}
 			} else {
 				let newrank = this.findNextDefinedRank(lastKnownIdent, previousRankings, lastAssignedRank)
@@ -117,6 +118,7 @@ export class ParsedINewsIntoSegments {
 					false
 				)
 				lastAssignedRank = newrank
+				lastKnownIdent = rawSegment.identifier
 				segments.push(segment)
 			}
 		})

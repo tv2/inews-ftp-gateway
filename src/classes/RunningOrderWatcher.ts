@@ -72,7 +72,7 @@ export class RunningOrderWatcher extends EventEmitter {
 		((event: 'segment_update', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this)
 
 	// Fast = list diffs, Slow = fetch All
-	public pollInterval: number = 10000
+	public pollInterval: number = 1000
 
 	private pollTimer: NodeJS.Timer | undefined
 

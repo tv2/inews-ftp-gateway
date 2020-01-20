@@ -27,7 +27,7 @@ export class ParsedINewsIntoSegments {
 	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings): RundownSegment[] {
 		let segments: RundownSegment[] = []
 
-		if (inewsRaw.some(rawSegment => !!rawSegment.identifier)) {
+		if (inewsRaw.some(rawSegment => !rawSegment.identifier)) {
 			return segments
 		}
 

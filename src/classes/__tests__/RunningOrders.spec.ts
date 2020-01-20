@@ -1,9 +1,9 @@
-let fs = require('fs')
+// let fs = require('fs')
 // let ftpData = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/ftpData.json'))
-let parsedData = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/parsedData.json'))
+// let parsedData = JSON.parse(fs.readFileSync('src/classes/__tests__/__mocks__/parsedData.json'))
 import { InewsRundown } from '../datastructures/Rundown'
-import winston = require('winston')
-import { RundownManager } from '../RundownManager'
+// import winston = require('winston')
+// import { RundownManager } from '../RundownManager'
 
 describe('RunningOrders', () => {
 
@@ -13,7 +13,7 @@ describe('RunningOrders', () => {
 	})
 })
 
-describe('RundownManager', () => {
+/*describe('RundownManager', () => {
 	it('SplitRawDataToElements', () => {
 		let id = '00000000000001'
 		let logger = new winston.Logger()
@@ -24,4 +24,4 @@ describe('RundownManager', () => {
 		// fs.writeFileSync('src/classes/__tests__/__mocks__/updatedParsedData.json', JSON.stringify(managerParsedData))
 		expect(convertedRundown).toMatchObject(parsedData)
 	})
-})
+})*/

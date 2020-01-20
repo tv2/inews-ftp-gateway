@@ -28,19 +28,26 @@ export class ParsedINewsIntoSegments {
 		let segments: RundownSegment[] = []
 
 		// Initial startup of gateway
+		let pad = 1
 		if (JSON.stringify(previousRankings) === JSON.stringify({})) {
-			inewsRaw.forEach((rawSegment, position) => {
+			inewsRaw.forEach((rawSegment) => {
+				if (!rawSegment.identifier) {
+					pad += 1
+					return
+				}
+
 				segments.push(
 					new RundownSegment(
 						rundownId,
 						rawSegment,
 						rawSegment.fields.modifyDate,
 						rawSegment.id || `${rawSegment.identifier}`,
-						position + 101, // Offset from 0 to allow for stories arriving out of order
+						pad * 100, // Offset from 0 to allow for stories arriving out of order
 						rawSegment.fields.title || '',
 						false
 					)
 				)
+				pad += 1
 			})
 			return segments
 		}
@@ -50,6 +57,9 @@ export class ParsedINewsIntoSegments {
 		let lastKnownIdent = ''
 		let lastAssignedRank = 0
 		inewsRaw.forEach((rawSegment) => {
+			if (!rawSegment.identifier) {
+				return
+			}
 			// Segment previously existed
 			if (Object.keys(previousRankings).includes(rawSegment.identifier)) {
 

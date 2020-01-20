@@ -18,7 +18,7 @@ declare module '@johnsand/inews' {
 			cues: Array<Array<string | null>>
 			body?: string
 			/** Same identifier as the file the story came from */
-			identifier: string
+			identifier?: string
 		}
 
 		interface INewsDirItem {
@@ -30,7 +30,8 @@ declare module '@johnsand/inews' {
 
 		interface INewsFile extends INewsDirItem {
 			filetype: 'file'
-			identifier: string
+			/* Unique identifier. Sometimes blank (temporarily) */
+			identifier?: string
 			locator: string
 			storyName: string
 		}

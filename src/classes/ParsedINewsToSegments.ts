@@ -32,7 +32,7 @@ export class ParsedINewsIntoSegments {
 		}
 
 		// Initial startup of gateway
-		let pad = 1
+		let pad = 10
 		if (JSON.stringify(previousRankings) === JSON.stringify({})) {
 			inewsRaw.forEach((rawSegment) => {
 				if (!rawSegment.identifier) {
@@ -51,7 +51,7 @@ export class ParsedINewsIntoSegments {
 						false
 					)
 				)
-				pad += 1
+				pad += 10
 			})
 			return segments
 		}

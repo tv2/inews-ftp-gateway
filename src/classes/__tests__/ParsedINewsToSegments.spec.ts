@@ -208,7 +208,7 @@ describe('ParsedINewsIntoSegments', () => {
 
 	it('Preserves existing ranks and creates new', () => {
 		const iNewsRaw: INewsStoryGW[] = [
-			segmentGW01, segmentGW02, segmentGW03, segmentGW04, segmentGW05, segmentGW06, segmentGW07
+			segmentGW08, segmentGW01, segmentGW02, segmentGW03, segmentGW04, segmentGW05, segmentGW06, segmentGW07
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
@@ -219,6 +219,10 @@ describe('ParsedINewsIntoSegments', () => {
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
+			{
+				rank: 0.5,
+				externalId: 'segment-08'
+			},
 			{
 				rank: 1,
 				externalId: 'segment-01'

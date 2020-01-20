@@ -1,5 +1,4 @@
 import { RundownSegment, INewsStoryGW } from './datastructures/Segment'
-import winston = require('winston')
 
 export interface IParsedElement {
 	data: {
@@ -25,7 +24,7 @@ export interface SegmentRankings {
 
 export class ParsedINewsIntoSegments {
 
-	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings, logger?: winston.LoggerInstance): RundownSegment[] {
+	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings): RundownSegment[] {
 		let segments: RundownSegment[] = []
 
 		if (inewsRaw.some(rawSegment => !rawSegment.identifier)) {
@@ -124,12 +123,6 @@ export class ParsedINewsIntoSegments {
 				segments.push(segment)
 			}
 		})
-
-		logger?.info(JSON.stringify(
-			segments.map(
-				segment => { return { rank: segment.rank, identifier: segment.externalId } }
-			)
-		))
 
 		return segments.sort((a, b) => a.rank < b.rank ? -1 : 1)
 	}

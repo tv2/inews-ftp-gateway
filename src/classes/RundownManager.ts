@@ -69,7 +69,7 @@ export class RundownManager {
 		let version = 'v0.2'
 
 		let rundown = new InewsRundown(runningOrderId, runningOrderId, version)
-		let segments = ParsedINewsIntoSegments.parse(runningOrderId, rundownRaw, this.previousRanks, this._logger)
+		let segments = ParsedINewsIntoSegments.parse(runningOrderId, rundownRaw, this.previousRanks)
 		this.previousRanks = {}
 		segments.forEach((segment, position) => {
 			this.previousRanks[segment.externalId] = {

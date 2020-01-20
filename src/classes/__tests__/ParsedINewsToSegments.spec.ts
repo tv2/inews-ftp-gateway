@@ -206,6 +206,50 @@ describe('ParsedINewsIntoSegments', () => {
 		])
 	})
 
+	it('Preserves existing ranks and creates new', () => {
+		const iNewsRaw: INewsStoryGW[] = [
+			segmentGW01, segmentGW02, segmentGW03, segmentGW04, segmentGW05, segmentGW06, segmentGW07
+		]
+		const rundownId = 'test-rundown'
+		const previousRanks: SegmentRankings = {
+			'segment-01': { rank: 1, position: 1 },
+			'segment-02': { rank: 2, position: 2 },
+			'segment-03': { rank: 3, position: 3 }
+		}
+
+		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
+		expect(result).toEqual([
+			{
+				rank: 1,
+				externalId: 'segment-01'
+			},
+			{
+				rank: 2,
+				externalId: 'segment-02'
+			},
+			{
+				rank: 3,
+				externalId: 'segment-03'
+			},
+			{
+				rank: 4,
+				externalId: 'segment-04'
+			},
+			{
+				rank: 5,
+				externalId: 'segment-05'
+			},
+			{
+				rank: 6,
+				externalId: 'segment-06'
+			},
+			{
+				rank: 7,
+				externalId: 'segment-07'
+			}
+		])
+	})
+
 	it('Creates a new rank for a moved segment', () => {
 		const iNewsRaw: INewsStoryGW[] = [
 			segmentGW01, segmentGW03, segmentGW02

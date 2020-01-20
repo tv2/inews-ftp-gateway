@@ -123,7 +123,7 @@ describe('ParsedINewsIntoSegments', () => {
 		expect(result).toEqual(4)
 	})
 
-	/*it('Assigns initial ranks', () => {
+	it('Assigns initial ranks', () => {
 		const iNewsRaw: INewsStoryGW[] = [
 			segmentGW01, segmentGW02, segmentGW03
 		]
@@ -132,19 +132,19 @@ describe('ParsedINewsIntoSegments', () => {
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, {}).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
 			{
-				rank: 101,
+				rank: 1000,
 				externalId: 'segment-01'
 			},
 			{
-				rank: 102,
+				rank: 2000,
 				externalId: 'segment-02'
 			},
 			{
-				rank: 103,
+				rank: 3000,
 				externalId: 'segment-03'
 			}
 		])
-	})*/
+	})
 
 	it('Preserves existing ranks', () => {
 		const iNewsRaw: INewsStoryGW[] = [

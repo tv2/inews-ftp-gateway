@@ -196,6 +196,13 @@ export class RunningOrderWatcher extends EventEmitter {
 	private processUpdatedRunningOrder (rundownId: string, rundown: InewsRundown | null) {
 		const updates = ProcessUpdatedRunningOrder(rundownId, rundown, this.runningOrders, this.logger)
 
+		// Update the stored data:
+		if (rundown) {
+			this.runningOrders[rundownId] = clone(rundown)
+		} else {
+			delete this.runningOrders[rundownId]
+		}
+
 		updates.forEach((update) => {
 			switch (update.type) {
 				case RundownChangeType.RUNDOWN_DELETE:
@@ -232,13 +239,6 @@ export class RunningOrderWatcher extends EventEmitter {
 					break
 			}
 		})
-
-		// Update the stored data:
-		if (rundown) {
-			this.runningOrders[rundownId] = clone(rundown)
-		} else {
-			delete this.runningOrders[rundownId]
-		}
 	}
 
 }

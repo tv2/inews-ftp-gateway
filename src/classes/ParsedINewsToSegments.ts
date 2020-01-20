@@ -27,7 +27,7 @@ export class ParsedINewsIntoSegments {
 	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings): RundownSegment[] {
 		let segments: RundownSegment[] = []
 
-		if (inewsRaw.some(rawSegment => rawSegment.identifier === undefined)) {
+		if (inewsRaw.some(rawSegment => !!rawSegment.identifier)) {
 			return segments
 		}
 
@@ -61,9 +61,6 @@ export class ParsedINewsIntoSegments {
 		let lastKnownIdent = ''
 		let lastAssignedRank = 0
 		inewsRaw.forEach((rawSegment) => {
-			if (!rawSegment.identifier) {
-				return
-			}
 			// Segment previously existed
 			if (Object.keys(previousRankings).includes(rawSegment.identifier)) {
 

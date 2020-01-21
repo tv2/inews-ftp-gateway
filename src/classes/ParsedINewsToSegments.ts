@@ -52,7 +52,7 @@ export class ParsedINewsIntoSegments {
 						rundownId,
 						rawSegment,
 						rawSegment.fields.modifyDate,
-						rawSegment.id || `${rawSegment.identifier}`,
+						`${rawSegment.identifier}`,
 						pad * 100, // Offset from 0 to allow for stories arriving out of order
 						rawSegment.fields.title || '',
 						false
@@ -78,7 +78,7 @@ export class ParsedINewsIntoSegments {
 							rundownId,
 							rawSegment,
 							rawSegment.fields.modifyDate,
-							rawSegment.id || `${rawSegment.identifier}`,
+							`${rawSegment.identifier}`,
 							previousRankings[rundownId][rawSegment.identifier].rank,
 							rawSegment.fields.title || '',
 							false
@@ -94,7 +94,7 @@ export class ParsedINewsIntoSegments {
 							rundownId,
 							rawSegment,
 							rawSegment.fields.modifyDate,
-							rawSegment.id || `${rawSegment.identifier}`,
+							`${rawSegment.identifier}`,
 							(rank - 1 + this.findNextDefinedRank(lastKnownIdent, previousRankings, rundownId, lastAssignedRank)) / 2,
 							rawSegment.fields.title || '',
 							false
@@ -120,7 +120,7 @@ export class ParsedINewsIntoSegments {
 					rundownId,
 					story,
 					story.fields.modifyDate,
-					story.id || `${rawSegment.identifier}`,
+					`${rawSegment.identifier}`,
 					newrank,
 					story.fields.title || '',
 					false

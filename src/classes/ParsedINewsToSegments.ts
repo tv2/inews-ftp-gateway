@@ -25,6 +25,9 @@ export interface SegmentRankings {
 	}
 }
 
+const BASE_RANK = 1000
+const PAD_RANK = 1000
+
 export class ParsedINewsIntoSegments {
 
 	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings, _logger?: winston.LoggerInstance): RundownSegment[] {
@@ -35,144 +38,153 @@ export class ParsedINewsIntoSegments {
 		}
 
 		// Initial startup of gateway
-		let pad = 10
 		if (
 			JSON.stringify(previousRankings) === JSON.stringify({}) ||
 			!previousRankings[rundownId] ||
 			JSON.stringify(previousRankings[rundownId]) === JSON.stringify({})
 		) {
-			inewsRaw.forEach((rawSegment) => {
-				if (!rawSegment.identifier) {
-					pad += 1
-					return
-				}
-
+			inewsRaw.forEach((rawSegment, position) => {
 				segments.push(
 					new RundownSegment(
 						rundownId,
 						rawSegment,
 						rawSegment.fields.modifyDate,
 						`${rawSegment.identifier}`,
-						pad * 100, // Offset from 0 to allow for stories arriving out of order
+						BASE_RANK + PAD_RANK * position, // Offset from 0 to allow for stories arriving out of order
 						rawSegment.fields.title || '',
 						false
 					)
 				)
-				pad += 10
 			})
 			return segments
 		}
 
-		let rank = 1
-		let movedPieces = 0
-		let lastKnownIdent = ''
-		let lastAssignedRank = 0
+		const newOrderSegmentIds = inewsRaw.map(raw => raw.identifier)
+		const previousOrderSegmentIds = Object.keys(previousRankings[rundownId])
+		const movedSegments = this.getMovedSegments(previousOrderSegmentIds, newOrderSegmentIds)
+		const insertedSegments = this.getInsertedSegments(previousOrderSegmentIds, newOrderSegmentIds)
+		const stayedSegments = newOrderSegmentIds.filter(segment => !movedSegments.includes(segment) && !insertedSegments.includes(segment))
+
+		let lastStayed: string = ''
+		const assignedRanks: number[] = []
 		inewsRaw.forEach((rawSegment) => {
-			// Segment previously existed
-			if (Object.keys(previousRankings[rundownId]).includes(rawSegment.identifier)) {
-
-				// Segment hasn't moved
-				if (rank - movedPieces === previousRankings[rundownId][rawSegment.identifier].position) {
-					segments.push(
-						new RundownSegment(
-							rundownId,
-							rawSegment,
-							rawSegment.fields.modifyDate,
-							`${rawSegment.identifier}`,
-							previousRankings[rundownId][rawSegment.identifier].rank,
-							rawSegment.fields.title || '',
-							false
-						)
+			// Previously existed and is in the same place
+			if (stayedSegments.includes(rawSegment.identifier)) {
+				segments.push(
+					new RundownSegment(
+						rundownId,
+						rawSegment,
+						rawSegment.fields.modifyDate,
+						`${rawSegment.identifier}`,
+						previousRankings[rundownId][rawSegment.identifier].rank,
+						rawSegment.fields.title || '',
+						false
 					)
-					lastAssignedRank = previousRankings[rundownId][rawSegment.identifier].rank
-					rank += 1
-					lastKnownIdent = rawSegment.identifier
-					movedPieces = 0
-				} else {
-					segments.push(
-						new RundownSegment(
-							rundownId,
-							rawSegment,
-							rawSegment.fields.modifyDate,
-							`${rawSegment.identifier}`,
-							(rank - 1 + this.findNextDefinedRank(lastKnownIdent, previousRankings, rundownId, lastAssignedRank)) / 2,
-							rawSegment.fields.title || '',
-							false
-						)
-					)
-
-					lastAssignedRank = (rank - 1 + this.findNextDefinedRank(lastKnownIdent, previousRankings, rundownId, lastAssignedRank)) / 2
-					rank += 1
-					movedPieces += 1
-					lastKnownIdent = rawSegment.identifier
-				}
-			} else {
-				let newrank = this.findNextDefinedRank(lastKnownIdent, previousRankings, rundownId, lastAssignedRank)
-
-				let lastAttempt = newrank
-				while (segments.some(segment => segment.rank === newrank) || Object.values(previousRankings[rundownId]).some(rank => rank.rank === newrank)) {
-					newrank = (lastAssignedRank + lastAttempt) / 2
-					lastAttempt = newrank
-				}
-
-				let story = rawSegment
-				let segment = new RundownSegment(
-					rundownId,
-					story,
-					story.fields.modifyDate,
-					`${rawSegment.identifier}`,
-					newrank,
-					story.fields.title || '',
-					false
 				)
-				lastAssignedRank = newrank
-				lastKnownIdent = rawSegment.identifier
-				segments.push(segment)
+				assignedRanks.push(previousRankings[rundownId][rawSegment.identifier].rank)
+				lastStayed = rawSegment.identifier
+			} else if (insertedSegments.includes(rawSegment.identifier) || movedSegments.includes(rawSegment.identifier)) {
+				segments.push(
+					new RundownSegment(
+						rundownId,
+						rawSegment,
+						rawSegment.fields.modifyDate,
+						`${rawSegment.identifier}`,
+						this.getNextAvailableRank(
+							rundownId,
+							previousRankings,
+							assignedRanks,
+							lastStayed,
+							stayedSegments[stayedSegments.indexOf(lastStayed) + 1]
+						),
+						rawSegment.fields.title || '',
+						false
+					)
+				)
+
+				assignedRanks.push(
+					this.getNextAvailableRank(
+						rundownId,
+						previousRankings,
+						assignedRanks,
+						lastStayed,
+						stayedSegments[stayedSegments.indexOf(lastStayed) + 1]
+					)
+				)
 			}
 		})
 
 		return segments.sort((a, b) => a.rank < b.rank ? -1 : 1)
 	}
 
-	static findNextDefinedRank (lastKnownIdent: string, previousRanks: SegmentRankings, rundownId: string, lastAssignedRank: number): number {
-		if (!Object.keys(previousRanks).includes(rundownId)) {
-			return Math.floor(lastAssignedRank + 1)
+	static getNextAvailableRank (
+		rundownId: string,
+		previousRanks: SegmentRankings,
+		assignedRanks: number[],
+		previousKnownSegment?: string,
+		nextKnownSegment?: string
+	) {
+		if (!previousRanks[rundownId]) {
+			return BASE_RANK
 		}
 
-		if (!Object.keys(previousRanks[rundownId]).length) {
-			return Math.floor(lastAssignedRank + 1)
+		if (!previousKnownSegment && !nextKnownSegment) {
+			return BASE_RANK
 		}
 
-		if (!lastKnownIdent.length) {
-			return previousRanks[rundownId][Object.keys(previousRanks[rundownId])[0]].rank
+		const start = assignedRanks[assignedRanks.length - 1] ? assignedRanks[assignedRanks.length - 1] : 0
+
+		if (!nextKnownSegment) {
+			return Math.floor(start + PAD_RANK)
 		}
 
-		const lastPosition = Object.keys(previousRanks[rundownId]).indexOf(lastKnownIdent)
+		let end = previousRanks[rundownId][nextKnownSegment] ? previousRanks[rundownId][nextKnownSegment].rank : start + PAD_RANK
 
-		if (lastPosition === -1) {
-			return Math.floor(lastAssignedRank + 1)
+		let newRank = (start + end) / 2
+
+		// Prevent infinite loop
+		// This comes at the cost of there being a possibility of duplicate IDs *but* only when there are 1000s of stories in a single rundown.
+		let attempts = 0
+		while (assignedRanks.includes(newRank) && attempts < 100) {
+			newRank = (newRank + end) / 2
+			attempts += 1
 		}
 
-		const nextPosition = previousRanks[rundownId][Object.keys(previousRanks[rundownId])[lastPosition + 1]]
-
-		if (nextPosition) {
-			return nextPosition.rank
-		}
-
-		return previousRanks[rundownId][Object.keys(previousRanks[rundownId])[lastPosition]].rank + 1
+		return newRank
 	}
 
-	static getLastKnownRank (lastKnownIdent: string, previousRanks: SegmentRankings, rundownId: string): number {
-		if (!Object.keys(previousRanks).length) {
-			return 0
+	static getDeletedSegments (oldOrder: string[], newOrder: string[]): string[] {
+		return oldOrder.filter(segment => !newOrder.includes(segment))
+	}
+
+	static getInsertedSegments (oldOrder: string[], newOrder: string[]): string[] {
+		return newOrder.filter(segment => !oldOrder.includes(segment))
+	}
+
+	static getMovedSegments (oldOrder: string[], newOrder: string[]): string[] {
+		const insertedSegments = this.getInsertedSegments(oldOrder, newOrder)
+		const deletedSegments = this.getDeletedSegments(oldOrder, newOrder)
+		const reducedOldOrder = oldOrder.filter(segment => !deletedSegments.includes(segment))
+		const reducedNewOrder = newOrder.filter(segment => !insertedSegments.includes(segment))
+
+		const moved: string[] = []
+
+		let newPointer = 0
+		let origPointer = 0
+
+		while (origPointer < oldOrder.length) {
+			const newValue = reducedNewOrder[origPointer]
+			const oldValue = reducedOldOrder[newPointer]
+
+			if (newValue !== oldValue && !moved.includes(newValue)) {
+				moved.push(oldValue)
+			}
+
+			newPointer++
+			origPointer++
 		}
 
-		const val = previousRanks[rundownId][lastKnownIdent]
-
-		// tslint:disable-next-line: strict-type-predicates
-		if (val !== undefined) return val.rank
-
-		return 0
+		return moved
 	}
 
 }

@@ -30,6 +30,7 @@ declare module '@johnsand/inews' {
 
 		interface INewsFile extends INewsDirItem {
 			filetype: 'file'
+			/* Unique identifier. Sometimes blank (temporarily) */
 			identifier: string
 			locator: string
 			storyName: string

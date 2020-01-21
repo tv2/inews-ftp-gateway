@@ -108,18 +108,20 @@ const segmentGW08: INewsStoryGW = {
 describe('ParsedINewsIntoSegments', () => {
 	it('Finds the the next known rank', () => {
 		const previousRanks: SegmentRankings = {
-			'segment-01': { rank: 1,position: 1 },
-			'segment-02': { rank: 2, position: 2 },
-			'segment-03': { rank: 3, position: 3 }
+			'test-rundown': {
+				'segment-01': { rank: 1,position: 1 },
+				'segment-02': { rank: 2, position: 2 },
+				'segment-03': { rank: 3, position: 3 }
+			}
 		}
 
-		let result = ParsedINewsIntoSegments.findNextDefinedRank('segment-01', previousRanks, 1)
+		let result = ParsedINewsIntoSegments.findNextDefinedRank('segment-01', previousRanks, 'test-rundown', 1)
 		expect(result).toEqual(2)
 
-		result = ParsedINewsIntoSegments.findNextDefinedRank('', previousRanks, 0)
+		result = ParsedINewsIntoSegments.findNextDefinedRank('test-rundown', previousRanks, 'test-rundown', 0)
 		expect(result).toEqual(1)
 
-		result = ParsedINewsIntoSegments.findNextDefinedRank('segment-03', previousRanks, 3)
+		result = ParsedINewsIntoSegments.findNextDefinedRank('segment-03', previousRanks, 'test-rundown', 3)
 		expect(result).toEqual(4)
 	})
 
@@ -152,9 +154,11 @@ describe('ParsedINewsIntoSegments', () => {
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
-			'segment-01': { rank: 1, position: 1 },
-			'segment-02': { rank: 2, position: 2 },
-			'segment-03': { rank: 3, position: 3 }
+			[rundownId] : {
+				'segment-01': { rank: 1, position: 1 },
+				'segment-02': { rank: 2, position: 2 },
+				'segment-03': { rank: 3, position: 3 }
+			}
 		}
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
@@ -180,9 +184,11 @@ describe('ParsedINewsIntoSegments', () => {
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
-			'segment-01': { rank: 1, position: 1 },
-			'segment-02': { rank: 2, position: 2 },
-			'segment-03': { rank: 3, position: 3 }
+			[rundownId]: {
+				'segment-01': { rank: 1, position: 1 },
+				'segment-02': { rank: 2, position: 2 },
+				'segment-03': { rank: 3, position: 3 }
+			}
 		}
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
@@ -212,9 +218,11 @@ describe('ParsedINewsIntoSegments', () => {
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
-			'segment-01': { rank: 1, position: 1 },
-			'segment-02': { rank: 2, position: 2 },
-			'segment-03': { rank: 3, position: 3 }
+			[rundownId]: {
+				'segment-01': { rank: 1, position: 1 },
+				'segment-02': { rank: 2, position: 2 },
+				'segment-03': { rank: 3, position: 3 }
+			}
 		}
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
@@ -260,9 +268,11 @@ describe('ParsedINewsIntoSegments', () => {
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
-			'segment-01': { rank: 1,position: 1 },
-			'segment-02': { rank: 2,position: 2 },
-			'segment-03': { rank: 3,position: 3 }
+			[rundownId]: {
+				'segment-01': { rank: 1,position: 1 },
+				'segment-02': { rank: 2,position: 2 },
+				'segment-03': { rank: 3,position: 3 }
+			}
 		}
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
@@ -288,10 +298,12 @@ describe('ParsedINewsIntoSegments', () => {
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
-			'segment-01': { rank: 1, position: 1 },
-			'segment-02': { rank: 1.5, position: 2 },
-			'segment-03': { rank: 2, position: 3 },
-			'segment-04': { rank: 3, position: 4 }
+			[rundownId]: {
+				'segment-01': { rank: 1, position: 1 },
+				'segment-02': { rank: 1.5, position: 2 },
+				'segment-03': { rank: 2, position: 3 },
+				'segment-04': { rank: 3, position: 4 }
+			}
 		}
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
@@ -321,12 +333,14 @@ describe('ParsedINewsIntoSegments', () => {
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
-			'segment-05': { rank: 1, position: 1 },
-			'segment-01': { rank: 2, position: 2 },
-			'segment-02': { rank: 2.5, position: 3 },
-			'segment-03': { rank: 3, position: 4 },
-			'segment-04': { rank: 4, position: 5 },
-			'segment-06': { rank: 5, position: 6 }
+			[rundownId]: {
+				'segment-05': { rank: 1, position: 1 },
+				'segment-01': { rank: 2, position: 2 },
+				'segment-02': { rank: 2.5, position: 3 },
+				'segment-03': { rank: 3, position: 4 },
+				'segment-04': { rank: 4, position: 5 },
+				'segment-06': { rank: 5, position: 6 }
+			}
 		}
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
@@ -364,12 +378,14 @@ describe('ParsedINewsIntoSegments', () => {
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
-			'segment-05': { rank: 1, position: 1 },
-			'segment-01': { rank: 2, position: 2 },
-			'segment-02': { rank: 2.5, position: 3 },
-			'segment-03': { rank: 3, position: 4 },
-			'segment-04': { rank: 4, position: 5 },
-			'segment-06': { rank: 5, position: 6 }
+			[rundownId]: {
+				'segment-05': { rank: 1, position: 1 },
+				'segment-01': { rank: 2, position: 2 },
+				'segment-02': { rank: 2.5, position: 3 },
+				'segment-03': { rank: 3, position: 4 },
+				'segment-04': { rank: 4, position: 5 },
+				'segment-06': { rank: 5, position: 6 }
+			}
 		}
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
@@ -415,14 +431,16 @@ describe('ParsedINewsIntoSegments', () => {
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks: SegmentRankings = {
-			'segment-05': { rank: 1, position: 1 },
-			'segment-02': { rank: 1.5, position: 2 },
-			'segment-01': { rank: 2, position: 3 },
-			'segment-04': { rank: 4, position: 4 },
-			'segment-03': { rank: 4.125, position: 5 },
-			'segment-07': { rank: 4.25, position: 6 },
-			'segment-08': { rank: 4.5, position: 7 },
-			'segment-06': { rank: 5, position: 8 }
+			[rundownId]: {
+				'segment-05': { rank: 1, position: 1 },
+				'segment-02': { rank: 1.5, position: 2 },
+				'segment-01': { rank: 2, position: 3 },
+				'segment-04': { rank: 4, position: 4 },
+				'segment-03': { rank: 4.125, position: 5 },
+				'segment-07': { rank: 4.25, position: 6 },
+				'segment-08': { rank: 4.5, position: 7 },
+				'segment-06': { rank: 5, position: 8 }
+			}
 		}
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })

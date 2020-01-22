@@ -72,7 +72,7 @@ export class RunningOrderWatcher extends EventEmitter {
 		((event: 'segment_update', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this)
 
 	// Fast = list diffs, Slow = fetch All
-	public pollInterval: number = 1000
+	public pollInterval: number = 2000
 
 	private pollTimer: NodeJS.Timer | undefined
 
@@ -327,6 +327,7 @@ export function ProcessUpdatedRunningOrder (
 						rundownExternalId: rundownId,
 						segmentExternalId: oldSegment.externalId
 					})
+					logger?.info(`Deleting segment ${oldSegment.name} with externalId ${oldSegment.externalId}`)
 				}
 			})
 			// Go through the segments for creation:
@@ -336,6 +337,7 @@ export function ProcessUpdatedRunningOrder (
 					rundownExternalId: rundownId,
 					segmentExternalId: segment.externalId
 				})
+				logger?.info(`Creating segment ${segment.name} with externalId ${segment.externalId}`)
 			})
 		}
 	}

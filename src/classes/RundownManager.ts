@@ -155,7 +155,7 @@ export class RundownManager {
 				}
 			}
 
-			this._logger.info('UPDATING : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
+			this._logger.info('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
 			/* Add fileId and update modifyDate to ftp reference in storyFile */
 			story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
 			this._logger.debug('Queue : ', queueName, error || '', ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)

@@ -1,9 +1,9 @@
-import { ProcessUpdatedRunningOrder, RundownChangeType, RundownChangeSegmentCreate, RundownChangeSegmentDelete, RundownChangeSegmentUpdate, RundownChangeRundownCreate, RundownChangeRundownDelete, RundownChangeRundownUpdate } from '../RunningOrderWatcher'
-import { InewsRundown } from '../datastructures/Rundown'
+import { ProcessUpdatedRundown, RundownChangeType, RundownChangeSegmentCreate, RundownChangeSegmentDelete, RundownChangeSegmentUpdate, RundownChangeRundownCreate, RundownChangeRundownDelete, RundownChangeRundownUpdate } from '../RundownWatcher'
+import { INewsRundown } from '../datastructures/Rundown'
 import { RundownSegment, INewsStoryGW } from '../datastructures/Segment'
 import { literal } from '../../helpers'
 
-describe('Running Order Watcher', () => {
+describe('Rundown Watcher', () => {
 	it('Reports no changes when no changes occur', () => {
 		const segmentGW01: INewsStoryGW = {
 			fileId: 'segment-01',
@@ -29,13 +29,13 @@ describe('Running Order Watcher', () => {
 			)
 		]
 
-		const testRundown = new InewsRundown('test-rundown', 'Test Rundown', '', segments)
+		const testRundown = new INewsRundown('test-rundown', 'Test Rundown', '', segments)
 
-		const runningOrders: { [name: string]: InewsRundown } = {
+		const rundowns: { [name: string]: INewsRundown } = {
 			'test-rundown': testRundown
 		}
 
-		const result = ProcessUpdatedRunningOrder('test-rundown', testRundown, runningOrders)
+		const result = ProcessUpdatedRundown('test-rundown', testRundown, rundowns)
 
 		expect(result).toEqual([])
 	})
@@ -65,11 +65,11 @@ describe('Running Order Watcher', () => {
 			)
 		]
 
-		const testRundown = new InewsRundown('test-rundown', 'Test Rundown', '', segments)
+		const testRundown = new INewsRundown('test-rundown', 'Test Rundown', '', segments)
 
-		const runningOrders: { [name: string]: InewsRundown } = {}
+		const rundowns: { [name: string]: INewsRundown } = {}
 
-		const result = ProcessUpdatedRunningOrder('test-rundown', testRundown, runningOrders)
+		const result = ProcessUpdatedRundown('test-rundown', testRundown, rundowns)
 
 		expect(result).toEqual([
 			literal<RundownChangeRundownCreate>({
@@ -104,13 +104,13 @@ describe('Running Order Watcher', () => {
 			)
 		]
 
-		const testRundown = new InewsRundown('test-rundown', 'Test Rundown', '', segments)
+		const testRundown = new INewsRundown('test-rundown', 'Test Rundown', '', segments)
 
-		const runningOrders: { [name: string]: InewsRundown } = {
+		const rundowns: { [name: string]: INewsRundown } = {
 			'test-rundown': testRundown
 		}
 
-		const result = ProcessUpdatedRunningOrder('test-rundown', null, runningOrders)
+		const result = ProcessUpdatedRundown('test-rundown', null, rundowns)
 
 		expect(result).toEqual([
 			literal<RundownChangeRundownDelete>({
@@ -145,14 +145,14 @@ describe('Running Order Watcher', () => {
 			)
 		]
 
-		const testRundownBefore = new InewsRundown('test-rundown', 'Test Rundown Before', '', segments)
-		const testRundownAfter = new InewsRundown('test-rundown', 'Test Rundown After', '', segments)
+		const testRundownBefore = new INewsRundown('test-rundown', 'Test Rundown Before', '', segments)
+		const testRundownAfter = new INewsRundown('test-rundown', 'Test Rundown After', '', segments)
 
-		const runningOrders: { [name: string]: InewsRundown } = {
+		const rundowns: { [name: string]: INewsRundown } = {
 			'test-rundown': testRundownBefore
 		}
 
-		const result = ProcessUpdatedRunningOrder('test-rundown', testRundownAfter, runningOrders)
+		const result = ProcessUpdatedRundown('test-rundown', testRundownAfter, rundowns)
 
 		expect(result).toEqual([
 			literal<RundownChangeRundownUpdate>({
@@ -176,7 +176,7 @@ describe('Running Order Watcher', () => {
 			identifier: 'segment-01'
 		}
 
-		const testRundownBefore = new InewsRundown('test-rundown', 'Test Rundown', '', [])
+		const testRundownBefore = new INewsRundown('test-rundown', 'Test Rundown', '', [])
 		const segments: RundownSegment[] = [
 			new RundownSegment(
 				'test-rundown',
@@ -188,13 +188,13 @@ describe('Running Order Watcher', () => {
 				false
 			)
 		]
-		const testRundownAfter = new InewsRundown('test-rundown', 'Test Rundown', '', segments)
+		const testRundownAfter = new INewsRundown('test-rundown', 'Test Rundown', '', segments)
 
-		const runningOrders: { [name: string]: InewsRundown } = {
+		const rundowns: { [name: string]: INewsRundown } = {
 			'test-rundown': testRundownBefore
 		}
 
-		const result = ProcessUpdatedRunningOrder('test-rundown', testRundownAfter, runningOrders)
+		const result = ProcessUpdatedRundown('test-rundown', testRundownAfter, rundowns)
 
 		expect(result).toEqual([
 			literal<RundownChangeSegmentCreate>({
@@ -230,14 +230,14 @@ describe('Running Order Watcher', () => {
 				false
 			)
 		]
-		const testRundownBefore = new InewsRundown('test-rundown', 'Test Rundown', '', segments)
-		const testRundownAfter = new InewsRundown('test-rundown', 'Test Rundown', '', [])
+		const testRundownBefore = new INewsRundown('test-rundown', 'Test Rundown', '', segments)
+		const testRundownAfter = new INewsRundown('test-rundown', 'Test Rundown', '', [])
 
-		const runningOrders: { [name: string]: InewsRundown } = {
+		const rundowns: { [name: string]: INewsRundown } = {
 			'test-rundown': testRundownBefore
 		}
 
-		const result = ProcessUpdatedRunningOrder('test-rundown', testRundownAfter, runningOrders)
+		const result = ProcessUpdatedRundown('test-rundown', testRundownAfter, rundowns)
 
 		expect(result).toEqual([
 			literal<RundownChangeSegmentDelete>({
@@ -298,14 +298,14 @@ describe('Running Order Watcher', () => {
 				false
 			)
 		]
-		const testRundownBefore = new InewsRundown('test-rundown', 'Test Rundown', '', segmentsBefore)
-		const testRundownAfter = new InewsRundown('test-rundown', 'Test Rundown', '', segmentsAfter)
+		const testRundownBefore = new INewsRundown('test-rundown', 'Test Rundown', '', segmentsBefore)
+		const testRundownAfter = new INewsRundown('test-rundown', 'Test Rundown', '', segmentsAfter)
 
-		const runningOrders: { [name: string]: InewsRundown } = {
+		const rundowns: { [name: string]: INewsRundown } = {
 			'test-rundown': testRundownBefore
 		}
 
-		const result = ProcessUpdatedRunningOrder('test-rundown', testRundownAfter, runningOrders)
+		const result = ProcessUpdatedRundown('test-rundown', testRundownAfter, rundowns)
 
 		expect(result).toEqual([
 			literal<RundownChangeSegmentUpdate>({
@@ -415,14 +415,14 @@ describe('Running Order Watcher', () => {
 				false
 			)
 		]
-		const testRundownBefore = new InewsRundown('test-rundown', 'Test Rundown', '', segmentsBefore)
-		const testRundownAfter = new InewsRundown('test-rundown', 'Test Rundown', '', segmentsAfter)
+		const testRundownBefore = new INewsRundown('test-rundown', 'Test Rundown', '', segmentsBefore)
+		const testRundownAfter = new INewsRundown('test-rundown', 'Test Rundown', '', segmentsAfter)
 
-		const runningOrders: { [name: string]: InewsRundown } = {
+		const rundowns: { [name: string]: INewsRundown } = {
 			'test-rundown': testRundownBefore
 		}
 
-		const result = ProcessUpdatedRunningOrder('test-rundown', testRundownAfter, runningOrders)
+		const result = ProcessUpdatedRundown('test-rundown', testRundownAfter, rundowns)
 
 		expect(result).toEqual([
 			literal<RundownChangeSegmentUpdate>({

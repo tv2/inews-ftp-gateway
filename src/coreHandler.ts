@@ -381,7 +381,7 @@ export class CoreHandler {
 		return {}
 	}
 	/** Reload a rundown */
-	async triggerReloadRundown (rundownId: string): Promise<string> {
+	async triggerReloadRundown (rundownId: string): Promise<null> {
 
 		// FIXME: INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
 		// If empty it should automatically reload in the setInterval timer.
@@ -394,7 +394,7 @@ export class CoreHandler {
 			// this.iNewsHandler.iNewsWatcher.rundownManager.downloadINewsRundown(rundownId)
 			delete this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
 		}
-		return 'iNews is updated'
+		return null
 	}
 
 	async triggerReloadSegment (_rundownId: string, _segmentId: string): Promise<string> {

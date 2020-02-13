@@ -389,7 +389,7 @@ export class CoreHandler {
 		// PROMISE should be removed - only here so we do not change the Core
 		// A return statement or errorhandling?
 		// IT WILL ALSO GIVE A WRONG MESSAGE IN THE GUI RIGHT NOW
-		console.log('DUMMMY - roId :', rundownId)
+		this.logger.info(`Reloading rundown: ${rundownId}`)
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
 			// this.iNewsHandler.iNewsWatcher.rundownManager.downloadINewsRundown(rundownId)
 			delete this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
@@ -397,8 +397,20 @@ export class CoreHandler {
 		return null
 	}
 
-	async triggerReloadSegment (_rundownId: string, _segmentId: string): Promise<string> {
-		return Promise.reject('not implemented')
+	async triggerReloadSegment (rundownId: string, segmentId: string): Promise<null> {
+		// TODO: IMPROVE THIS, this is a hack!
+		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
+			const rundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
+			
+			if (rundown) {
+				const segmentIndex = rundown.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
+				if (segmentIndex !== -1) {
+					rundown.segments.splice(segmentIndex, 1)
+					this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = rundown
+				}
+			}
+		}
+		return null
 	}
 
 	/**

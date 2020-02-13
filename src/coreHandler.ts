@@ -222,6 +222,11 @@ export class CoreHandler {
 						success = true
 						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadSegmentResult])
 						break
+					case 'pingResponse':
+						let result = await Promise.resolve(this.pingResponse(cmd.args[0]))
+						success = true
+						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, result])
+						break
 				}
 			} catch (err) {
 				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, err.stack)

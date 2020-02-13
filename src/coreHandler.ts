@@ -48,7 +48,7 @@ export class CoreHandler {
 	private _executedFunctions: {[id: string]: boolean} = {}
 	private _coreConfig?: CoreConfig
 	private _process?: Process
-	private _studioId: string
+	private _studioId?: string
 	public iNewsHandler?: InewsFTPHandler
 
 	constructor (logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
@@ -202,21 +202,27 @@ export class CoreHandler {
 	/**
 	 * Executes a peripheral device command.
 	 */
-	// TODO - why fcnObject an any?
-	async executeFunction (cmd: PeripheralDeviceCommand, fcnObject: any): Promise<void> {
+	async executeFunction (cmd: PeripheralDeviceCommand): Promise<void> {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
 			this.logger.debug(cmd.functionName, cmd.args)
 			this._executedFunctions[cmd._id] = true
-			let fcn: Function = fcnObject[cmd.functionName]
 			let success = false
 
 			try {
-				if (!fcn) throw Error('Function "' + cmd.functionName + '" not found!')
-				// Assume function is to run off main loop
-				let result = await Promise.resolve(fcn.apply(fcnObject, cmd.args))
-				success = true
-				await this.core.callMethod(P.methods.functionReply, [cmd._id, null, result])
+				switch (cmd.functionName) {
+					case 'triggerReloadRundown':
+						// Assume function is to run off main loop
+						const reloadRundownResult = await Promise.resolve(this.triggerReloadRundown(cmd.args[0]))
+						success = true
+						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadRundownResult])
+						break
+					case 'triggerReloadSegment':
+						const reloadSegmentResult = await Promise.resolve(this.triggerReloadRundown(cmd.args[0]))
+						success = true
+						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadSegmentResult])
+						break
+				}
 			} catch (err) {
 				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, err.stack)
 				if (!success) {
@@ -251,7 +257,7 @@ export class CoreHandler {
 			let cmd = cmds.findOne(id) as PeripheralDeviceCommand
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
 			if (cmd.deviceId === this.core.deviceId) {
-				this.executeFunction(cmd, this).catch(e => this.logger.error('addedChangedCommand executeFunction error', e, e.stack))
+				this.executeFunction(cmd).catch(e => this.logger.error('Error executing command recieved from core', e, e.stack))
 			}
 			return
 		}
@@ -275,7 +281,7 @@ export class CoreHandler {
 		await Promise.all(cmds.find({}).map((cmd0) => {
 			let cmd = cmd0 as PeripheralDeviceCommand
 			if (cmd.deviceId === this.core.deviceId) {
-				return this.executeFunction(cmd, this)
+				return this.executeFunction(cmd)
 			}
 			return
 		}))
@@ -340,11 +346,12 @@ export class CoreHandler {
 	/** Get snapshot of the gateway. */
 	getSnapshot (): any {
 		this.logger.info('getSnapshot')
-		if (this.iNewsHandler?.iNewsWatcher?.runningOrders) {
+		if (this.iNewsHandler?.iNewsWatcher?.rundowns) {
 			const ret: any = {}
-			Object.keys(this.iNewsHandler.iNewsWatcher.runningOrders).forEach(key => {
-				if (this.iNewsHandler?.iNewsWatcher?.runningOrders[key]) {
-					ret[key] = mutateRundown(this.iNewsHandler.iNewsWatcher.runningOrders[key])
+			Object.keys(this.iNewsHandler.iNewsWatcher.rundowns).forEach(key => {
+				const rundown = this.iNewsHandler?.iNewsWatcher?.rundowns[key]
+				if (rundown) {
+					ret[key] = mutateRundown(rundown)
 				}
 			})
 			return ret
@@ -352,9 +359,8 @@ export class CoreHandler {
 
 		return {}
 	}
-	/** Reload a running order */
-	// TODO - check what calls this?
-	async triggerGetRunningOrder (roId: string): Promise<string> {
+	/** Reload a rundown */
+	async triggerReloadRundown (rundownId: string): Promise<string> {
 
 		// FIXME: INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
 		// If empty it should automatically reload in the setInterval timer.
@@ -362,12 +368,18 @@ export class CoreHandler {
 		// PROMISE should be removed - only here so we do not change the Core
 		// A return statement or errorhandling?
 		// IT WILL ALSO GIVE A WRONG MESSAGE IN THE GUI RIGHT NOW
-		console.log('DUMMMY - roId :', roId)
+		console.log('DUMMMY - roId :', rundownId)
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			delete this.iNewsHandler.iNewsWatcher.runningOrders[roId]
+			// this.iNewsHandler.iNewsWatcher.rundownManager.downloadINewsRundown(rundownId)
+			delete this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
 		}
 		return 'iNews is updated'
 	}
+
+	async triggerReloadSegment (_rundownId: string, _segmentId: string): Promise<string> {
+		return Promise.reject('not implemented')
+	}
+
 	/**
 	 * Get the versions of installed packages.
 	 */

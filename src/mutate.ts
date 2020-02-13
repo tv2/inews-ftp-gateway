@@ -1,10 +1,10 @@
 import * as _ from 'underscore'
-import { InewsRundown } from './classes/datastructures/Rundown'
+import { INewsRundown } from './classes/datastructures/Rundown'
 import { IngestRundown, IngestSegment } from 'tv-automation-sofie-blueprints-integration'
 import { RundownSegment } from './classes/datastructures/Segment'
 
 /** These are temorary mutation functions to convert sheet types to ingest types */
-export function mutateRundown (rundown: InewsRundown): IngestRundown {
+export function mutateRundown (rundown: INewsRundown): IngestRundown {
 	return {
 		externalId: rundown.externalId,
 		name: rundown.name,

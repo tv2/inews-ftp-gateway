@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 import * as dotenv from 'dotenv'
-import { InewsRundown } from './datastructures/Rundown'
+import { INewsRundown } from './datastructures/Rundown'
 import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
 import { RundownSegment } from './datastructures/Segment'
@@ -57,19 +57,21 @@ export interface RundownChangeSegmentCreate extends RundownChangeSegment {
 
 export type RundownChange = RundownChangeRundownCreate | RundownChangeRundownDelete | RundownChangeRundownUpdate | RundownChangeSegmentCreate | RundownChangeSegmentDelete | RundownChangeSegmentUpdate
 
-export class RunningOrderWatcher extends EventEmitter {
+export type RundownMap = { [rundownId: string]: INewsRundown | undefined }
 
-	on: ((event: 'info', listener: (message: string) => void) => this) &
+export class RundownWatcher extends EventEmitter {
+
+	on!: ((event: 'info', listener: (message: string) => void) => this) &
 		((event: 'error', listener: (error: any, stack?: any) => void) => this) &
 		((event: 'warning', listener: (message: string) => void) => this) &
 
-		((event: 'rundown_delete', listener: (runningOrderId: string) => void) => this) &
-		((event: 'rundown_create', listener: (runningOrderId: string, runningOrder: InewsRundown) => void) => this) &
-		((event: 'rundown_update', listener: (runningOrderId: string, runningOrder: InewsRundown) => void) => this) &
+		((event: 'rundown_delete', listener: (rundownId: string) => void) => this) &
+		((event: 'rundown_create', listener: (rundownId: string, rundown: INewsRundown) => void) => this) &
+		((event: 'rundown_update', listener: (rundownId: string, rundown: INewsRundown) => void) => this) &
 
-		((event: 'segment_delete', listener: (runningOrderId: string, sectionId: string) => void) => this) &
-		((event: 'segment_create', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this) &
-		((event: 'segment_update', listener: (runningOrderId: string, sectionId: string, newSection: RundownSegment) => void) => this)
+		((event: 'segment_delete', listener: (rundownId: string, segmentId: string) => void) => this) &
+		((event: 'segment_create', listener: (rundownId: string, segmentId: string, newSegment: RundownSegment) => void) => this) &
+		((event: 'segment_update', listener: (rundownId: string, segmentId: string, newSegment: RundownSegment) => void) => this) // TODO: Change to IngestSegment + IngestRundown
 
 	// Fast = list diffs, Slow = fetch All
 	public pollInterval: number = 2000
@@ -81,7 +83,7 @@ export class RunningOrderWatcher extends EventEmitter {
 	private _logger: Winston.LoggerInstance
 
 	/**
-	 * A Running Order watcher which will poll iNews FTP server for changes and emit events
+	 * A Rundown watcher which will poll iNews FTP server for changes and emit events
 	 * whenever a change occurs.
 	 *
 	 * @param coreHandler Handler for Sofie Core
@@ -94,7 +96,8 @@ export class RunningOrderWatcher extends EventEmitter {
 		private coreHandler: CoreHandler,
 		private iNewsQueue: Array<INewsQueue>,
 		private gatewayVersion: string,
-		public runningOrders: { [runningOrderId: string]: InewsRundown },
+		/** Map of rundown Ids to iNews Rundowns, may be undefined if rundown has not been previously downloaded. */
+		public rundowns: RundownMap,
 		delayStart?: boolean
 	) {
 		super()
@@ -172,55 +175,51 @@ export class RunningOrderWatcher extends EventEmitter {
 		this.stopWatcher()
 	}
 
-	async checkINewsRundowns (): Promise<InewsRundown[]> {
+	async checkINewsRundowns (): Promise<INewsRundown[]> {
 		return Promise.all(this.iNewsQueue.map(roId => {
 			return this.checkINewsRundownById(roId.queue)
 		}))
 	}
 
-	// public async DownloadRunningOrderById (runningOrderId: string) {
-	// 	if (this.runningOrders[runningOrderId]) {
-	// 		delete this.runningOrders[runningOrderId]
-	// 	}
-	// 	return this.rundownManager.downloadRunningOrder(runningOrderId, this.runningOrders[runningOrderId])
-	// }
-
-	async checkINewsRundownById (runningOrderId: string): Promise<InewsRundown> {
-		const runningOrder = await this.rundownManager.downloadRunningOrder(runningOrderId, this.runningOrders[runningOrderId])
-		if (runningOrder.gatewayVersion === this.gatewayVersion) {
-			this.processUpdatedRunningOrder(runningOrder.externalId, runningOrder)
+	async checkINewsRundownById (rundownId: string): Promise<INewsRundown> {
+		const rundown = await this.rundownManager.downloadRundown(rundownId)
+		if (rundown.gatewayVersion === this.gatewayVersion) {
+			this.processUpdatedRundown(rundown.externalId, rundown)
 		}
-		return runningOrder
+		return rundown
 	}
 
-	private processUpdatedRunningOrder (rundownId: string, rundown: InewsRundown | null) {
-		const updates = ProcessUpdatedRunningOrder(rundownId, rundown, this.runningOrders, this.logger)
+	private processUpdatedRundown (rundownId: string, rundown: INewsRundown) {
+		const updates = ProcessUpdatedRundown(rundownId, rundown, this.rundowns, this.logger)
 
 		// Update the stored data:
 		if (rundown) {
-			this.runningOrders[rundownId] = clone(rundown)
+			this.rundowns[rundownId] = clone(rundown)
 		} else {
-			delete this.runningOrders[rundownId]
+			delete this.rundowns[rundownId]
 		}
 
 		updates.forEach((update) => {
+			const rundown = this.rundowns[update.rundownExternalId]
 			switch (update.type) {
 				case RundownChangeType.RUNDOWN_DELETE:
 					this.emit('rundown_delete', update.rundownExternalId)
 					break
 				case RundownChangeType.RUNDOWN_CREATE:
-					this.emit('rundown_create', update.rundownExternalId, this.runningOrders[update.rundownExternalId])
+					this.emit('rundown_create', update.rundownExternalId, this.rundowns[update.rundownExternalId])
 					break
 				case RundownChangeType.RUNDOWN_UPDATE:
-					this.emit('rundown_update', update.rundownExternalId, this.runningOrders[update.rundownExternalId])
+					this.emit('rundown_update', update.rundownExternalId, this.rundowns[update.rundownExternalId])
 					break
 				case RundownChangeType.SEGMENT_UPDATE:
-					this.emit(
-						'segment_update',
-						update.rundownExternalId,
-						update.segmentExternalId,
-						this.runningOrders[update.rundownExternalId].segments.find((segment) => segment.externalId === update.segmentExternalId)
-					)
+					if (rundown) {
+						this.emit(
+							'segment_update',
+							update.rundownExternalId,
+							update.segmentExternalId,
+							rundown.segments.find((segment) => segment.externalId === update.segmentExternalId)
+						)
+					}
 					break
 				case RundownChangeType.SEGMENT_DELETE:
 					this.emit(
@@ -230,12 +229,14 @@ export class RunningOrderWatcher extends EventEmitter {
 					)
 					break
 				case RundownChangeType.SEGMENT_CREATE:
-					this.emit(
-						'segment_create',
-						update.rundownExternalId,
-						update.segmentExternalId,
-						this.runningOrders[update.rundownExternalId].segments.find((segment) => segment.externalId === update.segmentExternalId)
-					)
+					if (rundown) {
+						this.emit(
+							'segment_create',
+							update.rundownExternalId,
+							update.segmentExternalId,
+							rundown.segments.find((segment) => segment.externalId === update.segmentExternalId)
+						)
+					}
 					break
 			}
 		})
@@ -243,17 +244,18 @@ export class RunningOrderWatcher extends EventEmitter {
 
 }
 
-export function ProcessUpdatedRunningOrder (
+export function ProcessUpdatedRundown (
 	rundownId: string,
-	rundown: InewsRundown | null, runningOrders: { [runningOrderId: string]: InewsRundown },
+	rundown: INewsRundown | null,
+	rundowns: RundownMap,
 	logger?: Winston.LoggerInstance
 ): RundownChange[] {
 
 	const changes: RundownChange[] = []
 
-	const oldRundown = runningOrders[rundownId]
+	const oldRundown = rundowns[rundownId]
 
-	// Check if runningOrders have changed:
+	// Check if rundowns have changed:
 	if (!rundown && oldRundown) {
 		changes.push({
 			type: RundownChangeType.RUNDOWN_DELETE,
@@ -272,7 +274,7 @@ export function ProcessUpdatedRunningOrder (
 				rundownExternalId: rundownId
 			})
 		} else {
-			const newRundown: InewsRundown = rundown
+			const newRundown: INewsRundown = rundown
 			let segmentsToCreate: RundownSegment[] = []
 			// Go through the new segments for changes:
 			newRundown.segments.forEach((segment: RundownSegment) => {

@@ -114,9 +114,9 @@ export class RundownWatcher extends EventEmitter {
 	 * Start the watcher
 	 */
 	startWatcher () {
-		this.logger.info('Clear all wathcers')
+		this.logger.info('Clear all watchers')
 		this.stopWatcher()
-		this.logger.info('Start wathcers')
+		this.logger.info('Start watchers')
 		let passoverTimings = 0
 		// First run
 		this.currentlyChecking = true

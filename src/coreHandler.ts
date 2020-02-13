@@ -212,7 +212,6 @@ export class CoreHandler {
 			try {
 				switch (cmd.functionName) {
 					case 'triggerReloadRundown':
-						// Assume function is to run off main loop
 						const reloadRundownResult = await Promise.resolve(this.triggerReloadRundown(cmd.args[0]))
 						success = true
 						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadRundownResult])
@@ -223,10 +222,27 @@ export class CoreHandler {
 						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadSegmentResult])
 						break
 					case 'pingResponse':
-						let result = await Promise.resolve(this.pingResponse(cmd.args[0]))
+						let pingResponseResult = await Promise.resolve(this.pingResponse(cmd.args[0]))
 						success = true
-						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, result])
+						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, pingResponseResult])
 						break
+					case 'retireExecuteFunction':
+						let retireExecuteFunctionResult = await Promise.resolve(this.retireExecuteFunction(cmd.args[0]))
+						success = true
+						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, retireExecuteFunctionResult])
+						break
+					case 'killProcess':
+						let killProcessFunctionResult = await Promise.resolve(this.killProcess(cmd.args[0]))
+						success = true
+						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, killProcessFunctionResult])
+						break
+					case 'getSnapshot':
+						let getSnapshotResult = await Promise.resolve(this.getSnapshot())
+						success = true
+						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, getSnapshotResult])
+						break
+					default:
+						throw Error('Function "' + cmd.functionName + '" not found!')
 				}
 			} catch (err) {
 				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, err.stack)

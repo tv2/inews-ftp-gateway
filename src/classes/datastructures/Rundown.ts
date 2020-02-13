@@ -5,10 +5,7 @@ export interface IRundown {
 	name: string // namnet på sheeten
 }
 
-export class InewsRundown implements IRundown {
-	// id: string
-	// name: string // namnet på sheeten
-	// sections: Section[] = []
+export class INewsRundown implements IRundown {
 	constructor (
 		public externalId: string,
 		public name: string,

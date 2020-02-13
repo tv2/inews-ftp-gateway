@@ -5,8 +5,8 @@ import {
 	PeripheralDeviceAPI as P
 } from 'tv-automation-server-core-integration'
 import { CoreHandler } from './coreHandler'
-import { RunningOrderWatcher } from './classes/RunningOrderWatcher'
-import { InewsRundown } from './classes/datastructures/Rundown'
+import { RundownWatcher, RundownMap } from './classes/RundownWatcher'
+import { INewsRundown } from './classes/datastructures/Rundown'
 import { mutateRundown, mutateSegment } from './mutate'
 import * as inews from '@johnsand/inews'
 // @ts-ignore
@@ -39,12 +39,12 @@ export interface INewsQueue {
 
 export class InewsFTPHandler {
 
-	public iNewsConnection: INewsClient
-	public userName: string
-	public passWord: string
+	public iNewsConnection?: INewsClient
+	public userName?: string
+	public passWord?: string
 	public debugLogging: boolean = false
 
-	public iNewsWatcher?: RunningOrderWatcher
+	public iNewsWatcher?: RundownWatcher
 
 	private _logger: Winston.LoggerInstance
 	private _disposed: boolean = false
@@ -101,10 +101,10 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-				this.iNewsWatcher = new RunningOrderWatcher(
+				this.iNewsWatcher = new RundownWatcher(
 					this._logger, this.iNewsConnection,
 					this._coreHandler, this._settings.queues,
-					'v0.2', this.ingestDataToRunningOrders('v0.2'))
+					'v0.2', this.ingestDataToRundowns('v0.2'))
 
 				this.updateChanges(this.iNewsWatcher)
 
@@ -116,17 +116,17 @@ export class InewsFTPHandler {
 	}
 
 	/**
-	 *  Get the current rundown state from Core and convert it to runningOrders
+	 *  Get the current rundown state from Core and convert it to rundowns.
 	 */
-	ingestDataToRunningOrders (gatewayVersion: string): { [runningOrderId: string]: InewsRundown } {
+	ingestDataToRundowns (gatewayVersion: string): RundownMap {
 		// let coreRundowns = this._coreHandler.GetRundownList()
 		let coreCache = this._coreHandler.GetRundownCache()
 		let rundowns = coreCache.filter(item => item.type === 'rundown')
-		let runningOrdersCache: { [runningOrderId: string]: InewsRundown } = {}
+		let rundownsCache: RundownMap = {}
 
 		rundowns.forEach((rundownHeader: any) => {
 			let segments = [new RundownSegment('',emptyStory(),'0','',0,'',false)]
-			let rundown = new InewsRundown(
+			let rundown = new INewsRundown(
 				rundownHeader.data.externalId,
 				rundownHeader.data.name,
 				gatewayVersion,
@@ -149,12 +149,12 @@ export class InewsFTPHandler {
 				segments = []
 			}
 			rundown.segments = segments
-			runningOrdersCache[rundownHeader.data.externalId] = rundown
+			rundownsCache[rundownHeader.data.externalId] = rundown
 		})
-		return runningOrdersCache
+		return rundownsCache
 	}
 
-	updateChanges (iNewsWatcher: RunningOrderWatcher) {
+	updateChanges (iNewsWatcher: RundownWatcher) {
 		iNewsWatcher
 		.on('info', (message: any) => {
 			this._logger.info(message)
@@ -174,14 +174,14 @@ export class InewsFTPHandler {
 		.on('rundown_update', (_rundownExternalId, rundown) => {
 			this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)]).catch(this._logger.error)
 		})
-		.on('segment_delete', (rundownExternalId, sectionId) => {
-			this._coreHandler.core.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, sectionId]).catch(this._logger.error)
+		.on('segment_delete', (rundownExternalId, segmentId) => {
+			this._coreHandler.core.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, segmentId]).catch(this._logger.error)
 		})
-		.on('segment_create', (rundownExternalId, _sectionId, newSection) => {
-			this._coreHandler.core.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
+		.on('segment_create', (rundownExternalId, _segmentId, newSegment) => {
+			this._coreHandler.core.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSegment)]).catch(this._logger.error)
 		})
-		.on('segment_update', (rundownExternalId, _sectionId, newSection) => {
-			this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSection)]).catch(this._logger.error)
+		.on('segment_update', (rundownExternalId, _segmentId, newSegment) => {
+			this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSegment)]).catch(this._logger.error)
 		})
 	}
 }

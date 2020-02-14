@@ -139,4 +139,23 @@ export class RundownManager {
 		this._logger.debug('Queue : ', queueName, error || '', ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
 		return story
 	}
+
+	/**
+	 * Downloads a segment from iNews with a given file name (externalId).
+	 * @param queueName Rundown to download from.
+	 * @param segmentFileName Segment to download.
+	 */
+	async downloadINewsStoryById (queueName: string, segmentFileName: string): Promise<INewsStoryGW> {
+		let dirList = await this._listStories(queueName)
+
+		if (dirList.length > 0) {
+			const segment = dirList.find((segment) => segment.file === segmentFileName)
+
+			if (!segment) return Promise.reject(`Cannot find segment with name ${segmentFileName}`)
+
+			return this.downloadINewsStory(queueName, segment)
+		} else {
+			return Promise.reject(`Cannot find rundown with Id ${queueName}`)
+		}
+	}
 }

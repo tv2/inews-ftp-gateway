@@ -219,7 +219,7 @@ export class CoreHandler {
 						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadRundownResult])
 						break
 					case 'triggerReloadSegment':
-						const reloadSegmentResult = await Promise.resolve(this.triggerReloadRundown(cmd.args[0]))
+						const reloadSegmentResult = await Promise.resolve(this.triggerReloadSegment(cmd.args[0], cmd.args[1]))
 						success = true
 						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadSegmentResult])
 						break

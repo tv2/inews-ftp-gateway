@@ -3,7 +3,7 @@ import * as Winston from 'winston'
 import { ParsedINewsIntoSegments, SegmentRankings } from './ParsedINewsToSegments'
 import { INewsClient, INewsStory, INewsDirItem, INewsFile } from '@johnsand/inews'
 import { promisify } from 'util'
-import { INewsStoryGW, RundownSegment } from './datastructures/Segment'
+import { INewsStoryGW } from './datastructures/Segment'
 
 function isFile (f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -133,8 +133,8 @@ export class RundownManager {
 
 	/**
 	 * Finds an old segment with a given external Id in a rundown.
-	 * @param segmentId 
-	 * @param rundown 
+	 * @param segmentId
+	 * @param rundown
 	 */
 	private findOldSegment (segmentId: string, rundown: INewsRundown): INewsStoryGW | undefined {
 		const oldSegment = rundown.segments.find((segment) => segment.externalId === segmentId)

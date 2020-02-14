@@ -13,7 +13,9 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateRundown } from './mutate'
+import { mutateRundown, mutateSegment } from './mutate'
+import { RundownSegment } from './classes/datastructures/Segment'
+import { IngestSegment } from 'tv-automation-sofie-blueprints-integration'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -397,20 +399,43 @@ export class CoreHandler {
 		return null
 	}
 
-	async triggerReloadSegment (rundownId: string, segmentId: string): Promise<null> {
-		// TODO: IMPROVE THIS, this is a hack!
+	/**
+	 * Called by core to reload a segment and returns the requested segment.
+	 * Promise is rejected if the rundown or segment cannot be found, or if the gateway is initialising.
+	 * @param rundownId Rundown to fetch from.
+	 * @param segmentId Segment to reload.
+	 */
+	async triggerReloadSegment (rundownId: string, segmentId: string): Promise<IngestSegment | null> {
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
 			const rundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
-			
+
 			if (rundown) {
 				const segmentIndex = rundown.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
-				if (segmentIndex !== -1) {
-					rundown.segments.splice(segmentIndex, 1)
-					this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = rundown
-				}
+				if (segmentIndex === -1) return Promise.reject(`iNews gateway can't find segment ${segmentId}`)
+
+				const prevSegment = rundown.segments[segmentIndex]
+				const rawSegment = await this.iNewsHandler.iNewsWatcher.rundownManager.downloadINewsStoryById(rundownId, segmentId)
+
+				const segment = new RundownSegment(
+					rundownId,
+					rawSegment,
+					rawSegment.fields.modifyDate,
+					`${rawSegment.identifier}`,
+					prevSegment.rank,
+					rawSegment.fields.title || '',
+					false
+				)
+
+				rundown.segments[segmentIndex] = segment
+				this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = rundown
+
+				return mutateSegment(segment)
+			} else {
+				return Promise.reject(`iNews gateway can't find rundown with Id ${rundownId}`)
 			}
+		} else {
+			return Promise.reject(`iNews gateway is still connecting to iNews`)
 		}
-		return null
 	}
 
 	/**

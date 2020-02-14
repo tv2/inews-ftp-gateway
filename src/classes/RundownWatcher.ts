@@ -182,7 +182,7 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	async checkINewsRundownById (rundownId: string): Promise<INewsRundown> {
-		const rundown = await this.rundownManager.downloadRundown(rundownId)
+		const rundown = await this.rundownManager.downloadRundown(rundownId, this.rundowns[rundownId])
 		if (rundown.gatewayVersion === this.gatewayVersion) {
 			this.processUpdatedRundown(rundown.externalId, rundown)
 		}

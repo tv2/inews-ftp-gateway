@@ -382,7 +382,7 @@ export class CoreHandler {
 
 		return {}
 	}
-	
+
 	/**
 	 * Called by core to reload a rundown. Returns the requested rundown.
 	 * Promise is rejected if the rundown cannot be found, or if the gateway is initialising.

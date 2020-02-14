@@ -15,7 +15,7 @@ import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
 import { mutateRundown, mutateSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
-import { IngestSegment } from 'tv-automation-sofie-blueprints-integration'
+import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -382,30 +382,37 @@ export class CoreHandler {
 
 		return {}
 	}
-	/** Reload a rundown */
-	async triggerReloadRundown (rundownId: string): Promise<null> {
-
-		// FIXME: INSTEAD OF RETRIGGERING WE SHOULD RE-INITIALISE runnigOrders[roId]
-		// If empty it should automatically reload in the setInterval timer.
-
-		// PROMISE should be removed - only here so we do not change the Core
-		// A return statement or errorhandling?
-		// IT WILL ALSO GIVE A WRONG MESSAGE IN THE GUI RIGHT NOW
+	
+	/**
+	 * Called by core to reload a rundown. Returns the requested rundown.
+	 * Promise is rejected if the rundown cannot be found, or if the gateway is initialising.
+	 * @param rundownId Rundown to reload.
+	 */
+	async triggerReloadRundown (rundownId: string): Promise<IngestRundown | null> {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			// this.iNewsHandler.iNewsWatcher.rundownManager.downloadINewsRundown(rundownId)
-			delete this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
+			const oldRundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
+
+			if (!oldRundown) return Promise.reject(`iNews gateway can't find rundown with Id ${oldRundown}`)
+
+			const rundown = await this.iNewsHandler.iNewsWatcher.rundownManager.downloadRundown(rundownId)
+
+			this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = rundown
+
+			return mutateRundown(rundown)
+		} else {
+			return Promise.reject(`iNews gateway is still connecting to iNews`)
 		}
-		return null
 	}
 
 	/**
-	 * Called by core to reload a segment and returns the requested segment.
+	 * Called by core to reload a segment. Returns the requested segment.
 	 * Promise is rejected if the rundown or segment cannot be found, or if the gateway is initialising.
 	 * @param rundownId Rundown to fetch from.
 	 * @param segmentId Segment to reload.
 	 */
 	async triggerReloadSegment (rundownId: string, segmentId: string): Promise<IngestSegment | null> {
+		this.logger.info(`Reloading segment ${segmentId} from rundown ${rundownId}`)
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
 			const rundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
 

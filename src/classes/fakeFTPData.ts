@@ -24,7 +24,8 @@ let ftpData = [
 			},
 			'cues': [],
 			'id': '2e1d3ecb:00d210ee:5d6cc0f3',
-			'body': '\r\n<p></p>\r\n<p><a idref=\"0\"></a></p>\r\n<p><pi>CAMERA 1</pi></p>\r\n<p>Her står em masse tekst</p>\r\n'
+			'body': '\r\n<p></p>\r\n<p><a idref=\"0\"></a></p>\r\n<p><pi>CAMERA 2</pi></p>\r\n<p>Her står em masse tekst</p>\r\n',
+			'identifier': '1'
 		}
 	},
 	{
@@ -52,7 +53,8 @@ let ftpData = [
 			},
 			'cues': [],
 			'id': '191f009e:00cb28c8:5d67c8be',
-			'body': '\r\n<p></p>\r\n<p><a idref=\"0\"></a></p>\r\n<p><pi></pi></p>\r\n'
+			'body': '\r\n<p></p>\r\n<p><a idref=\"0\"></a></p>\r\n<p><pi></pi></p>\r\n',
+			'identifier': '2'
 		}
 	},
 	{
@@ -90,7 +92,8 @@ let ftpData = [
 				]
 			],
 			'id': '1a1f009e:00bd0dd8:5d5e54a3',
-			'body': '\r\n<p><cc>Her ligger alle Mosart koder til setup af studiet</cc></p>\r\n<p></p>\r\n<p><pi>KAM 1</pi></p>\r\n<p><cc>----reset Watchout----></cc><a idref=\"0\"><cc><--------</cc></a></p>\r\n<p><cc>---Watchout standard loop----></cc><a idref=\"1\"><cc><--------</cc></a></p>\r\n<p></p>\r\n<p></p>\r\n<p><cc>WO loop EVENT 1</cc></p>\r\n<p><cc>WO loop EVENT 2</cc></p>\r\n<p><cc>WO loop EVENT 3</cc></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p><cc>Her ligger alle Mosart koder til setup af studiet</cc></p>\r\n<p></p>\r\n<p><pi>KAM 1</pi></p>\r\n<p><cc>----reset Watchout----></cc><a idref=\"0\"><cc><--------</cc></a></p>\r\n<p><cc>---Watchout standard loop----></cc><a idref=\"1\"><cc><--------</cc></a></p>\r\n<p></p>\r\n<p></p>\r\n<p><cc>WO loop EVENT 1</cc></p>\r\n<p><cc>WO loop EVENT 2</cc></p>\r\n<p><cc>WO loop EVENT 3</cc></p>\r\n<p></p>\r\n',
+			'identifier': '3'
 		}
 	},
 	{
@@ -168,7 +171,8 @@ let ftpData = [
 				]
 			],
 			'id': '1b1f009e:00bd0dd7:5d5e54a3',
-			'body': '\r\n<p><pi>KAM CS 3</pi></p>\r\n<p><a idref=\"0\"></a></p>\r\n<p></p>\r\n<p></p>\r\n<p><cc>---VALG AF STUDIE PRIMÆR--></cc><a idref=\"1\"><cc><--(ST4p, ST2p)</cc></a></p>\r\n<p><cc>--VALG AF STUDIE SEKUNDÆR--></cc><a idref=\"2\"><cc><---(ST4s, ST2s)</cc></a></p>\r\n<p><cc>----all out overlay--></cc><a idref=\"3\"><cc><---</cc></a></p>\r\n<p><cc>---grafik design på overlay------></cc><a idref=\"4\"><cc><------</cc></a></p>\r\n<p></p>\r\n<p><a idref=\"5\"></a></p>\r\n<p><cc>---load background on DVE------></cc><a idref=\"6\"><cc><------</cc></a></p>\r\n<p><cc>---load background on FULL------></cc><a idref=\"7\"><cc><------</cc></a></p>\r\n<p></p>\r\n<p></p>\r\n<p><cc>-----tænder mikrofoner--></cc><a idref=\"8\"><cc><-----</cc><tab><tab><tab><tab></tab></tab></tab></tab></a></p>\r\n<p><cc>-----Watchout input--></cc><a idref=\"9\"><cc><-----</cc></a></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p><tab><tab><tab><tab></tab></tab></tab></tab></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p><pi>KAM CS 3</pi></p>\r\n<p><a idref=\"0\"></a></p>\r\n<p></p>\r\n<p></p>\r\n<p><cc>---VALG AF STUDIE PRIMÆR--></cc><a idref=\"1\"><cc><--(ST4p, ST2p)</cc></a></p>\r\n<p><cc>--VALG AF STUDIE SEKUNDÆR--></cc><a idref=\"2\"><cc><---(ST4s, ST2s)</cc></a></p>\r\n<p><cc>----all out overlay--></cc><a idref=\"3\"><cc><---</cc></a></p>\r\n<p><cc>---grafik design på overlay------></cc><a idref=\"4\"><cc><------</cc></a></p>\r\n<p></p>\r\n<p><a idref=\"5\"></a></p>\r\n<p><cc>---load background on DVE------></cc><a idref=\"6\"><cc><------</cc></a></p>\r\n<p><cc>---load background on FULL------></cc><a idref=\"7\"><cc><------</cc></a></p>\r\n<p></p>\r\n<p></p>\r\n<p><cc>-----tænder mikrofoner--></cc><a idref=\"8\"><cc><-----</cc><tab><tab><tab><tab></tab></tab></tab></tab></a></p>\r\n<p><cc>-----Watchout input--></cc><a idref=\"9\"><cc><-----</cc></a></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p><tab><tab><tab><tab></tab></tab></tab></tab></p>\r\n<p></p>\r\n',
+			'identifier': '4'
 		}
 	},
 	{
@@ -241,7 +245,8 @@ let ftpData = [
 				]
 			],
 			'id': '1c1f009e:00bd0dd5:5d5e54a3',
-			'body': '\r\n<p><pi>KAM 1</pi><tab><tab><tab></tab></tab></tab></p>\r\n<p><a idref=\"2\"><a idref=\"3\"><a idref=\"4\"></a></a></a></p>\r\n<p><a idref=\"5\"></a></p>\r\n<p><a idref=\"6\"></a></p>\r\n<p><cc>der skal altid skrives en goddag!</cc></p>\r\n<p><a idref=\"7\"></a></p>\r\n<p><a idref=\"8\"><a idref=\"9\"><a idref=\"10\"></a></a></a></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p><pi>KAM 1</pi><tab><tab><tab></tab></tab></tab></p>\r\n<p><a idref=\"2\"><a idref=\"3\"><a idref=\"4\"></a></a></a></p>\r\n<p><a idref=\"5\"></a></p>\r\n<p><a idref=\"6\"></a></p>\r\n<p><cc>der skal altid skrives en goddag!</cc></p>\r\n<p><a idref=\"7\"></a></p>\r\n<p><a idref=\"8\"><a idref=\"9\"><a idref=\"10\"></a></a></a></p>\r\n<p></p>\r\n',
+			'identifier': '5'
 		}
 	},
 	{
@@ -271,7 +276,8 @@ let ftpData = [
 			},
 			'cues': [],
 			'id': '1d1f009e:00bd0dd3:5d5e54a3',
-			'body': '\r\n<p></p>\r\n<p></p>\r\n<p><a idref=\"0\"></a></p>\r\n<p></p>\r\n<p><pi>***SERVER*** </pi></p>\r\n<p></p>\r\n<p><cc>---<b>BUNDTER HERUNDER</b> ---></cc></p>\r\n<p></p>\r\n<p></p>\r\n<p><pi>SLUTORD:UD PÅ TID</pi></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p></p>\r\n<p></p>\r\n<p><a idref=\"0\"></a></p>\r\n<p></p>\r\n<p><pi>***SERVER*** </pi></p>\r\n<p></p>\r\n<p><cc>---<b>BUNDTER HERUNDER</b> ---></cc></p>\r\n<p></p>\r\n<p></p>\r\n<p><pi>SLUTORD:UD PÅ TID</pi></p>\r\n<p></p>\r\n',
+			'identifier': '6'
 		}
 	},
 	{
@@ -336,7 +342,8 @@ let ftpData = [
 				]
 			],
 			'id': '1e1f009e:00bd0dd2:5d5e54a3',
-			'body': '\r\n<p><pi>KAM 1</pi><tab><tab></tab></tab></p>\r\n<p></p>\r\n<p><a idref=\"0\"><a idref=\"1\"></a></a></p>\r\n<p><a idref=\"2\"><a idref=\"3\"></a></a></p>\r\n<p><a idref=\"4\"></a></p>\r\n<p><cc>der skal altid skrives en goddag!</cc></p>\r\n<p><a idref=\"5\"></a></p>\r\n<p><a idref=\"6\"><a idref=\"7\"></a></a></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p><pi>KAM 1</pi><tab><tab></tab></tab></p>\r\n<p></p>\r\n<p><a idref=\"0\"><a idref=\"1\"></a></a></p>\r\n<p><a idref=\"2\"><a idref=\"3\"></a></a></p>\r\n<p><a idref=\"4\"></a></p>\r\n<p><cc>der skal altid skrives en goddag!</cc></p>\r\n<p><a idref=\"5\"></a></p>\r\n<p><a idref=\"6\"><a idref=\"7\"></a></a></p>\r\n<p></p>\r\n',
+			'identifier': '7'
 		}
 	},
 	{
@@ -375,7 +382,8 @@ let ftpData = [
 				]
 			],
 			'id': '1f1f009e:00bd0dd0:5d5e54a3',
-			'body': '\r\n<p><pi>***100% GRAFIK***</pi></p>\r\n<p><cc>START MUSIK MED Directtake 53</cc></p>\r\n<p><cc>Fade musik ud med Directtake 59</cc><a idref=\"0\"></a></p>\r\n<p><cc>Indsæt viz-pilot koden her --></cc><a idref=\"1\"><cc><---.</cc></a></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p><pi>***100% GRAFIK***</pi></p>\r\n<p><cc>START MUSIK MED Directtake 53</cc></p>\r\n<p><cc>Fade musik ud med Directtake 59</cc><a idref=\"0\"></a></p>\r\n<p><cc>Indsæt viz-pilot koden her --></cc><a idref=\"1\"><cc><---.</cc></a></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n',
+			'identifier': '8'
 		}
 	},
 	{
@@ -418,7 +426,8 @@ let ftpData = [
 				]
 			],
 			'id': '001f009f:00bd0dce:5d5e54a3',
-			'body': '\r\n<p><pi>KAM 1</pi><a idref=\"0\"></a></p>\r\n<p><cc>DIGI----vcp her--><----</cc></p>\r\n<p></p>\r\n<p>Lad os lige høre, hvordan den danske herredouble selv ser frem til den her kamp.</p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p><pi>***SERVER*** </pi></p>\r\n<p><a idref=\"1\"><a idref=\"2\"></a></a></p>\r\n<p><cc>---<b>BUNDTER HERUNDER</b> ---></cc></p>\r\n<p></p>\r\n<p><pi>SLUTORD: Slå dem</pi></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p><pi>KAM 1</pi><a idref=\"0\"></a></p>\r\n<p><cc>DIGI----vcp her--><----</cc></p>\r\n<p></p>\r\n<p>Lad os lige høre, hvordan den danske herredouble selv ser frem til den her kamp.</p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p><pi>***SERVER*** </pi></p>\r\n<p><a idref=\"1\"><a idref=\"2\"></a></a></p>\r\n<p><cc>---<b>BUNDTER HERUNDER</b> ---></cc></p>\r\n<p></p>\r\n<p><pi>SLUTORD: Slå dem</pi></p>\r\n<p></p>\r\n',
+			'identifier': '8'
 		}
 	},
 	{
@@ -473,7 +482,8 @@ let ftpData = [
 				]
 			],
 			'id': '011f009f:00bd0dde:5d5e54a3',
-			'body': '\r\n<p><pi>KAM 1</pi><tab><tab></tab></tab></p>\r\n<p></p>\r\n<p></p>\r\n<p><a idref=\"0\"><a idref=\"5\"></a></a></p>\r\n<p><a idref=\"1\"></a></p>\r\n<p><cc>der skal altid skrives en goddag!</cc></p>\r\n<p><a idref=\"2\"></a></p>\r\n<p><a idref=\"3\"><a idref=\"4\"></a></a></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p><pi>KAM 1</pi><tab><tab></tab></tab></p>\r\n<p></p>\r\n<p></p>\r\n<p><a idref=\"0\"><a idref=\"5\"></a></a></p>\r\n<p><a idref=\"1\"></a></p>\r\n<p><cc>der skal altid skrives en goddag!</cc></p>\r\n<p><a idref=\"2\"></a></p>\r\n<p><a idref=\"3\"><a idref=\"4\"></a></a></p>\r\n<p></p>\r\n',
+			'identifier': '9'
 		}
 	},
 	{
@@ -538,7 +548,8 @@ let ftpData = [
 				]
 			],
 			'id': '021f009f:00bd29ac:5d5e54a3',
-			'body': '\r\n<p><a idref=\"0\"></a></p>\r\n<p><cc>DIGI----vcp her--><----</cc></p>\r\n<p></p>\r\n<p>Kento Momota har vist overmenneskelig styrke, efter sit comecack til sporten i 2018, men måske er konkurrenterne ved at hale ind på ham igen.</p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p><pi>***SERVER*** </pi></p>\r\n<p><a idref=\"1\"><a idref=\"2\"><a idref=\"3\"><a idref=\"4\"><a idref=\"5\"></a></a></a></a></a></p>\r\n<p><cc>---<b>BUNDTER HERUNDER</b> ---></cc></p>\r\n<p></p>\r\n<p><pi>SLUTORD: Krafedeme vannvittigt.</pi></p>\r\n<p><a idref=\"6\"></a></p>\r\n<p></p>\r\n'
+			'body': '\r\n<p><a idref=\"0\"></a></p>\r\n<p><cc>DIGI----vcp her--><----</cc></p>\r\n<p></p>\r\n<p>Kento Momota har vist overmenneskelig styrke, efter sit comecack til sporten i 2018, men måske er konkurrenterne ved at hale ind på ham igen.</p>\r\n<p></p>\r\n<p></p>\r\n<p></p>\r\n<p><pi>***SERVER*** </pi></p>\r\n<p><a idref=\"1\"><a idref=\"2\"><a idref=\"3\"><a idref=\"4\"><a idref=\"5\"></a></a></a></a></a></p>\r\n<p><cc>---<b>BUNDTER HERUNDER</b> ---></cc></p>\r\n<p></p>\r\n<p><pi>SLUTORD: Krafedeme vannvittigt.</pi></p>\r\n<p><a idref=\"6\"></a></p>\r\n<p></p>\r\n',
+			'identifier': '10'
 		}
 	}
 ]

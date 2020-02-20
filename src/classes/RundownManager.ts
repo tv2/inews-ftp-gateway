@@ -1,4 +1,4 @@
-import { InewsRundown } from './datastructures/Rundown'
+import { INewsRundown } from './datastructures/Rundown'
 import * as Winston from 'winston'
 import { ParsedINewsIntoSegments, SegmentRankings } from './ParsedINewsToSegments'
 import { INewsClient, INewsStory, INewsDirItem, INewsFile } from '@johnsand/inews'
@@ -13,9 +13,9 @@ export class RundownManager {
 
 	private previousRanks: SegmentRankings = {}
 
-	// public queueLock: boolean
-	private _listStories: (queueName: string) => Promise<Array<INewsDirItem>>
-	private _getStory: (queueName: string, story: string) => Promise<INewsStory>
+	// TODO: This could be cleaned up
+	private _listStories!: (queueName: string) => Promise<Array<INewsDirItem>>
+	private _getStory!: (queueName: string, story: string) => Promise<INewsStory>
 
 	constructor (private _logger: Winston.LoggerInstance, private inewsConnection?: INewsClient) {
 		// this.queueLock = false
@@ -26,9 +26,9 @@ export class RundownManager {
 	}
 
 	/**
-	 * Downloads a running order by ID.
+	 * Downloads a rundown by ID.
 	 */
-	async downloadRunningOrder (rundownId: string, oldRundown: InewsRundown): Promise<InewsRundown> {
+	async downloadRundown (rundownId: string, oldRundown?: INewsRundown): Promise<INewsRundown> {
 
 		/**
 		 * When running as DEV, send a fake rundown (for testing detached from iNews).
@@ -45,7 +45,7 @@ export class RundownManager {
 	 * returns a promise with a fake rundown for testing
 	 * in detached mode
 	 */
-	fakeRundown (id: string = '135381b4-f11a-4689-8346-b298b966664f'): InewsRundown {
+	fakeRundown (id: string = '135381b4-f11a-4689-8346-b298b966664f'): INewsRundown {
 		let ftpData: { default: { story: INewsStory, storyName: string}[] } = require('./fakeFTPData')
 		let stories: INewsStoryGW[] = ftpData.default.map(x =>
 			Object.assign(x.story, { fileId: x.storyName }))
@@ -59,20 +59,20 @@ export class RundownManager {
 	/**
 	 * Convert a raw rundown from iNews to a sofie rundown.
 	 * @param _logger Logger instance.
-	 * @param runningOrderId ID of the running order.
+	 * @param rundownId ID of the rundown.
 	 * @param name Rundown name.
 	 * @param rundownRaw Rundown to convert.
 	 */
-	convertRawtoSofie (runningOrderId: string, name: string, rundownRaw: INewsStoryGW[]): InewsRundown {
+	convertRawtoSofie (rundownId: string, name: string, rundownRaw: INewsStoryGW[]): INewsRundown {
 		this._logger.info('START : ', name, ' convert to Sofie Rundown')
 		// where should these data come from?
 		let version = 'v0.2'
 
-		let rundown = new InewsRundown(runningOrderId, runningOrderId, version)
-		let segments = ParsedINewsIntoSegments.parse(runningOrderId, rundownRaw, this.previousRanks)
-		this.previousRanks[runningOrderId] = {}
+		let rundown = new INewsRundown(rundownId, rundownId, version)
+		let segments = ParsedINewsIntoSegments.parse(rundownId, rundownRaw, this.previousRanks)
+		this.previousRanks[rundownId] = {}
 		segments.forEach((segment, position) => {
-			this.previousRanks[runningOrderId][segment.externalId] = {
+			this.previousRanks[rundownId][segment.externalId] = {
 				rank: segment.rank,
 				position: position + 1
 			}
@@ -87,25 +87,60 @@ export class RundownManager {
 	 * @param queueName Name of queue to download.
 	 * @param oldRundown Old rundown object.
 	 */
-	async downloadINewsRundown (queueName: string, oldRundown: InewsRundown): Promise<Array<INewsStoryGW>> {
-		// this.queueLock = true
+	async downloadINewsRundown (queueName: string, oldRundown?: INewsRundown): Promise<Array<INewsStoryGW>> {
 		let stories: Array<INewsStoryGW> = []
 		try {
 			let dirList = await this._listStories(queueName)
 			if (dirList.length > 0) {
 				stories = await Promise.all(
-					dirList.map((ftpFileName: INewsDirItem, index: number) => {
-						return this.downloadINewsStory(index, queueName, ftpFileName, oldRundown)
+					dirList.map((ftpFileName: INewsDirItem) => {
+						if (!oldRundown) return this.downloadINewsStory(queueName, ftpFileName)
+						const oldSegment = this.findOldSegment(ftpFileName.file, oldRundown)
+						if (!oldSegment || this.shouldDownloadSegment(oldSegment, ftpFileName.modified)) {
+							return this.downloadINewsStory(queueName, ftpFileName)
+						} else {
+							return oldSegment
+						}
 					}))
 			} else {
 				this._logger.error('Downloaded empty iNews rundown.')
 			}
 		} catch (err) {
 			this._logger.error('Error downloading iNews rundown: ', err, err.stack)
-		} /* finally {
-			this.queueLock = false
-		} */
+		}
 		return stories
+	}
+
+	/**
+	 * Returns true if a file should be redownloaded.
+	 * @param oldSegment Cached segment to compare to.
+	 * @param lastModified When the file was modified.
+	 */
+	private shouldDownloadSegment (oldSegment: INewsStoryGW, lastModified?: Date): boolean {
+		if (!lastModified) return true
+
+		const oldModified = Math.floor(parseFloat(oldSegment.fields.modifyDate) / 100)
+
+		const fileDate = Math.floor(lastModified.getTime() / 100000)
+
+		if (
+			fileDate - oldModified > 1 ||
+			Date.now() / 100000 - fileDate <= 1
+		) return true
+
+		return false
+	}
+
+	/**
+	 * Finds an old segment with a given external Id in a rundown.
+	 * @param segmentId
+	 * @param rundown
+	 */
+	private findOldSegment (segmentId: string, rundown: INewsRundown): INewsStoryGW | undefined {
+		const oldSegment = rundown.segments.find((segment) => segment.externalId === segmentId)
+
+		if (!oldSegment) return undefined
+		return oldSegment.iNewsStory
 	}
 
 	/**
@@ -115,53 +150,47 @@ export class RundownManager {
 	 * @param storyFile File to download.
 	 * @param oldRundown Old rundown to overwrite.
 	 */
-	async downloadINewsStory (index: number, queueName: string, storyFile: INewsDirItem, oldRundown: InewsRundown): Promise<INewsStoryGW> {
-		let oldModified = 0
-		let oldFileId: string | undefined
-
-		if (oldRundown
-			&& Array.isArray(oldRundown.segments)
-			&& oldRundown.segments.length > index
-		) {
-			oldFileId = oldRundown.segments[index].iNewsStory.fileId
-			// oldModified = Math.floor(parseFloat(oldRundown.segments[index].modified) / 100000)
-			oldModified = Math.floor(parseFloat(oldRundown.segments[index].iNewsStory.fields.modifyDate) / 100)
+	async downloadINewsStory (queueName: string, storyFile: INewsDirItem): Promise<INewsStoryGW> {
+		let story: INewsStoryGW
+		let error: Error | null = null
+		try {
+			story = { ...await this._getStory(queueName, storyFile.file), fileId: storyFile.file, identifier: (storyFile as INewsFile).identifier }
+		} catch (err) {
+			console.log('DUMMY LOG : ', err)
+			error = err
+			story = { // Create an empty story when an error occurs
+				fields: {},
+				meta: {},
+				cues: [],
+				fileId: storyFile.file,
+				error: (err as Error).message,
+				identifier: ''
+			}
 		}
 
-		/** The date from the iNews FTP server is only per whole minute, and the iNews modifyDate
-		 * is per second. So time time will be compared for changes within 1 minute. And if the
-		 * story has been updates within the last minute, it will keep updating for a whole minute.
-		 */
-		let fileDate = storyFile.modified ? Math.floor(storyFile.modified.getTime() / 100000) : 0
+		this._logger.debug('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
+		/* Add fileId and update modifyDate to ftp reference in storyFile */
+		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
+		this._logger.debug('Queue : ', queueName, error || '', ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
+		return story
+	}
 
-		if (fileDate - oldModified > 1
-			|| Date.now() / 100000 - fileDate <= 1
-			|| storyFile.file !== oldFileId
-		) {
-			let story: INewsStoryGW
-			let error: Error | null = null
-			try {
-				story = { ...await this._getStory(queueName, storyFile.file), fileId: storyFile.file, identifier: (storyFile as INewsFile).identifier }
-			} catch (err) {
-				console.log('DUMMY LOG : ', err)
-				error = err
-				story = { // Create an empty story when an error occurs
-					fields: {},
-					meta: {},
-					cues: [],
-					fileId: storyFile.file,
-					error: (err as Error).message,
-					identifier: ''
-				}
-			}
+	/**
+	 * Downloads a segment from iNews with a given file name (externalId).
+	 * @param queueName Rundown to download from.
+	 * @param segmentId Segment to download.
+	 */
+	async downloadINewsStoryById (queueName: string, segmentId: string): Promise<INewsStoryGW> {
+		let dirList = await this._listStories(queueName)
 
-			this._logger.info('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
-			/* Add fileId and update modifyDate to ftp reference in storyFile */
-			story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
-			this._logger.debug('Queue : ', queueName, error || '', ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
-			return story
+		if (dirList.length > 0) {
+			const segment = dirList.find((segment: INewsDirItem) => (segment as INewsFile).identifier === segmentId)
+
+			if (!segment) return Promise.reject(`Cannot find segment with name ${segmentId}`)
+
+			return this.downloadINewsStory(queueName, segment)
 		} else {
-			return oldRundown.segments[index].iNewsStory
+			return Promise.reject(`Cannot find rundown with Id ${queueName}`)
 		}
 	}
 }

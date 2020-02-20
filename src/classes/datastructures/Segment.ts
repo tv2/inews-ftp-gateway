@@ -9,7 +9,7 @@ export interface ISegment {
 	rundownId: string
 	iNewsStory: INewsStoryGW
 	modified: string
-	externalId: string // unique within the parent runningOrder
+	externalId: string // unique within the parent rundown
 	rank: number
 	name: string
 	float: boolean

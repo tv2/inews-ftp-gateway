@@ -671,4 +671,60 @@ describe('ParsedINewsIntoSegments', () => {
 			}
 		])
 	})
+
+	it('Preserves ranks when a segment is deleted', () => {
+		const iNewsRaw: INewsStoryGW[] = [
+			segmentGW01, segmentGW03, segmentGW04, segmentGW05
+		]
+		const rundownId = 'test-rundown'
+		const previousRanks: SegmentRankings = {
+			[rundownId]: {
+				'segment-01': { rank: 1000,position: 1 },
+				'segment-02': { rank: 2000,position: 2 },
+				'segment-03': { rank: 3000,position: 3 },
+				'segment-04': { rank: 4000,position: 4 },
+				'segment-05': { rank: 5000,position: 5 }
+			}
+		}
+
+		let result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
+		expect(result).toEqual([
+			{
+				rank: 1000,
+				externalId: 'segment-01'
+			},
+			{
+				rank: 3000,
+				externalId: 'segment-03'
+			},
+			{
+				rank: 4000,
+				externalId: 'segment-04'
+			},
+			{
+				rank: 5000,
+				externalId: 'segment-05'
+			}
+		])
+
+		result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
+		expect(result).toEqual([
+			{
+				rank: 1000,
+				externalId: 'segment-01'
+			},
+			{
+				rank: 3000,
+				externalId: 'segment-03'
+			},
+			{
+				rank: 4000,
+				externalId: 'segment-04'
+			},
+			{
+				rank: 5000,
+				externalId: 'segment-05'
+			}
+		])
+	})
 })

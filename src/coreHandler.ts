@@ -390,8 +390,9 @@ export class CoreHandler {
 	 */
 	async triggerReloadRundown (rundownId: string): Promise<IngestRundown | null> {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
-		this.logger.info(`Known rundowns: ${Object.keys(this.iNewsHandler?.iNewsWatcher?.rundowns || {})}`)
-		delete this.iNewsHandler?.iNewsWatcher?.rundowns[rundownId]
+		if (this.iNewsHandler?.iNewsWatcher) {
+			this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = undefined
+		}
 		return null
 
 		// Maybe we can use this code one day when core is smarter about timeouts on peripheral device commands.

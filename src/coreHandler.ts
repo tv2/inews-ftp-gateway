@@ -390,6 +390,7 @@ export class CoreHandler {
 	 */
 	async triggerReloadRundown (rundownId: string): Promise<IngestRundown | null> {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
+		this.logger.info(`Known rundowns: ${Object.keys(this.iNewsHandler?.iNewsWatcher?.rundowns || {})}`)
 		delete this.iNewsHandler?.iNewsWatcher?.rundowns[rundownId]
 		return null
 

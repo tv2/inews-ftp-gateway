@@ -196,7 +196,7 @@ export class RundownWatcher extends EventEmitter {
 		if (rundown) {
 			this.rundowns[rundownId] = clone(rundown)
 		} else {
-			delete this.rundowns[rundownId]
+			this.rundowns[rundownId] = undefined
 		}
 
 		updates.forEach((update) => {

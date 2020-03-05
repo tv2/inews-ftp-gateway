@@ -390,7 +390,11 @@ export class CoreHandler {
 	 */
 	async triggerReloadRundown (rundownId: string): Promise<IngestRundown | null> {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
-		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
+		delete this.iNewsHandler?.iNewsWatcher?.rundowns[rundownId]
+		return null
+
+		// Maybe we can use this code one day when core is smarter about timeouts on peripheral device commands.
+		/*if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
 			const oldRundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
 
 			if (!oldRundown) return Promise.reject(`iNews gateway can't find rundown with Id ${oldRundown}`)
@@ -402,7 +406,7 @@ export class CoreHandler {
 			return mutateRundown(rundown)
 		} else {
 			return Promise.reject(`iNews gateway is still connecting to iNews`)
-		}
+		}*/
 	}
 
 	/**

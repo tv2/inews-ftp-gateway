@@ -98,6 +98,7 @@ export class RundownWatcher extends EventEmitter {
 		private gatewayVersion: string,
 		/** Map of rundown Ids to iNews Rundowns, may be undefined if rundown has not been previously downloaded. */
 		public rundowns: RundownMap,
+		private handler: InewsFTPHandler,
 		delayStart?: boolean
 	) {
 		super()
@@ -120,10 +121,12 @@ export class RundownWatcher extends EventEmitter {
 		let passoverTimings = 0
 		// First run
 		this.currentlyChecking = true
-		this.checkINewsRundowns().then(queueList => {
+		this.checkINewsRundowns().then(async queueList => {
 			console.log('DUMMY LOG : ', queueList)
 			this.currentlyChecking = false
-			return this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
+			if (this.handler.isConnected) {
+				await this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
+			}
 		}, err => {
 			this._logger.error('Error in iNews Rundown list', err)
 			this.currentlyChecking = false
@@ -134,8 +137,10 @@ export class RundownWatcher extends EventEmitter {
 			if (this.currentlyChecking) {
 				if (passoverTimings++ > 10) {
 					this._logger.warn(`Check iNews rundown has been skipped ${passoverTimings} times.`)
-					this.coreHandler.setStatus(P.StatusCode.WARNING_MINOR,
-						[`Check iNews not run for ${passoverTimings * this.pollInterval}ms`]).catch(this.logger.error)
+					if (this.handler.isConnected) {
+						this.coreHandler.setStatus(P.StatusCode.WARNING_MINOR,
+							[`Check iNews not run for ${passoverTimings * this.pollInterval}ms`]).catch(this.logger.error)
+					}
 				}
 				return
 			} else {

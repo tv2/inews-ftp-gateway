@@ -1,7 +1,7 @@
 import { INewsRundown } from './datastructures/Rundown'
 import * as Winston from 'winston'
 import { ParsedINewsIntoSegments, SegmentRankings } from './ParsedINewsToSegments'
-import { INewsClient, INewsStory, INewsDirItem, INewsFile } from '@johnsand/inews'
+import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 

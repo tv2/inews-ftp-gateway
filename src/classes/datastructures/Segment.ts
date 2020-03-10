@@ -1,4 +1,4 @@
-import { INewsStory } from '@johnsand/inews'
+import { INewsStory } from 'inews'
 
 export interface INewsStoryGW extends INewsStory {
 	fileId: string // Added by RundownManager - not from underlying library

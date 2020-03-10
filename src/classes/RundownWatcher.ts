@@ -7,7 +7,7 @@ import { RundownSegment } from './datastructures/Segment'
 import * as clone from 'clone'
 import * as Winston from 'winston'
 import { INewsQueue, InewsFTPHandler } from '../inewsHandler'
-import { INewsClient } from '@johnsand/inews'
+import { INewsClient } from 'inews'
 import { CoreHandler } from '../coreHandler'
 import { PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
 

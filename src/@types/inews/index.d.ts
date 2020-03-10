@@ -1,4 +1,4 @@
-declare module '@johnsand/inews' {
+declare module 'inews' {
 	import { EventEmitter } from 'events'
 
 	function inews (options: inews.INewsOptions): inews.INewsClient

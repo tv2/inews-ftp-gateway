@@ -8,7 +8,7 @@ import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap } from './classes/RundownWatcher'
 import { INewsRundown } from './classes/datastructures/Rundown'
 import { mutateRundown, mutateSegment } from './mutate'
-import * as inews from '@johnsand/inews'
+import * as inews from 'inews'
 // @ts-ignore
 // import inews from '@johnsand/inews'
 import { RundownSegment, INewsStoryGW } from './classes/datastructures/Segment'

@@ -50,10 +50,16 @@ export class InewsFTPHandler {
 	private _disposed: boolean = false
 	private _settings?: INewsDeviceSettings
 	private _coreHandler: CoreHandler
+	private _isConnected: boolean = false
+	private _reconnectAttempts: number = 0
 
 	constructor (logger: Winston.LoggerInstance, coreHandler: CoreHandler) {
 		this._logger = logger
 		this._coreHandler = coreHandler
+	}
+
+	get isConnected (): boolean {
+		return this._isConnected
 	}
 
 	async init (coreHandler: CoreHandler): Promise<void> {
@@ -94,7 +100,8 @@ export class InewsFTPHandler {
 		this.iNewsConnection = inews({
 			hosts: this._settings.hosts.map(host => host.host),
 			user: this._settings.user,
-			password: this._settings.password
+			password: this._settings.password,
+			timeout: 10000
 		} as INewsOptions)
 
 		if (!this.iNewsWatcher) {
@@ -104,7 +111,8 @@ export class InewsFTPHandler {
 				this.iNewsWatcher = new RundownWatcher(
 					this._logger, this.iNewsConnection,
 					this._coreHandler, this._settings.queues,
-					'v0.2', this.ingestDataToRundowns('v0.2'))
+					'v0.2', this.ingestDataToRundowns('v0.2'),
+					this)
 
 				this.updateChanges(this.iNewsWatcher)
 
@@ -113,6 +121,24 @@ export class InewsFTPHandler {
 				})
 			}
 		}
+		
+		this.iNewsConnection.on('status', async status => {
+			if (status === 'disconnected') {
+				if (this._isConnected) {
+					this._isConnected = false
+					this._reconnectAttempts = 0
+					await this._coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['Attempting to reconnect'])
+				} else {
+					this._reconnectAttempts++
+					if (this._reconnectAttempts >= this._settings!.hosts.length) {
+						await this._coreHandler.setStatus(P.StatusCode.BAD, ['No servers available'])
+					}
+				}
+			}
+			if (status === 'connected') {
+				this._isConnected = true
+			}
+		})
 	}
 
 	/**

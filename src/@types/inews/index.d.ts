@@ -51,7 +51,7 @@ declare module 'inews' {
 			story (queueName: string, file: string, cb: (error: Error | null, rawStory: INewsStory) => void): void
 			storyNsml (queueName: string, file: string, cb: (error: Error | null, nsml: string) => void): void
 			queueLength (): number
-			on: ((event: 'status', listener: (status: string) => void) => this) &
+			on: ((event: 'status', listener: (status: { name: string, host: string }) => void) => this) &
 			  ((event: 'ready', listener: () => void) => this) &
 				((event: 'error', listener: (err: Error) => void) => this) &
 				((event: 'close', listener: (hadErr?: boolean) => void) => this) &

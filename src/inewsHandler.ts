@@ -104,6 +104,28 @@ export class InewsFTPHandler {
 			timeout: 10000
 		} as INewsOptions)
 
+		this.iNewsConnection.on('status', async status => {
+			if (status.name === 'disconnected') {
+				if (this._isConnected) {
+					this._isConnected = false
+					this._reconnectAttempts = 0
+					await this._coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['Attempting to reconnect'])
+					this._logger.warn(`Disconnected from iNews at ${status.host}`)
+				} else {
+					this._reconnectAttempts++
+					if (this._reconnectAttempts >= this._settings!.hosts.length) {
+						await this._coreHandler.setStatus(P.StatusCode.BAD, ['No servers available'])
+						this._logger.warn(`Cannot connect to any of the iNews hosts`)
+					}
+				}
+			} else if (status.name === 'connected') {
+				this._isConnected = true
+				this._logger.info(`Connected to iNews at ${status.host}`)
+			} else if (status.name === 'connecting') {
+				this._logger.info(`Connecting to iNews at ${status.host}`)
+			}
+		})
+
 		if (!this.iNewsWatcher) {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
@@ -121,24 +143,6 @@ export class InewsFTPHandler {
 				})
 			}
 		}
-
-		this.iNewsConnection.on('status', async status => {
-			if (status === 'disconnected') {
-				if (this._isConnected) {
-					this._isConnected = false
-					this._reconnectAttempts = 0
-					await this._coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['Attempting to reconnect'])
-				} else {
-					this._reconnectAttempts++
-					if (this._reconnectAttempts >= this._settings!.hosts.length) {
-						await this._coreHandler.setStatus(P.StatusCode.BAD, ['No servers available'])
-					}
-				}
-			}
-			if (status === 'connected') {
-				this._isConnected = true
-			}
-		})
 	}
 
 	/**

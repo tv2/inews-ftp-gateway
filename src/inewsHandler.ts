@@ -121,7 +121,7 @@ export class InewsFTPHandler {
 				})
 			}
 		}
-		
+
 		this.iNewsConnection.on('status', async status => {
 			if (status === 'disconnected') {
 				if (this._isConnected) {

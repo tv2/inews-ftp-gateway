@@ -87,7 +87,9 @@
   "resolutions": {
     "typedoc/**/marked": "^0.7.0",
     "handlebars": "^4.3.0",
-    "jobs-queue": "git+https://github.com/sparkpunkd/node-jobs-queue.git#master"
+		"jobs-queue": "git+https://github.com/sparkpunkd/node-jobs-queue.git#master",
+		"kind-of": "^6.0.3",
+		"acorn": "^7.1.1"
   },
   "devDependencies": {
     "@types/clone": "^0.1.30",

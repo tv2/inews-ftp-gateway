@@ -126,6 +126,10 @@ export class InewsFTPHandler {
 			}
 		})
 
+		this.iNewsConnection.on('error', error => {
+			this._logger.error('FTP error:', error.message)
+		})
+
 		if (!this.iNewsWatcher) {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {

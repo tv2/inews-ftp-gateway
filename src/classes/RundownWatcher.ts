@@ -149,15 +149,16 @@ export class RundownWatcher extends EventEmitter {
 			this.logger.info('Check rundowns for updates')
 			this.currentlyChecking = true
 
-			this.checkINewsRundowns().then(() => {
+			this.checkINewsRundowns().then(async () => {
 				// this.rundownManager.EmptyInewsFtpBuffer()
 				if (this.iNewsConnection.queueLength() > 0) {
 					this.logger.error(`INews library queue length was ${this.iNewsConnection.queueLength()} when it should be 0.`)
 				}
 				// console.log('slow check done')
 				this.currentlyChecking = false
-				return this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
-
+				if (this.handler.isConnected) {
+					await this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
+				}
 			}, error => {
 				this.logger.error('Something went wrong during check', error, error.stack)
 				this.currentlyChecking = false

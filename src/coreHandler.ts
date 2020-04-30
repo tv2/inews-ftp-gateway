@@ -16,6 +16,7 @@ import { InewsFTPHandler } from './inewsHandler'
 import { mutateRundown, mutateSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
+import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -149,7 +150,9 @@ export class CoreHandler {
 			deviceSubType: P.SUBTYPE_PROCESS,
 
 			deviceName: name,
-			watchDog: (this._coreConfig ? this._coreConfig.watchdog : true)
+			watchDog: (this._coreConfig ? this._coreConfig.watchdog : true),
+
+			configManifest: INEWS_DEVICE_CONFIG_MANIFEST
 		}
 		options.versions = this._getVersions()
 		return options

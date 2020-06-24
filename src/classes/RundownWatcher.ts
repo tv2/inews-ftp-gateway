@@ -183,7 +183,7 @@ export class RundownWatcher extends EventEmitter {
 
 	async checkINewsRundowns (): Promise<INewsRundown[]> {
 		return Promise.all(this.iNewsQueue.map(roId => {
-			return this.checkINewsRundownById(roId.queue)
+			return this.checkINewsRundownById(roId.queues)
 		}))
 	}
 

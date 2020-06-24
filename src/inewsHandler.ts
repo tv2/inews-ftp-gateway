@@ -34,7 +34,8 @@ export interface INewsHost {
 
 export interface INewsQueue {
 	_id: string
-	queue: string
+	type: string
+	queues: string
 }
 
 export class InewsFTPHandler {
@@ -143,7 +144,7 @@ export class InewsFTPHandler {
 				this.updateChanges(this.iNewsWatcher)
 
 				this._settings.queues.forEach((q) => {
-					this._logger.info(`Starting watch of `, q.queue)
+					this._logger.info(`Starting watch of `, q.queues)
 				})
 			}
 		}

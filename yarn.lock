@@ -2588,9 +2588,9 @@ indent-string@^4.0.0:
   resolved "https://registry.yarnpkg.com/indent-string/-/indent-string-4.0.0.tgz#624f8f4497d619b2d9768531d58f4122854d7251"
   integrity sha512-EdDDZu4A2OyIK7Lr/2zG+w5jmbuk1DVBnEwREQvBzspBJkCEbRa8GxU1lghYcaGJCnRWibjDXlq779X1/y5xwg==
 
-"inews@https://github.com/SuperFlyTV/node-inews.git":
+"inews@https://github.com/SuperFlyTV/node-inews.git#20200917_2":
   version "1.3.3"
-  resolved "https://github.com/SuperFlyTV/node-inews.git#8dfb0ccd412c6f2ab957ba8446e2faed79c73f9e"
+  resolved "https://github.com/SuperFlyTV/node-inews.git#3ef22df660da7f5d3100676a177da54607e8645a"
   dependencies:
     camelcase "3.0.x"
     ftp "0.3.x"

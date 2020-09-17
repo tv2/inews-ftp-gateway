@@ -72,7 +72,7 @@
     "clone": "^2.1.2",
     "dotenv": "^8.0.0",
     "handlebars": "^4.3.0",
-    "inews": "https://github.com/SuperFlyTV/node-inews.git",
+    "inews": "https://github.com/SuperFlyTV/node-inews.git#20200917_2",
     "jobs-queue": "git+https://github.com/sparkpunkd/node-jobs-queue.git#master",
     "lodash": "^4.17.15",
     "marked": "^0.7.0",

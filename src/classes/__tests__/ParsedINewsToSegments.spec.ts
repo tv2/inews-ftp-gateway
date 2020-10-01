@@ -157,6 +157,9 @@ describe('ParsedINewsIntoSegments', () => {
 	})
 
 	it('Assigns initial ranks', () => {
+		// Mock Math.random()
+		global.Math.random = () => 0.05
+
 		const iNewsRaw: INewsStoryGW[] = [
 			segmentGW01, segmentGW02, segmentGW03
 		]
@@ -165,15 +168,15 @@ describe('ParsedINewsIntoSegments', () => {
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, {}).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
 			{
-				rank: 1000,
+				rank: 1000.05,
 				externalId: 'segment-01'
 			},
 			{
-				rank: 2000,
+				rank: 2000.05,
 				externalId: 'segment-02'
 			},
 			{
-				rank: 3000,
+				rank: 3000.05,
 				externalId: 'segment-03'
 			}
 		])

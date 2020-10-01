@@ -50,7 +50,7 @@ export class ParsedINewsIntoSegments {
 						rawSegment,
 						rawSegment.fields.modifyDate,
 						`${rawSegment.identifier}`,
-						BASE_RANK + PAD_RANK * position, // Offset from 0 to allow for stories arriving out of order
+						BASE_RANK + PAD_RANK * position + Math.random(), // Offset from 0 to allow for stories arriving out of order
 						rawSegment.fields.title || '',
 						false
 					)
@@ -146,7 +146,7 @@ export class ParsedINewsIntoSegments {
 		// This comes at the cost of there being a possibility of duplicate IDs *but* only when there are 1000s of stories in a single rundown.
 		let attempts = 0
 		while (assignedRanks.includes(newRank) && attempts < 100) {
-			newRank = (newRank + end) / 2
+			newRank = (newRank + end) / 2 + Math.random()
 			attempts += 1
 		}
 

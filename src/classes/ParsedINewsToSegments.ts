@@ -1,5 +1,6 @@
 import { RundownSegment, INewsStoryGW } from './datastructures/Segment'
 import winston = require('winston')
+import _ = require('underscore')
 
 export interface IParsedElement {
 	data: {
@@ -14,15 +15,12 @@ export interface IParsedElement {
 	}
 }
 
-export interface SegmentRankings {
-	[rundownId: string]: {
-		[segmentId: string]: {
-			/** Assigned rank */
-			rank: number,
-			/** Position in arra */
-			position: number
-		}
-	}
+export type SegmentRankings = Map<string, Map<string, SegmentRankingsInner>>
+export interface SegmentRankingsInner {
+	/** Assigned rank */
+	rank: number,
+	/** Position in array */
+	position: number
 }
 
 const BASE_RANK = 1000
@@ -37,11 +35,12 @@ export class ParsedINewsIntoSegments {
 			return segments
 		}
 
+		const rundownPreviousRanks = previousRankings.get(rundownId)
+
 		// Initial startup of gateway
 		if (
-			JSON.stringify(previousRankings) === JSON.stringify({}) ||
-			!previousRankings[rundownId] ||
-			JSON.stringify(previousRankings[rundownId]) === JSON.stringify({})
+			!rundownPreviousRanks ||
+			rundownPreviousRanks.size === 0
 		) {
 			inewsRaw.forEach((rawSegment, position) => {
 				segments.push(
@@ -60,15 +59,22 @@ export class ParsedINewsIntoSegments {
 		}
 
 		const newOrderSegmentIds = inewsRaw.map(raw => raw.identifier)
-		const previousOrderSegmentIds = Object.keys(previousRankings[rundownId])
+		const previousOrderSegmentIds = Array.from(rundownPreviousRanks.keys())
 		const movedSegments = this.getMovedSegments(previousOrderSegmentIds, newOrderSegmentIds)
 		const insertedSegments = this.getInsertedSegments(previousOrderSegmentIds, newOrderSegmentIds)
-		const stayedSegments = newOrderSegmentIds.filter(segment => !movedSegments.includes(segment) && !insertedSegments.includes(segment))
+		const stayedSegments = newOrderSegmentIds.filter(segment => !movedSegments.includes(segment) && !insertedSegments.includes(segment)) // unmoved and still exist
 
 		let lastStayed: string = ''
 		const assignedRanks: number[] = []
 		inewsRaw.forEach((rawSegment) => {
 			// Previously existed and is in the same place
+			const previousRank = rundownPreviousRanks.get(rawSegment.identifier)?.rank
+			const newRank = previousRank ?? this.getNextAvailableRank(
+				rundownPreviousRanks,
+				assignedRanks,
+				// lastStayed,
+				stayedSegments[stayedSegments.indexOf(lastStayed) + 1]
+			)
 			if (stayedSegments.includes(rawSegment.identifier)) {
 				segments.push(
 					new RundownSegment(
@@ -76,12 +82,12 @@ export class ParsedINewsIntoSegments {
 						rawSegment,
 						rawSegment.fields.modifyDate,
 						`${rawSegment.identifier}`,
-						previousRankings[rundownId][rawSegment.identifier].rank,
+						newRank,
 						rawSegment.fields.title || '',
 						false
 					)
 				)
-				assignedRanks.push(previousRankings[rundownId][rawSegment.identifier].rank)
+				assignedRanks.push(newRank)
 				lastStayed = rawSegment.identifier
 			} else if (insertedSegments.includes(rawSegment.identifier) || movedSegments.includes(rawSegment.identifier)) {
 				segments.push(
@@ -90,27 +96,12 @@ export class ParsedINewsIntoSegments {
 						rawSegment,
 						rawSegment.fields.modifyDate,
 						`${rawSegment.identifier}`,
-						this.getNextAvailableRank(
-							rundownId,
-							previousRankings,
-							assignedRanks,
-							lastStayed,
-							stayedSegments[stayedSegments.indexOf(lastStayed) + 1]
-						),
+						newRank,
 						rawSegment.fields.title || '',
 						false
 					)
 				)
-
-				assignedRanks.push(
-					this.getNextAvailableRank(
-						rundownId,
-						previousRankings,
-						assignedRanks,
-						lastStayed,
-						stayedSegments[stayedSegments.indexOf(lastStayed) + 1]
-					)
-				)
+				assignedRanks.push(newRank)
 			}
 		})
 
@@ -118,39 +109,26 @@ export class ParsedINewsIntoSegments {
 	}
 
 	static getNextAvailableRank (
-		rundownId: string,
-		previousRanks: SegmentRankings,
+		previousRanks: Map<string, SegmentRankingsInner>,
 		assignedRanks: number[],
-		previousKnownSegment?: string,
+		// previousKnownSegment?: string,
 		nextKnownSegment?: string
-	) {
-		if (!previousRanks[rundownId]) {
+	): number {
+		const lastAssignedRank = _.last(assignedRanks)
+		const nextKnownRank = nextKnownSegment ? previousRanks.get(nextKnownSegment) : undefined
+
+		if (lastAssignedRank !== undefined && nextKnownRank !== undefined) {
+			return (lastAssignedRank + nextKnownRank.rank) / 2
+
+		} else if (lastAssignedRank !== undefined) {
+			return lastAssignedRank + PAD_RANK
+
+		} else if (nextKnownRank !== undefined) {
+			return nextKnownRank.rank / 2
+
+		} else {
 			return BASE_RANK
 		}
-
-		if (!previousKnownSegment && !nextKnownSegment) {
-			return BASE_RANK
-		}
-
-		const start = assignedRanks[assignedRanks.length - 1] ? assignedRanks[assignedRanks.length - 1] : 0
-
-		if (!nextKnownSegment) {
-			return Math.floor(start + PAD_RANK)
-		}
-
-		let end = previousRanks[rundownId][nextKnownSegment] ? previousRanks[rundownId][nextKnownSegment].rank : start + PAD_RANK
-
-		let newRank = (start + end) / 2
-
-		// Prevent infinite loop
-		// This comes at the cost of there being a possibility of duplicate IDs *but* only when there are 1000s of stories in a single rundown.
-		let attempts = 0
-		while (assignedRanks.includes(newRank) && attempts < 100) {
-			newRank = (newRank + end) / 2 + Math.random()
-			attempts += 1
-		}
-
-		return newRank
 	}
 
 	static getDeletedSegments (oldOrder: string[], newOrder: string[]): string[] {

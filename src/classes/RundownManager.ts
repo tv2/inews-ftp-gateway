@@ -11,7 +11,7 @@ function isFile (f: INewsDirItem): f is INewsFile {
 
 export class RundownManager {
 
-	private previousRanks: SegmentRankings = {}
+	private previousRanks: SegmentRankings = new Map()
 
 	// TODO: This could be cleaned up
 	private _listStories!: (queueName: string) => Promise<Array<INewsDirItem>>
@@ -70,13 +70,16 @@ export class RundownManager {
 
 		let rundown = new INewsRundown(rundownId, rundownId, version)
 		let segments = ParsedINewsIntoSegments.parse(rundownId, rundownRaw, this.previousRanks)
-		this.previousRanks[rundownId] = {}
+
+		const previousRanksMap = new Map()
 		segments.forEach((segment, position) => {
-			this.previousRanks[rundownId][segment.externalId] = {
+			previousRanksMap.set(segment.externalId, {
 				rank: segment.rank,
 				position: position + 1
-			}
+			})
 		})
+		this.previousRanks.set(rundownId, previousRanksMap)
+
 		rundown.addSegments(segments)
 		this._logger.info('DONE : ', name, ' converted to Sofie Rundown')
 		return rundown

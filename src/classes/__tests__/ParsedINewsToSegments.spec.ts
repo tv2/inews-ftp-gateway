@@ -1,4 +1,4 @@
-import { ParsedINewsIntoSegments, SegmentRankings } from '../ParsedINewsToSegments'
+import { ParsedINewsIntoSegments, SegmentRankingsInner, SegmentRankings } from '../ParsedINewsToSegments'
 import { INewsStoryGW } from '../datastructures/Segment'
 
 const segmentGW01: INewsStoryGW = {
@@ -105,33 +105,50 @@ const segmentGW08: INewsStoryGW = {
 	identifier: 'segment-08'
 }
 
+const rundownId = 'test-rundown'
+
+function makeSegmentRanks (segments: { [segmentId: string]: SegmentRankingsInner }): SegmentRankings {
+	const ranks: SegmentRankings = new Map()
+
+	ranks.set(rundownId, makeSegmentRanksInner(segments))
+
+	return ranks
+}
+
+function makeSegmentRanksInner (segments: { [segmentId: string]: SegmentRankingsInner}): Map<string, SegmentRankingsInner> {
+	const segmentRanksInner: Map<string, SegmentRankingsInner> = new Map()
+
+	for (const segmentId in segments) {
+		segmentRanksInner.set(segmentId, segments[segmentId])
+	}
+
+	return segmentRanksInner
+}
+
 describe('ParsedINewsIntoSegments', () => {
 	it('Finds the the next available rank', () => {
-		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-01': { rank: 1000,position: 1 },
-				'segment-02': { rank: 2000, position: 2 },
-				'segment-03': { rank: 5000, position: 3 }
-			}
-		}
+		const previousRanks = makeSegmentRanksInner({
+			'segment-01': { rank: 1000,position: 1 },
+			'segment-02': { rank: 2000, position: 2 },
+			'segment-03': { rank: 5000, position: 3 }
+		})
 
-		let result = ParsedINewsIntoSegments.getNextAvailableRank(rundownId, previousRanks, [1000, 2000, 5000])
-		expect(result).toEqual(1000)
-
-		result = ParsedINewsIntoSegments.getNextAvailableRank(rundownId, previousRanks, [], undefined, 'segment-01')
-		expect(result).toEqual(500)
-
-		result = ParsedINewsIntoSegments.getNextAvailableRank(rundownId, previousRanks, [1000, 2000, 5000], 'segment-03')
+		let result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [1000, 2000, 5000])
 		expect(result).toEqual(6000)
 
-		result = ParsedINewsIntoSegments.getNextAvailableRank(rundownId, previousRanks, [1000], 'segment-01', 'segment-02')
+		result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [], 'segment-01')
+		expect(result).toEqual(500)
+
+		result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [1000, 2000, 5000])
+		expect(result).toEqual(6000)
+
+		result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [1000], 'segment-02')
 		expect(result).toEqual(1500)
 
-		result = ParsedINewsIntoSegments.getNextAvailableRank(rundownId, previousRanks, [1000, 2000, 1500], 'segment-01', 'segment-02')
+		result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [1000, 2000, 1500], 'segment-02')
 		expect(result).toEqual(1750)
 
-		result = ParsedINewsIntoSegments.getNextAvailableRank(rundownId, previousRanks, [1000, 2000], 'segment-02', 'segment-03')
+		result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [1000, 2000], 'segment-03')
 		expect(result).toEqual(3500)
 	})
 
@@ -157,26 +174,23 @@ describe('ParsedINewsIntoSegments', () => {
 	})
 
 	it('Assigns initial ranks', () => {
-		// Mock Math.random()
-		global.Math.random = () => 0.05
-
 		const iNewsRaw: INewsStoryGW[] = [
 			segmentGW01, segmentGW02, segmentGW03
 		]
 		const rundownId = 'test-rundown'
 
-		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, {}).map(res => { return { rank: res.rank, externalId: res.externalId } })
+		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, new Map()).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
 			{
-				rank: 1000.05,
+				rank: 1000,
 				externalId: 'segment-01'
 			},
 			{
-				rank: 2000.05,
+				rank: 2000,
 				externalId: 'segment-02'
 			},
 			{
-				rank: 3000.05,
+				rank: 3000,
 				externalId: 'segment-03'
 			}
 		])
@@ -187,13 +201,11 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW01, segmentGW02, segmentGW03
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId] : {
-				'segment-01': { rank: 1, position: 1 },
-				'segment-02': { rank: 2, position: 2 },
-				'segment-03': { rank: 3, position: 3 }
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-01': { rank: 1, position: 1 },
+			'segment-02': { rank: 2, position: 2 },
+			'segment-03': { rank: 3, position: 3 }
+		})
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -217,13 +229,11 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW01, segmentGW02, segmentGW04, segmentGW03
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-01': { rank: 1, position: 1 },
-				'segment-02': { rank: 2, position: 2 },
-				'segment-03': { rank: 3, position: 3 }
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-01': { rank: 1, position: 1 },
+			'segment-02': { rank: 2, position: 2 },
+			'segment-03': { rank: 3, position: 3 }
+		})
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -251,13 +261,11 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW08, segmentGW01, segmentGW02, segmentGW03, segmentGW04, segmentGW05, segmentGW06, segmentGW07
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-01': { rank: 1000, position: 1 },
-				'segment-02': { rank: 2000, position: 2 },
-				'segment-03': { rank: 3000, position: 3 }
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-01': { rank: 1000, position: 1 },
+			'segment-02': { rank: 2000, position: 2 },
+			'segment-03': { rank: 3000, position: 3 }
+		})
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -301,13 +309,11 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW01, segmentGW03, segmentGW02
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-01': { rank: 1000,position: 1 },
-				'segment-02': { rank: 2000,position: 2 },
-				'segment-03': { rank: 3000,position: 3 }
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-01': { rank: 1000, position: 1 },
+			'segment-02': { rank: 2000, position: 2 },
+			'segment-03': { rank: 3000, position: 3 }
+		})
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -331,14 +337,12 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW02, segmentGW01, segmentGW04, segmentGW03
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-01': { rank: 1000, position: 1 },
-				'segment-02': { rank: 1500, position: 2 },
-				'segment-03': { rank: 2000, position: 3 },
-				'segment-04': { rank: 3000, position: 4 }
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-01': { rank: 1000, position: 1 },
+			'segment-02': { rank: 1500, position: 2 },
+			'segment-03': { rank: 2000, position: 3 },
+			'segment-04': { rank: 3000, position: 4 }
+		})
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -366,16 +370,14 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW05, segmentGW02, segmentGW01, segmentGW04, segmentGW03, segmentGW06
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-05': { rank: 1000, position: 1 },
-				'segment-01': { rank: 2000, position: 2 },
-				'segment-02': { rank: 2500, position: 3 },
-				'segment-03': { rank: 3000, position: 4 },
-				'segment-04': { rank: 4000, position: 5 },
-				'segment-06': { rank: 5000, position: 6 }
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-05': { rank: 1000, position: 1 },
+			'segment-01': { rank: 2000, position: 2 },
+			'segment-02': { rank: 2500, position: 3 },
+			'segment-03': { rank: 3000, position: 4 },
+			'segment-04': { rank: 4000, position: 5 },
+			'segment-06': { rank: 5000, position: 6 }
+		})
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -411,16 +413,14 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW05, segmentGW02, segmentGW01, segmentGW04, segmentGW03, segmentGW07, segmentGW08, segmentGW06
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-05': { rank: 1000, position: 1 }, // Stay
-				'segment-01': { rank: 2000, position: 2 },
-				'segment-02': { rank: 2500, position: 3 }, // Stay
-				'segment-03': { rank: 3000, position: 4 },
-				'segment-04': { rank: 4000, position: 5 }, // Stay
-				'segment-06': { rank: 5000, position: 6 } // Stay
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-05': { rank: 1000, position: 1 }, // Stay
+			'segment-01': { rank: 2000, position: 2 },
+			'segment-02': { rank: 2500, position: 3 }, // Stay
+			'segment-03': { rank: 3000, position: 4 },
+			'segment-04': { rank: 4000, position: 5 }, // Stay
+			'segment-06': { rank: 5000, position: 6 } // Stay
+		})
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -464,18 +464,16 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW05, segmentGW02, segmentGW01, segmentGW04, segmentGW03, segmentGW07, segmentGW08, segmentGW06
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-05': { rank: 1000, position: 1 },
-				'segment-02': { rank: 1500, position: 2 },
-				'segment-01': { rank: 2000, position: 3 },
-				'segment-04': { rank: 4000, position: 4 },
-				'segment-03': { rank: 4125, position: 5 },
-				'segment-07': { rank: 4250, position: 6 },
-				'segment-08': { rank: 4500, position: 7 },
-				'segment-06': { rank: 5000, position: 8 }
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-05': { rank: 1000, position: 1 },
+			'segment-02': { rank: 1500, position: 2 },
+			'segment-01': { rank: 2000, position: 3 },
+			'segment-04': { rank: 4000, position: 4 },
+			'segment-03': { rank: 4125, position: 5 },
+			'segment-07': { rank: 4250, position: 6 },
+			'segment-08': { rank: 4500, position: 7 },
+			'segment-06': { rank: 5000, position: 8 }
+		})
 
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -519,18 +517,16 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW05, segmentGW02, segmentGW01, segmentGW04, segmentGW03, segmentGW07, segmentGW08, segmentGW06
 		]
 		const rundownId = 'test-rundown'
-		let previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-05': { rank: 1000, position: 1 },
-				'segment-02': { rank: 1500, position: 2 },
-				'segment-01': { rank: 2000, position: 3 },
-				'segment-04': { rank: 4000, position: 4 },
-				'segment-03': { rank: 4125, position: 5 },
-				'segment-07': { rank: 4250, position: 6 },
-				'segment-08': { rank: 4500, position: 7 },
-				'segment-06': { rank: 5000, position: 8 }
-			}
-		}
+		let previousRanks = makeSegmentRanks({
+			'segment-05': { rank: 1000, position: 1 },
+			'segment-02': { rank: 1500, position: 2 },
+			'segment-01': { rank: 2000, position: 3 },
+			'segment-04': { rank: 4000, position: 4 },
+			'segment-03': { rank: 4125, position: 5 },
+			'segment-07': { rank: 4250, position: 6 },
+			'segment-08': { rank: 4500, position: 7 },
+			'segment-06': { rank: 5000, position: 8 }
+		})
 
 		let result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -572,18 +568,16 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW05, segmentGW01, segmentGW02, segmentGW04, segmentGW03, segmentGW07, segmentGW08, segmentGW06
 		]
 
-		previousRanks = {
-			[rundownId]: {
-				'segment-05': { rank: 1000, position: 1 },
-				'segment-02': { rank: 1500, position: 2 },
-				'segment-01': { rank: 2000, position: 3 },
-				'segment-04': { rank: 4000, position: 4 },
-				'segment-03': { rank: 4125, position: 5 },
-				'segment-07': { rank: 4250, position: 6 },
-				'segment-08': { rank: 4500, position: 7 },
-				'segment-06': { rank: 5000, position: 8 }
-			}
-		}
+		previousRanks = makeSegmentRanks({
+			'segment-05': { rank: 1000, position: 1 },
+			'segment-02': { rank: 1500, position: 2 },
+			'segment-01': { rank: 2000, position: 3 },
+			'segment-04': { rank: 4000, position: 4 },
+			'segment-03': { rank: 4125, position: 5 },
+			'segment-07': { rank: 4250, position: 6 },
+			'segment-08': { rank: 4500, position: 7 },
+			'segment-06': { rank: 5000, position: 8 }
+		})
 
 		result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -625,18 +619,16 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW05, segmentGW01, segmentGW04, segmentGW02, segmentGW03, segmentGW08, segmentGW06, segmentGW07
 		]
 
-		previousRanks = {
-			[rundownId]: {
-				'segment-05': { rank: 1000, position: 1 },
-				'segment-01': { rank: 2000, position: 3 },
-				'segment-02': { rank: 3000, position: 2 },
-				'segment-04': { rank: 4000, position: 4 },
-				'segment-03': { rank: 4125, position: 5 },
-				'segment-07': { rank: 4250, position: 6 },
-				'segment-08': { rank: 4500, position: 7 },
-				'segment-06': { rank: 5000, position: 8 }
-			}
-		}
+		previousRanks = makeSegmentRanks({
+			'segment-05': { rank: 1000, position: 1 },
+			'segment-01': { rank: 2000, position: 3 },
+			'segment-02': { rank: 3000, position: 2 },
+			'segment-04': { rank: 4000, position: 4 },
+			'segment-03': { rank: 4125, position: 5 },
+			'segment-07': { rank: 4250, position: 6 },
+			'segment-08': { rank: 4500, position: 7 },
+			'segment-06': { rank: 5000, position: 8 }
+		})
 
 		result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
@@ -680,15 +672,13 @@ describe('ParsedINewsIntoSegments', () => {
 			segmentGW01, segmentGW03, segmentGW04, segmentGW05
 		]
 		const rundownId = 'test-rundown'
-		const previousRanks: SegmentRankings = {
-			[rundownId]: {
-				'segment-01': { rank: 1000,position: 1 },
-				'segment-02': { rank: 2000,position: 2 },
-				'segment-03': { rank: 3000,position: 3 },
-				'segment-04': { rank: 4000,position: 4 },
-				'segment-05': { rank: 5000,position: 5 }
-			}
-		}
+		const previousRanks = makeSegmentRanks({
+			'segment-01': { rank: 1000,position: 1 },
+			'segment-02': { rank: 2000,position: 2 },
+			'segment-03': { rank: 3000,position: 3 },
+			'segment-04': { rank: 4000,position: 4 },
+			'segment-05': { rank: 5000,position: 5 }
+		})
 
 		let result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([

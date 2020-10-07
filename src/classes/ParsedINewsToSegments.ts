@@ -49,7 +49,7 @@ export class ParsedINewsIntoSegments {
 						rawSegment,
 						rawSegment.fields.modifyDate,
 						`${rawSegment.identifier}`,
-						BASE_RANK + PAD_RANK * position + Math.random(), // Offset from 0 to allow for stories arriving out of order
+						BASE_RANK + PAD_RANK * position, // Offset from 0 to allow for stories arriving out of order
 						rawSegment.fields.title || '',
 						false
 					)

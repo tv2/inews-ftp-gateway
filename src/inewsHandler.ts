@@ -157,7 +157,7 @@ export class InewsFTPHandler {
 		// let coreRundowns = this._coreHandler.GetRundownList()
 		let coreCache = this._coreHandler.GetRundownCache()
 		let rundowns = coreCache.filter(item => item.type === 'rundown')
-		let rundownsCache: RundownMap = {}
+		let rundownsCache: RundownMap = new Map()
 
 		rundowns.forEach((rundownHeader: any) => {
 			let segments = [new RundownSegment('',emptyStory(),'0','',0,'',false)]
@@ -184,7 +184,7 @@ export class InewsFTPHandler {
 				segments = []
 			}
 			rundown.segments = segments
-			rundownsCache[rundownHeader.data.externalId] = rundown
+			rundownsCache.set(rundownHeader.data.externalId, rundown)
 		})
 		return rundownsCache
 	}

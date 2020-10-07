@@ -375,7 +375,7 @@ export class CoreHandler {
 		if (this.iNewsHandler?.iNewsWatcher?.rundowns) {
 			const ret: any = {}
 			Object.keys(this.iNewsHandler.iNewsWatcher.rundowns).forEach(key => {
-				const rundown = this.iNewsHandler?.iNewsWatcher?.rundowns[key]
+				const rundown = this.iNewsHandler?.iNewsWatcher?.rundowns.get(key)
 				if (rundown) {
 					ret[key] = mutateRundown(rundown)
 				}
@@ -394,7 +394,7 @@ export class CoreHandler {
 	async triggerReloadRundown (rundownId: string): Promise<IngestRundown | null> {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
 		if (this.iNewsHandler?.iNewsWatcher) {
-			this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = undefined
+			this.iNewsHandler.iNewsWatcher.rundowns.delete(rundownId)
 		}
 		return null
 
@@ -423,7 +423,7 @@ export class CoreHandler {
 	async triggerReloadSegment (rundownId: string, segmentId: string): Promise<IngestSegment | null> {
 		this.logger.info(`Reloading segment ${segmentId} from rundown ${rundownId}`)
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			const rundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
+			const rundown = this.iNewsHandler.iNewsWatcher.rundowns.get(rundownId)
 
 			if (rundown) {
 				const segmentIndex = rundown.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
@@ -443,7 +443,7 @@ export class CoreHandler {
 				)
 
 				rundown.segments[segmentIndex] = segment
-				this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = rundown
+				this.iNewsHandler.iNewsWatcher.rundowns.set(rundownId, rundown)
 
 				return mutateSegment(segment)
 			} else {

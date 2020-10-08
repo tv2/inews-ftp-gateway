@@ -2,7 +2,7 @@ import { RundownSegment } from './Segment'
 
 export interface IRundown {
 	externalId: string
-	name: string // namnet på sheeten
+	name: string
 }
 
 export class INewsRundown implements IRundown {

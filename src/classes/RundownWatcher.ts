@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv'
 import { INewsRundown } from './datastructures/Rundown'
 import { RundownManager } from './RundownManager'
 import * as _ from 'underscore'
-import { RundownSegment } from './datastructures/Segment'
+import { RundownSegment, ISegment } from './datastructures/Segment'
 import * as Winston from 'winston'
 import { INewsQueue, InewsFTPHandler } from '../inewsHandler'
 import { INewsClient } from 'inews'
@@ -57,7 +57,10 @@ export interface RundownChangeSegmentCreate extends RundownChangeSegment {
 
 export type RundownChange = RundownChangeRundownCreate | RundownChangeRundownDelete | RundownChangeRundownUpdate | RundownChangeSegmentCreate | RundownChangeSegmentDelete | RundownChangeSegmentUpdate
 
-export type RundownMap = Map<string, INewsRundown>
+export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gatewayVersion'> & { segments: ReducedSegment[] }
+export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name'>
+
+export type RundownMap = Map<string, ReducedRundown>
 
 export class RundownWatcher extends EventEmitter {
 

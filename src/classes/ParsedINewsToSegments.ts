@@ -28,7 +28,7 @@ const PAD_RANK = 1000
 
 export class ParsedINewsIntoSegments {
 
-	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings, _logger?: winston.LoggerInstance): RundownSegment[] {
+	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings, _logger?: winston.LoggerInstance, removedSegments?: string[]): RundownSegment[] {
 		let segments: RundownSegment[] = []
 
 		if (inewsRaw.some(rawSegment => !rawSegment.identifier)) {
@@ -50,8 +50,7 @@ export class ParsedINewsIntoSegments {
 						rawSegment.fields.modifyDate,
 						`${rawSegment.identifier}`,
 						BASE_RANK + PAD_RANK * position, // Offset from 0 to allow for stories arriving out of order
-						rawSegment.fields.title || '',
-						false
+						rawSegment.fields.title || ''
 					)
 				)
 			})
@@ -61,7 +60,11 @@ export class ParsedINewsIntoSegments {
 		const newOrderSegmentIds = inewsRaw.map(raw => raw.identifier)
 		const previousOrderSegmentIds = Array.from(rundownPreviousRanks.keys())
 		const { movedSegments, notMovedSegments } = this.getMovedSegments(previousOrderSegmentIds, newOrderSegmentIds)
-		const insertedSegments = this.getInsertedSegments(previousOrderSegmentIds, newOrderSegmentIds)
+		const insertedSegments = this.getInsertedSegments(previousOrderSegmentIds, newOrderSegmentIds) // TODO: this can be returned by getMovedSegments
+		const deletedSegments = this.getDeletedSegments(previousOrderSegmentIds, newOrderSegmentIds) // TODO: this can be returned by getMovedSegments
+		if (removedSegments) {
+			removedSegments.push(...deletedSegments)
+		}
 
 		const movedSegmentsSet = new Set(movedSegments)
 		const notMovedSegmentsSet = new Set(notMovedSegments)
@@ -86,8 +89,7 @@ export class ParsedINewsIntoSegments {
 						rawSegment.fields.modifyDate,
 						`${rawSegment.identifier}`,
 						newRank,
-						rawSegment.fields.title || '',
-						false
+						rawSegment.fields.title || ''
 					)
 				)
 				assignedRanks.push(newRank)
@@ -101,8 +103,7 @@ export class ParsedINewsIntoSegments {
 						rawSegment.fields.modifyDate,
 						`${rawSegment.identifier}`,
 						newRank,
-						rawSegment.fields.title || '',
-						false
+						rawSegment.fields.title || ''
 					)
 				)
 				assignedRanks.push(newRank)

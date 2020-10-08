@@ -1,12 +1,11 @@
 import * as Winston from 'winston'
-import { INewsRundown } from './datastructures/Rundown'
-import { RundownMap, RundownChange, RundownChangeRundownDelete, RundownChangeType, RundownChangeRundownCreate, RundownChangeRundownUpdate, RundownChangeSegmentCreate, RundownChangeSegmentDelete, RundownChangeSegmentUpdate } from './RundownWatcher'
+import { RundownMap, RundownChange, RundownChangeRundownDelete, RundownChangeType, RundownChangeRundownCreate, RundownChangeRundownUpdate, RundownChangeSegmentCreate, RundownChangeSegmentDelete, RundownChangeSegmentUpdate, ReducedRundown } from './RundownWatcher'
 import { literal } from '../helpers'
 import _ = require('underscore')
 
 export function ProcessUpdatedRundown (
 	rundownId: string,
-	rundown: INewsRundown | null,
+	rundown: ReducedRundown | null,
 	rundowns: RundownMap,
 	logger?: Winston.LoggerInstance
 ) {
@@ -28,7 +27,7 @@ export function ProcessUpdatedRundown (
 		logger?.info(`Rundown ${rundownId} deleted`)
 	} else if (oldRundown && rundown) {
 		// Rundown properties changed
-		if (!_.isEqual(oldRundown.serialize(), rundown.serialize())) {
+		if (!_.isEqual(oldRundown, rundown)) {
 			changes.push(
 				literal<RundownChangeRundownUpdate>({
 					type: RundownChangeType.RUNDOWN_UPDATE,
@@ -67,7 +66,7 @@ export function ProcessUpdatedRundown (
 			)
 			logger?.info(`Segment ${segment.name} (${segment.externalId}) created in rundown ${rundownId}`)
 		} else {
-			if (!_.isEqual(oldSegment.serialize(), segment.serialize())) {
+			if (!_.isEqual(oldSegment, segment)) {
 				// Changed
 				changes.push(
 					literal<RundownChangeSegmentUpdate>({

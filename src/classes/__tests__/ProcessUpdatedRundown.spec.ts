@@ -83,7 +83,7 @@ describe('Process Updated Rundown', () => {
 		const rundownMap: RundownMap = new Map()
 		rundownMap.set(TEST_RUNDOWN_ID, TEST_RUNDOWN)
 
-		const newSegment: RundownSegment = new RundownSegment(TEST_RUNDOWN_ID, segmentGW01, '0', 'segment-01', 0, 'TEST SEGMENT', false)
+		const newSegment: RundownSegment = new RundownSegment(TEST_RUNDOWN_ID, segmentGW01, '0', 'segment-01', 0, 'TEST SEGMENT')
 		const updatedRundown = new INewsRundown(TEST_RUNDOWN.externalId, TEST_RUNDOWN.name, TEST_RUNDOWN.gatewayVersion, [newSegment])
 
 		const result = ProcessUpdatedRundown(TEST_RUNDOWN_ID, updatedRundown, rundownMap)
@@ -298,7 +298,7 @@ describe('Process Updated Rundown', () => {
 		rundownMap.set(TEST_RUNDOWN_ID, rundown)
 
 		const newSegments: INewsStoryGW[] = [
-			segmentGW02, segmentGW03, segmentGW08, segmentGW05, { ...segmentGW06, fields: { title: 'Changed Segment' } }, segmentGW07
+			segmentGW02, segmentGW03, segmentGW08, segmentGW05, { ...segmentGW06, fields: { title: 'Changed Segment', modifyDate: '' } }, segmentGW07
 		]
 		const newRundownSegments: RundownSegment[] = []
 

@@ -5,20 +5,13 @@ import {
 	PeripheralDeviceAPI as P
 } from 'tv-automation-server-core-integration'
 import { CoreHandler } from './coreHandler'
-import { RundownWatcher, RundownMap } from './classes/RundownWatcher'
-import { INewsRundown } from './classes/datastructures/Rundown'
+import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
 import { mutateRundown, mutateSegment } from './mutate'
 import * as inews from 'inews'
-// @ts-ignore
-// import inews from '@johnsand/inews'
-import { RundownSegment, INewsStoryGW } from './classes/datastructures/Segment'
+import { literal } from './helpers'
 
 type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions
-
-const emptyStory = (): INewsStoryGW => {
-	return { fields: {}, meta: {}, cues: [], fileId: '', identifier: '' }
-}
 
 export interface INewsDeviceSettings {
 	hosts: Array<INewsHost>
@@ -138,7 +131,7 @@ export class InewsFTPHandler {
 				this.iNewsWatcher = new RundownWatcher(
 					this._logger, this.iNewsConnection,
 					this._coreHandler, this._settings.queues,
-					'v0.2', this.ingestDataToRundowns('v0.2'),
+					'v0.2', this.ingestDataToRundowns('v0.2', this._settings.queues.map(q => q.queues)),
 					this)
 
 				this.updateChanges(this.iNewsWatcher)
@@ -153,40 +146,38 @@ export class InewsFTPHandler {
 	/**
 	 *  Get the current rundown state from Core and convert it to rundowns.
 	 */
-	ingestDataToRundowns (gatewayVersion: string): RundownMap {
-		// let coreRundowns = this._coreHandler.GetRundownList()
-		let coreCache = this._coreHandler.GetRundownCache()
-		let rundowns = coreCache.filter(item => item.type === 'rundown')
+	ingestDataToRundowns (gatewayVersion: string, rundownExternalIds: string[]): RundownMap {
+		const rundownMap: RundownMap = new Map()
+
+		let coreRundowns = this._coreHandler.GetRundownCache(rundownExternalIds)
+
 		let rundownsCache: RundownMap = new Map()
 
-		rundowns.forEach((rundownHeader: any) => {
-			let segments = [new RundownSegment('',emptyStory(),'0','',0,'',false)]
-			let rundown = new INewsRundown(
-				rundownHeader.data.externalId,
-				rundownHeader.data.name,
-				gatewayVersion,
-				[]
-			)
-			coreCache.forEach((segment: any) => {
-				if (segment.rundownId === rundownHeader.rundownId && segment.type === 'segment' && segment.data.payload.iNewsStory) {
-					segments[segment.data.rank] = new RundownSegment(
-						segment.data.payload.rundownId,
-						segment.data.payload.iNewsStory,
-						segment.data.payload.iNewsStory.fields.modifyDate || '0',
-						segment.data.payload.externalId,
-						segment.data.payload.rank,
-						segment.data.payload.name,
-						segment.data.payload.float
-					)
-				}
-			})
-			if (segments[0].rundownId === '') {
-				segments = []
+		coreRundowns.forEach(ingestRundown => {
+			let ingestSegments = this._coreHandler.GetSegmentsCacheForRundown(ingestRundown.externalId)
+
+			let rundown: ReducedRundown = {
+				externalId: ingestRundown.externalId,
+				name: ingestRundown.name,
+				gatewayVersion: ingestRundown.payload.gatewayVersion || gatewayVersion,
+				segments: []
 			}
-			rundown.segments = segments
-			rundownsCache.set(rundownHeader.data.externalId, rundown)
+
+			ingestSegments.forEach(ingestSegment => {
+				rundown.segments.push(
+					literal<ReducedSegment>({
+						externalId: ingestSegment.externalId,
+						name: ingestSegment.name,
+						modified: new Date(0), // Assume it was last modified long ago
+						rank: ingestSegment.rank
+					})
+				)
+			})
+
+			rundownsCache.set(ingestRundown.externalId, rundown)
 		})
-		return rundownsCache
+
+		return rundownMap
 	}
 
 	updateChanges (iNewsWatcher: RundownWatcher) {

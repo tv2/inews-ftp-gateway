@@ -2,10 +2,9 @@ import { INewsStoryGW, RundownSegment } from '../../datastructures/Segment'
 import * as _ from 'underscore'
 
 export const segmentGW01: INewsStoryGW = {
-	fileId: 'segment-01',
-	id: 'segment-01',
 	fields: {
-		title: 'Segment 01'
+		title: 'Segment 01',
+		modifyDate: ''
 	},
 	meta: {
 		words: '140',
@@ -17,10 +16,9 @@ export const segmentGW01: INewsStoryGW = {
 }
 
 export const segmentGW02: INewsStoryGW = {
-	fileId: 'segment-02',
-	id: 'segment-02',
 	fields: {
-		title: 'Segment 02'
+		title: 'Segment 02',
+		modifyDate: ''
 	},
 	meta: {
 		words: '140',
@@ -32,10 +30,9 @@ export const segmentGW02: INewsStoryGW = {
 }
 
 export const segmentGW03: INewsStoryGW = {
-	fileId: 'segment-03',
-	id: 'segment-03',
 	fields: {
-		title: 'Segment 03'
+		title: 'Segment 03',
+		modifyDate: ''
 	},
 	meta: {
 		words: '140',
@@ -47,10 +44,9 @@ export const segmentGW03: INewsStoryGW = {
 }
 
 export const segmentGW04: INewsStoryGW = {
-	fileId: 'segment-04',
-	id: 'segment-04',
 	fields: {
-		title: 'Segment 04'
+		title: 'Segment 04',
+		modifyDate: ''
 	},
 	meta: {
 		words: '140',
@@ -62,10 +58,9 @@ export const segmentGW04: INewsStoryGW = {
 }
 
 export const segmentGW05: INewsStoryGW = {
-	fileId: 'segment-05',
-	id: 'segment-05',
 	fields: {
-		title: 'Segment 05'
+		title: 'Segment 05',
+		modifyDate: ''
 	},
 	meta: {
 		words: '140',
@@ -77,10 +72,9 @@ export const segmentGW05: INewsStoryGW = {
 }
 
 export const segmentGW06: INewsStoryGW = {
-	fileId: 'segment-06',
-	id: 'segment-06',
 	fields: {
-		title: 'Segment 06'
+		title: 'Segment 06',
+		modifyDate: ''
 	},
 	meta: {
 		words: '140',
@@ -92,10 +86,9 @@ export const segmentGW06: INewsStoryGW = {
 }
 
 export const segmentGW07: INewsStoryGW = {
-	fileId: 'segment-07',
-	id: 'segment-07',
 	fields: {
-		title: 'Segment 07'
+		title: 'Segment 07',
+		modifyDate: ''
 	},
 	meta: {
 		words: '140',
@@ -107,10 +100,9 @@ export const segmentGW07: INewsStoryGW = {
 }
 
 export const segmentGW08: INewsStoryGW = {
-	fileId: 'segment-08',
-	id: 'segment-08',
 	fields: {
-		title: 'Segment 08'
+		title: 'Segment 08',
+		modifyDate: ''
 	},
 	meta: {
 		words: '140',
@@ -122,5 +114,5 @@ export const segmentGW08: INewsStoryGW = {
 }
 
 export function RundownSegmentFromMockSegment (rundownId: string, segmentGW: INewsStoryGW): RundownSegment {
-	return new RundownSegment(rundownId, _.clone(segmentGW), '0', segmentGW.identifier, 0, segmentGW.fields.title, false)
+	return new RundownSegment(rundownId, _.clone(segmentGW), '0', segmentGW.identifier, 0, segmentGW.fields.title)
 }

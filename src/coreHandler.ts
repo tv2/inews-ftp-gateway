@@ -1,9 +1,9 @@
-import { CoreConnection,
+import {
+	CoreConnection,
 	CoreOptions,
 	PeripheralDeviceAPI as P,
 	DDPConnectorOptions,
-  CollectionObj,
-  Observer
+	Observer
 } from 'tv-automation-server-core-integration'
 import * as Winston from 'winston'
 import * as fs from 'fs'
@@ -13,7 +13,7 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateRundown, mutateSegment } from './mutate'
+import { mutateRundown, mutateSegment, INGEST_RUNDOWN_TYPE } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
@@ -377,7 +377,7 @@ export class CoreHandler {
 			Object.keys(this.iNewsHandler.iNewsWatcher.rundowns).forEach(key => {
 				const rundown = this.iNewsHandler?.iNewsWatcher?.rundowns.get(key)
 				if (rundown) {
-					ret[key] = mutateRundown(rundown)
+					ret[key] = rundown
 				}
 			})
 			return ret
@@ -432,14 +432,17 @@ export class CoreHandler {
 				const prevSegment = rundown.segments[segmentIndex]
 				const rawSegment = await this.iNewsHandler.iNewsWatcher.rundownManager.downloadINewsStoryById(rundownId, segmentId)
 
+				if (!rawSegment) {
+					return null
+				}
+
 				const segment = new RundownSegment(
 					rundownId,
 					rawSegment,
 					rawSegment.fields.modifyDate,
 					`${rawSegment.identifier}`,
 					prevSegment.rank,
-					rawSegment.fields.title || '',
-					false
+					rawSegment.fields.title
 				)
 
 				rundown.segments[segmentIndex] = segment
@@ -489,36 +492,20 @@ export class CoreHandler {
 	}
 
 	/**
-	 * Returns the ID of the currently active rundown.
-	 */
-	public GetLiveRundown (): string | undefined {
-		let rundowns = this.core.getCollection('rundowns')
-		if (!rundowns) throw Error('"rundowns" collection not found!')
-
-		let activeRundown = rundowns.findOne({ studioId: this._studioId, active: true })
-		return activeRundown.externalId
-	}
-
-	/**
 	 * Returns Sofie rundown orders state
 	 */
-	public GetRundownCache (): Array<CollectionObj> {
+	public GetRundownCache (rundownExternalIds: string[]): Array<IngestRundown> {
 		let rundowns = this.core.getCollection('ingestDataCache')
 		if (!rundowns) throw Error('"ingestDataCache" collection not found!')
 
-		let fullIngestCache = rundowns.find({})
+		let fullIngestCache = rundowns.find({ externalId: { $in: rundownExternalIds }, type: INGEST_RUNDOWN_TYPE }) as unknown as IngestRundown[]
 		return fullIngestCache
 	}
 
-	/**
-	 * Checks if a rundown is active.
-	 * @param externalId External ID of the active rundown.
-	 */
-	public IsRundownLive (externalId: string): boolean {
-		let rundowns = this.core.getCollection('rundowns')
-		if (!rundowns) throw Error('"rundowns" collection not found!')
+	public GetSegmentsCacheForRundown (rundownExternalId: string): Array<IngestSegment> {
+		let segments = this.core.getCollection('ingestDataCache')
+		if (!segments) throw Error('"ingestDataCache" collection not found!')
 
-		let rundown = rundowns.findOne({ studioId: this._studioId, externalId: externalId })
-		return rundown.active
+		return (segments.find({ 'payload.rundownId': rundownExternalId }) as unknown as IngestSegment[]).sort((a, b) => a.rank - b.rank)
 	}
 }

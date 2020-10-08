@@ -4,7 +4,7 @@ import * as _ from 'underscore'
 export const segmentGW01: INewsStoryGW = {
 	fields: {
 		title: 'Segment 01',
-		modifyDate: ''
+		modifyDate: '0'
 	},
 	meta: {
 		words: '140',
@@ -18,7 +18,7 @@ export const segmentGW01: INewsStoryGW = {
 export const segmentGW02: INewsStoryGW = {
 	fields: {
 		title: 'Segment 02',
-		modifyDate: ''
+		modifyDate: '0'
 	},
 	meta: {
 		words: '140',
@@ -32,7 +32,7 @@ export const segmentGW02: INewsStoryGW = {
 export const segmentGW03: INewsStoryGW = {
 	fields: {
 		title: 'Segment 03',
-		modifyDate: ''
+		modifyDate: '0'
 	},
 	meta: {
 		words: '140',
@@ -46,7 +46,7 @@ export const segmentGW03: INewsStoryGW = {
 export const segmentGW04: INewsStoryGW = {
 	fields: {
 		title: 'Segment 04',
-		modifyDate: ''
+		modifyDate: '0'
 	},
 	meta: {
 		words: '140',
@@ -60,7 +60,7 @@ export const segmentGW04: INewsStoryGW = {
 export const segmentGW05: INewsStoryGW = {
 	fields: {
 		title: 'Segment 05',
-		modifyDate: ''
+		modifyDate: '0'
 	},
 	meta: {
 		words: '140',
@@ -74,7 +74,7 @@ export const segmentGW05: INewsStoryGW = {
 export const segmentGW06: INewsStoryGW = {
 	fields: {
 		title: 'Segment 06',
-		modifyDate: ''
+		modifyDate: '0'
 	},
 	meta: {
 		words: '140',
@@ -88,7 +88,7 @@ export const segmentGW06: INewsStoryGW = {
 export const segmentGW07: INewsStoryGW = {
 	fields: {
 		title: 'Segment 07',
-		modifyDate: ''
+		modifyDate: '0'
 	},
 	meta: {
 		words: '140',
@@ -102,7 +102,7 @@ export const segmentGW07: INewsStoryGW = {
 export const segmentGW08: INewsStoryGW = {
 	fields: {
 		title: 'Segment 08',
-		modifyDate: ''
+		modifyDate: '0'
 	},
 	meta: {
 		words: '140',
@@ -114,5 +114,5 @@ export const segmentGW08: INewsStoryGW = {
 }
 
 export function RundownSegmentFromMockSegment (rundownId: string, segmentGW: INewsStoryGW): RundownSegment {
-	return new RundownSegment(rundownId, _.clone(segmentGW), '0', segmentGW.identifier, 0, segmentGW.fields.title)
+	return new RundownSegment(rundownId, _.clone(segmentGW), new Date(segmentGW.fields.modifyDate), segmentGW.identifier, 0, segmentGW.fields.title)
 }

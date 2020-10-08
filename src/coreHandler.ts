@@ -13,10 +13,11 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateRundown, mutateSegment, INGEST_RUNDOWN_TYPE } from './mutate'
+import { mutateSegment, INGEST_RUNDOWN_TYPE } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
+import { ParseDateFromInews } from './helpers'
 // import { STATUS_CODES } from 'http'
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -439,7 +440,7 @@ export class CoreHandler {
 				const segment = new RundownSegment(
 					rundownId,
 					rawSegment,
-					rawSegment.fields.modifyDate,
+					ParseDateFromInews(rawSegment.fields.modifyDate),
 					`${rawSegment.identifier}`,
 					prevSegment.rank,
 					rawSegment.fields.title

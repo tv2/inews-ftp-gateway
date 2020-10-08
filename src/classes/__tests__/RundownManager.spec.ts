@@ -15,7 +15,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW01,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-01',
 					rank: 1000,
 					name: 'Segment 01',
@@ -24,7 +24,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW02,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-02',
 					rank: 2000,
 					name: 'Segment 02',
@@ -33,7 +33,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW03,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-03',
 					rank: 3000,
 					name: 'Segment 03',
@@ -49,7 +49,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW01,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-01',
 					rank: 1000,
 					name: 'Segment 01',
@@ -58,7 +58,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW03,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-03',
 					rank: 3000,
 					name: 'Segment 03',
@@ -67,7 +67,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW02,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-02',
 					rank: 4000,
 					name: 'Segment 02',
@@ -83,7 +83,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW01,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-01',
 					rank: 1000,
 					name: 'Segment 01',
@@ -92,7 +92,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW03,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-03',
 					rank: 3000,
 					name: 'Segment 03',
@@ -101,7 +101,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW02,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-02',
 					rank: 4000,
 					name: 'Segment 02',
@@ -110,7 +110,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW04,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-04',
 					rank: 5000,
 					name: 'Segment 04',
@@ -126,7 +126,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW01,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-01',
 					rank: 1000,
 					name: 'Segment 01',
@@ -135,7 +135,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW03,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-03',
 					rank: 3000,
 					name: 'Segment 03',
@@ -144,7 +144,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW05,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-05',
 					rank: 3500,
 					name: 'Segment 05',
@@ -153,7 +153,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW02,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-02',
 					rank: 4000,
 					name: 'Segment 02',
@@ -162,7 +162,7 @@ describe('RundownManager', () => {
 				{
 					rundownId: 'rundown-01',
 					iNewsStory: segmentGW04,
-					modified: '',
+					modified: new Date(0),
 					externalId: 'segment-04',
 					rank: 5000,
 					name: 'Segment 04',

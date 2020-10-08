@@ -1,6 +1,7 @@
 import { RundownSegment, INewsStoryGW } from './datastructures/Segment'
 import winston = require('winston')
 import _ = require('underscore')
+import { ParseDateFromInews } from '../helpers'
 
 export interface IParsedElement {
 	data: {
@@ -47,7 +48,7 @@ export class ParsedINewsIntoSegments {
 					new RundownSegment(
 						rundownId,
 						rawSegment,
-						rawSegment.fields.modifyDate,
+						ParseDateFromInews(rawSegment.fields.modifyDate),
 						`${rawSegment.identifier}`,
 						BASE_RANK + PAD_RANK * position, // Offset from 0 to allow for stories arriving out of order
 						rawSegment.fields.title || ''
@@ -77,7 +78,6 @@ export class ParsedINewsIntoSegments {
 			const nextAvaliableRank = this.getNextAvailableRank(
 				rundownPreviousRanks,
 				assignedRanks,
-				// lastStayed,
 				notMovedSegments[notMovedSegments.indexOf(lastStayed) + 1]
 			)
 			if (notMovedSegmentsSet.has(rawSegment.identifier)) {
@@ -86,7 +86,7 @@ export class ParsedINewsIntoSegments {
 					new RundownSegment(
 						rundownId,
 						rawSegment,
-						rawSegment.fields.modifyDate,
+						ParseDateFromInews(rawSegment.fields.modifyDate),
 						`${rawSegment.identifier}`,
 						newRank,
 						rawSegment.fields.title || ''
@@ -100,7 +100,7 @@ export class ParsedINewsIntoSegments {
 					new RundownSegment(
 						rundownId,
 						rawSegment,
-						rawSegment.fields.modifyDate,
+						ParseDateFromInews(rawSegment.fields.modifyDate),
 						`${rawSegment.identifier}`,
 						newRank,
 						rawSegment.fields.title || ''
@@ -116,7 +116,6 @@ export class ParsedINewsIntoSegments {
 	static getNextAvailableRank (
 		previousRanks: Map<string, SegmentRankingsInner>,
 		assignedRanks: number[],
-		// previousKnownSegment?: string,
 		nextKnownSegment?: string
 	): number {
 		const lastAssignedRank = _.last(assignedRanks)

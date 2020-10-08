@@ -83,7 +83,7 @@ describe('Process Updated Rundown', () => {
 		const rundownMap: RundownMap = new Map()
 		rundownMap.set(TEST_RUNDOWN_ID, TEST_RUNDOWN)
 
-		const newSegment: RundownSegment = new RundownSegment(TEST_RUNDOWN_ID, segmentGW01, '0', 'segment-01', 0, 'TEST SEGMENT')
+		const newSegment: RundownSegment = new RundownSegment(TEST_RUNDOWN_ID, segmentGW01, new Date(0), 'segment-01', 0, 'TEST SEGMENT')
 		const updatedRundown = new INewsRundown(TEST_RUNDOWN.externalId, TEST_RUNDOWN.name, TEST_RUNDOWN.gatewayVersion, [newSegment])
 
 		const result = ProcessUpdatedRundown(TEST_RUNDOWN_ID, updatedRundown, rundownMap)

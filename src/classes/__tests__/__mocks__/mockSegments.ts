@@ -1,118 +1,70 @@
 import { INewsStoryGW, RundownSegment } from '../../datastructures/Segment'
 import * as _ from 'underscore'
+import { ReducedSegment } from '../../RundownWatcher'
 
-export const segmentGW01: INewsStoryGW = {
-	fields: {
-		title: 'Segment 01',
-		modifyDate: '0'
-	},
-	meta: {
-		words: '140',
-		rate: '6'
-	},
-	cues: [],
-	body: '',
-	identifier: 'segment-01'
+export const segmentGW01: ReducedSegment = {
+	name: 'Segment 01',
+	modified: new Date(0),
+	externalId: 'segment-01',
+	rank: 1,
 }
 
-export const segmentGW02: INewsStoryGW = {
-	fields: {
-		title: 'Segment 02',
-		modifyDate: '0'
-	},
-	meta: {
-		words: '140',
-		rate: '6'
-	},
-	cues: [],
-	body: '',
-	identifier: 'segment-02'
+export const segmentGW02: ReducedSegment = {
+	name: 'Segment 02',
+	modified: new Date(0),
+	externalId: 'segment-02',
+	rank: 2,
 }
 
-export const segmentGW03: INewsStoryGW = {
-	fields: {
-		title: 'Segment 03',
-		modifyDate: '0'
-	},
-	meta: {
-		words: '140',
-		rate: '6'
-	},
-	cues: [],
-	body: '',
-	identifier: 'segment-03'
+export const segmentGW03: ReducedSegment = {
+	name: 'Segment 03',
+	modified: new Date(0),
+	externalId: 'segment-03',
+	rank: 3,
 }
 
-export const segmentGW04: INewsStoryGW = {
-	fields: {
-		title: 'Segment 04',
-		modifyDate: '0'
-	},
-	meta: {
-		words: '140',
-		rate: '6'
-	},
-	cues: [],
-	body: '',
-	identifier: 'segment-04'
+export const segmentGW04: ReducedSegment = {
+	name: 'Segment 04',
+	modified: new Date(0),
+	externalId: 'segment-04',
+	rank: 4,
 }
 
-export const segmentGW05: INewsStoryGW = {
-	fields: {
-		title: 'Segment 05',
-		modifyDate: '0'
-	},
-	meta: {
-		words: '140',
-		rate: '6'
-	},
-	cues: [],
-	body: '',
-	identifier: 'segment-05'
+export const segmentGW05: ReducedSegment = {
+	name: 'Segment 05',
+	modified: new Date(0),
+	externalId: 'segment-05',
+	rank: 5,
 }
 
-export const segmentGW06: INewsStoryGW = {
-	fields: {
-		title: 'Segment 06',
-		modifyDate: '0'
-	},
-	meta: {
-		words: '140',
-		rate: '6'
-	},
-	cues: [],
-	body: '',
-	identifier: 'segment-06'
+export const segmentGW06: ReducedSegment = {
+	name: 'Segment 06',
+	modified: new Date(0),
+	externalId: 'segment-06',
+	rank: 6,
 }
 
-export const segmentGW07: INewsStoryGW = {
-	fields: {
-		title: 'Segment 07',
-		modifyDate: '0'
-	},
-	meta: {
-		words: '140',
-		rate: '6'
-	},
-	cues: [],
-	body: '',
-	identifier: 'segment-07'
+export const segmentGW07: ReducedSegment = {
+	name: 'Segment 07',
+	modified: new Date(0),
+	externalId: 'segment-07',
+	rank: 7,
 }
 
-export const segmentGW08: INewsStoryGW = {
-	fields: {
-		title: 'Segment 08',
-		modifyDate: '0'
-	},
-	meta: {
-		words: '140',
-		rate: '6'
-	},
-	cues: [],
-	body: '',
-	identifier: 'segment-08'
+export const segmentGW08: ReducedSegment = {
+	name: 'Segment 08',
+	modified: new Date(0),
+	externalId: 'segment-08',
+	rank: 8,
 }
 
-export function RundownSegmentFromMockSegment (rundownId: string, segmentGW: INewsStoryGW): RundownSegment {
-	return new RundownSegment(rundownId, _.clone(segmentGW), new Date(segmentGW.fields.modifyDate), segmentGW.identifier, 0, segmentGW.fields.title)
+export function RundownSegmentFromMockSegment(rundownId: string, segmentGW: INewsStoryGW): RundownSegment {
+	return new RundownSegment(
+		rundownId,
+		_.clone(segmentGW),
+		new Date(segmentGW.fields.modifyDate),
+		segmentGW.identifier,
+		0,
+		segmentGW.fields.title
+	)
 }

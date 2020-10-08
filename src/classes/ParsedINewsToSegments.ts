@@ -1,6 +1,14 @@
 import _ = require('underscore')
 import { literal } from '../helpers'
-import { ReducedSegment, RundownChange, RundownChangeSegmentCreate, RundownChangeType } from './RundownWatcher'
+import {
+	ReducedSegment,
+	RundownChange,
+	RundownChangeSegmentCreate,
+	RundownChangeType,
+	RundownChangeSegmentUpdate,
+	RundownChangeSegmentDelete,
+	ReducedRundown,
+} from './RundownWatcher'
 
 export interface IParsedElement {
 	data: {
@@ -18,56 +26,111 @@ export interface IParsedElement {
 export type SegmentRankings = Map<string, Map<string, SegmentRankingsInner>>
 export interface SegmentRankingsInner {
 	/** Assigned rank */
-	rank: number,
-	/** Position in array */
-	position: number
+	rank: number
 }
 
 const BASE_RANK = 1000
 const PAD_RANK = 1000
 
 export class ParsedINewsIntoSegments {
-
-	static getUpdatesAndRanks (rundownId: string, inewsRaw: ReducedSegment[], previousRankings: SegmentRankings): { segments: ReducedSegment[], changes: RundownChange[] } {
-		const removedSegments: string[] = []
+	static GetUpdatesAndRanks(
+		rundownId: string,
+		inewsRaw: ReducedSegment[],
+		previousRankings: SegmentRankings,
+		cachedRundown?: ReducedRundown
+	): { segments: ReducedSegment[]; changes: RundownChange[] } {
 		const segments: ReducedSegment[] = []
 		const changes: RundownChange[] = []
 
 		const rundownPreviousRanks = previousRankings.get(rundownId)
 
 		// Initial startup of gateway
-		if (
-			!rundownPreviousRanks ||
-			rundownPreviousRanks.size === 0
-		) {
+		if (!rundownPreviousRanks || rundownPreviousRanks.size === 0) {
 			inewsRaw.forEach((rawSegment, position) => {
 				segments.push(
 					literal<ReducedSegment>({
 						externalId: rawSegment.externalId,
 						name: rawSegment.name,
 						modified: rawSegment.modified,
-						rank: BASE_RANK + PAD_RANK * position
+						rank: BASE_RANK + PAD_RANK * position,
 					})
 				)
 				changes.push(
 					literal<RundownChangeSegmentCreate>({
 						type: RundownChangeType.SEGMENT_CREATE,
 						rundownExternalId: rundownId,
-						segmentExternalId: rawSegment.externalId
+						segmentExternalId: rawSegment.externalId,
 					})
 				)
 			})
 			return { segments, changes }
 		}
 
-		const newOrderSegmentIds = inewsRaw.map(raw => raw.externalId)
+		const newOrderSegmentIds = inewsRaw.map((raw) => raw.externalId)
 		const previousOrderSegmentIds = Array.from(rundownPreviousRanks.keys())
-		const { movedSegments, notMovedSegments } = this.getMovedSegments(previousOrderSegmentIds, newOrderSegmentIds)
-		const insertedSegments = this.getInsertedSegments(previousOrderSegmentIds, newOrderSegmentIds) // TODO: this can be returned by getMovedSegments
-		const deletedSegments = this.getDeletedSegments(previousOrderSegmentIds, newOrderSegmentIds) // TODO: this can be returned by getMovedSegments
-		if (removedSegments) {
-			removedSegments.push(...deletedSegments)
-		}
+
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = this.getMovedSegments(
+			previousOrderSegmentIds,
+			newOrderSegmentIds
+		)
+
+		const changedSegments = new Set<string>()
+
+		deletedSegments.forEach((segmentId) => {
+			if (!changedSegments.has(segmentId)) {
+				changes.push(
+					literal<RundownChangeSegmentDelete>({
+						type: RundownChangeType.SEGMENT_DELETE,
+						rundownExternalId: rundownId,
+						segmentExternalId: segmentId,
+					})
+				)
+				changedSegments.add(segmentId)
+			}
+		})
+
+		movedSegments.forEach((segmentId) => {
+			if (!changedSegments.has(segmentId)) {
+				changes.push(
+					literal<RundownChangeSegmentUpdate>({
+						type: RundownChangeType.SEGMENT_UPDATE,
+						rundownExternalId: rundownId,
+						segmentExternalId: segmentId,
+					})
+				)
+				changedSegments.add(segmentId)
+			}
+		})
+
+		insertedSegments.forEach((segmentId) => {
+			if (!changedSegments.has(segmentId)) {
+				changes.push(
+					literal<RundownChangeSegmentCreate>({
+						type: RundownChangeType.SEGMENT_CREATE,
+						rundownExternalId: rundownId,
+						segmentExternalId: segmentId,
+					})
+				)
+				changedSegments.add(segmentId)
+			}
+		})
+
+		notMovedSegments.forEach((segmentId) => {
+			const cachedSegment = cachedRundown?.segments.find((s) => s.externalId === segmentId)
+			const newSegment = inewsRaw.find((s) => s.externalId === segmentId)
+
+			if (cachedSegment && newSegment) {
+				if (cachedSegment.modified !== newSegment.modified) {
+					changes.push(
+						literal<RundownChangeSegmentUpdate>({
+							type: RundownChangeType.SEGMENT_UPDATE,
+							rundownExternalId: rundownId,
+							segmentExternalId: newSegment.externalId,
+						})
+					)
+				}
+			}
+		})
 
 		const movedSegmentsSet = new Set(movedSegments)
 		const notMovedSegmentsSet = new Set(notMovedSegments)
@@ -89,7 +152,7 @@ export class ParsedINewsIntoSegments {
 						externalId: rawSegment.externalId,
 						name: rawSegment.name,
 						modified: rawSegment.modified,
-						rank: newRank
+						rank: newRank,
 					})
 				)
 				assignedRanks.push(newRank)
@@ -101,101 +164,17 @@ export class ParsedINewsIntoSegments {
 						externalId: rawSegment.externalId,
 						name: rawSegment.name,
 						modified: rawSegment.modified,
-						rank: newRank
+						rank: newRank,
 					})
 				)
 				assignedRanks.push(newRank)
 			}
 		})
 
-		return { segments: segments.sort((a, b) => a.rank < b.rank ? -1 : 1), changes: [] }
+		return { segments: segments.sort((a, b) => (a.rank < b.rank ? -1 : 1)), changes }
 	}
 
-	/*static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings, _logger?: winston.LoggerInstance, removedSegments?: string[]): RundownSegment[] {
-		let segments: RundownSegment[] = []
-
-		if (inewsRaw.some(rawSegment => !rawSegment.identifier)) {
-			return segments
-		}
-
-		const rundownPreviousRanks = previousRankings.get(rundownId)
-
-		// Initial startup of gateway
-		if (
-			!rundownPreviousRanks ||
-			rundownPreviousRanks.size === 0
-		) {
-			inewsRaw.forEach((rawSegment, position) => {
-				segments.push(
-					new RundownSegment(
-						rundownId,
-						rawSegment,
-						ParseDateFromInews(rawSegment.fields.modifyDate),
-						`${rawSegment.identifier}`,
-						BASE_RANK + PAD_RANK * position, // Offset from 0 to allow for stories arriving out of order
-						rawSegment.fields.title || ''
-					)
-				)
-			})
-			return segments
-		}
-
-		const newOrderSegmentIds = inewsRaw.map(raw => raw.identifier)
-		const previousOrderSegmentIds = Array.from(rundownPreviousRanks.keys())
-		const { movedSegments, notMovedSegments } = this.getMovedSegments(previousOrderSegmentIds, newOrderSegmentIds)
-		const insertedSegments = this.getInsertedSegments(previousOrderSegmentIds, newOrderSegmentIds) // TODO: this can be returned by getMovedSegments
-		const deletedSegments = this.getDeletedSegments(previousOrderSegmentIds, newOrderSegmentIds) // TODO: this can be returned by getMovedSegments
-		if (removedSegments) {
-			removedSegments.push(...deletedSegments)
-		}
-
-		const movedSegmentsSet = new Set(movedSegments)
-		const notMovedSegmentsSet = new Set(notMovedSegments)
-
-		let lastStayed: string = ''
-		const assignedRanks: number[] = []
-		inewsRaw.forEach((rawSegment) => {
-			// Previously existed and is in the same place
-			const previousRank = rundownPreviousRanks.get(rawSegment.identifier)?.rank
-			const nextAvaliableRank = this.getNextAvailableRank(
-				rundownPreviousRanks,
-				assignedRanks,
-				notMovedSegments[notMovedSegments.indexOf(lastStayed) + 1]
-			)
-			if (notMovedSegmentsSet.has(rawSegment.identifier)) {
-				const newRank = previousRank ?? nextAvaliableRank
-				segments.push(
-					new RundownSegment(
-						rundownId,
-						rawSegment,
-						ParseDateFromInews(rawSegment.fields.modifyDate),
-						`${rawSegment.identifier}`,
-						newRank,
-						rawSegment.fields.title || ''
-					)
-				)
-				assignedRanks.push(newRank)
-				lastStayed = rawSegment.identifier
-			} else if (insertedSegments.includes(rawSegment.identifier) || movedSegmentsSet.has(rawSegment.identifier)) {
-				const newRank = nextAvaliableRank
-				segments.push(
-					new RundownSegment(
-						rundownId,
-						rawSegment,
-						ParseDateFromInews(rawSegment.fields.modifyDate),
-						`${rawSegment.identifier}`,
-						newRank,
-						rawSegment.fields.title || ''
-					)
-				)
-				assignedRanks.push(newRank)
-			}
-		})
-
-		return segments.sort((a, b) => a.rank < b.rank ? -1 : 1)
-	}*/
-
-	static getNextAvailableRank (
+	static getNextAvailableRank(
 		previousRanks: Map<string, SegmentRankingsInner>,
 		assignedRanks: number[],
 		nextKnownSegment?: string
@@ -205,33 +184,35 @@ export class ParsedINewsIntoSegments {
 
 		if (lastAssignedRank !== undefined && nextKnownRank !== undefined) {
 			return (lastAssignedRank + nextKnownRank.rank) / 2
-
 		} else if (lastAssignedRank !== undefined) {
 			return lastAssignedRank + PAD_RANK
-
 		} else if (nextKnownRank !== undefined) {
 			return nextKnownRank.rank / 2
-
 		} else {
 			return BASE_RANK
 		}
 	}
 
-	static getDeletedSegments (oldOrder: string[], newOrder: string[]): string[] {
-		return oldOrder.filter(segment => !newOrder.includes(segment))
+	static getDeletedSegments(oldOrder: string[], newOrder: string[]): string[] {
+		return oldOrder.filter((segment) => !newOrder.includes(segment))
 	}
 
-	static getInsertedSegments (oldOrder: string[], newOrder: string[]): string[] {
-		return newOrder.filter(segment => !oldOrder.includes(segment))
+	static getInsertedSegments(oldOrder: string[], newOrder: string[]): string[] {
+		return newOrder.filter((segment) => !oldOrder.includes(segment))
 	}
 
-	static getMovedSegments (oldOrder: string[], newOrder: string[]): { movedSegments: string[]; notMovedSegments: string[] } {
-		const insertedSegments = new Set(this.getInsertedSegments(oldOrder, newOrder))
-		const deletedSegments = new Set(this.getDeletedSegments(oldOrder, newOrder))
-		const reducedOldOrder = oldOrder.filter(segment => !deletedSegments.has(segment))
-		const reducedNewOrder = newOrder.filter(segment => !insertedSegments.has(segment))
+	static getMovedSegments(
+		oldOrder: string[],
+		newOrder: string[]
+	): { movedSegments: string[]; notMovedSegments: string[]; insertedSegments: string[]; deletedSegments: string[] } {
+		const insertedSegments = this.getInsertedSegments(oldOrder, newOrder)
+		const insertedSegmentsSet = new Set(insertedSegments)
+		const deletedSegments = this.getDeletedSegments(oldOrder, newOrder)
+		const deletedSegmentsSet = new Set(deletedSegments)
+		const reducedOldOrder = oldOrder.filter((segment) => !deletedSegmentsSet.has(segment))
+		const reducedNewOrder = newOrder.filter((segment) => !insertedSegmentsSet.has(segment))
 
-		const oldOrderInd: { [key: string]: number } = _.object(_.map(reducedOldOrder, (x,k) => [x, k]))
+		const oldOrderInd: { [key: string]: number } = _.object(_.map(reducedOldOrder, (x, k) => [x, k]))
 		const newOrderInd: number[] = _.map(reducedNewOrder, (x) => oldOrderInd[x])
 
 		const notMovedIds = this.findLIS(newOrderInd)
@@ -240,12 +221,12 @@ export class ParsedINewsIntoSegments {
 		const movedSegments = reducedOldOrder.filter((_segment, index) => !notMovedSet.has(index))
 		const notMovedSegments = reducedOldOrder.filter((_segment, index) => notMovedSet.has(index))
 
-		return { movedSegments, notMovedSegments }
+		return { movedSegments, notMovedSegments, insertedSegments, deletedSegments }
 	}
 
 	// Method for finding the Longest Increasing Subsequence
 	// Complexity: O(nlogn)
-	static findLIS (v: number[]) {
+	static findLIS(v: number[]) {
 		const P = new Array(v.length + 1).fill(Infinity)
 		const Q = new Array(v.length).fill(0)
 		P[0] = -Infinity
@@ -288,5 +269,4 @@ export class ParsedINewsIntoSegments {
 
 		return res
 	}
-
 }

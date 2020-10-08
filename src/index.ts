@@ -1,4 +1,3 @@
-
 import { Connector, Config } from './connector'
 import * as Winston from 'winston'
 import _ = require('underscore')
@@ -6,16 +5,16 @@ import _ = require('underscore')
 // TODO: Consider using yargs
 
 // CLI arguments / Environment variables --------------
-let host: string 		= process.env.CORE_HOST 					|| '127.0.0.1'
-let port: number 		= parseInt(process.env.CORE_PORT + '', 10) 	|| 3000
-let logPath: string 	= process.env.CORE_LOG						|| ''
-let deviceId: string 	= process.env.DEVICE_ID						|| ''
-let deviceToken: string = process.env.DEVICE_TOKEN 				|| ''
-let disableWatchdog: boolean = (process.env.DISABLE_WATCHDOG === '1') 		|| false
-let unsafeSSL: boolean		= process.env.UNSAFE_SSL === '1' || false
-let certs: string[] 		= (process.env.CERTIFICATES || '').split(';') || []
-let debug: boolean 		= false
-let printHelp: boolean 	= false
+let host: string = process.env.CORE_HOST || '127.0.0.1'
+let port: number = parseInt(process.env.CORE_PORT + '', 10) || 3000
+let logPath: string = process.env.CORE_LOG || ''
+let deviceId: string = process.env.DEVICE_ID || ''
+let deviceToken: string = process.env.DEVICE_TOKEN || ''
+let disableWatchdog: boolean = process.env.DISABLE_WATCHDOG === '1' || false
+let unsafeSSL: boolean = process.env.UNSAFE_SSL === '1' || false
+let certs: string[] = (process.env.CERTIFICATES || '').split(';') || []
+let debug: boolean = false
+let printHelp: boolean = false
 logPath = logPath
 
 let prevProcessArg = ''
@@ -41,7 +40,7 @@ process.argv.forEach((val) => {
 		certs.push(val)
 		nextPrevProcessArg = prevProcessArg // so that we can get multiple certificates
 
-// arguments with no options:
+		// arguments with no options:
 	} else if (val.match(/-disableWatchdog/i)) {
 		disableWatchdog = true
 	} else if (val.match(/-unsafeSSL/i)) {
@@ -98,8 +97,7 @@ let JSONStringifyCircular = () => {
 	return stringifyFixer
 }
 // Setup logging --------------------------------------
-let logger = new (Winston.Logger)({
-})
+let logger = new Winston.Logger({})
 
 if (logPath) {
 	// Log json to file, human-readable to console
@@ -107,7 +105,7 @@ if (logPath) {
 	logger.add(Winston.transports.Console, {
 		level: 'verbose',
 		handleExceptions: true,
-		json: false
+		json: false,
 	})
 	logger.add(Winston.transports.File, {
 		level: 'debug',
@@ -116,7 +114,7 @@ if (logPath) {
 		stringify: (obj: any) => {
 			return JSON.stringify(obj, JSONStringifyCircular())
 		},
-		filename: logPath
+		filename: logPath,
 	})
 	// Hijack console.log:
 	// @ts-ignore
@@ -126,7 +124,6 @@ if (logPath) {
 			// orgConsoleLog('a')
 			if (args.length >= 1) {
 				try {
-
 					// @ts-ignore one or more arguments
 					logger.debug(...args)
 					// logger.debug(...args.map(JSONStringifyCircular()))
@@ -142,13 +139,13 @@ if (logPath) {
 } else {
 	console.log('Logging to Console')
 	// Log json to console
-	logger.add(Winston.transports.Console,{
+	logger.add(Winston.transports.Console, {
 		// level: 'verbose',
 		handleExceptions: true,
 		json: true,
 		stringify: (obj: any) => {
 			return JSON.stringify(obj, JSONStringifyCircular()) // make single line
-		}
+		},
 	})
 	// Hijack console.log:
 	// @ts-ignore
@@ -191,17 +188,17 @@ logger.info('-----------------------------------')
 let config: Config = {
 	process: {
 		unsafeSSL: unsafeSSL,
-		certificates: _.compact(certs)
+		certificates: _.compact(certs),
 	},
 	device: {
 		deviceId: deviceId,
-		deviceToken: deviceToken
+		deviceToken: deviceToken,
 	},
 	core: {
 		host: host,
 		port: port,
-		watchdog: !disableWatchdog
-	}
+		watchdog: !disableWatchdog,
+	},
 }
 
 let c = new Connector(logger, config)
@@ -213,7 +210,6 @@ logger.info('Core:          ' + config.core.host + ':' + config.core.port)
 // 	if (device.secondary) logger.info('Mos Secondary: ' + device.secondary.host)
 // })
 logger.info('------------------------------------------------------------------')
-c.init()
-.catch(logger.error)
+c.init().catch(logger.error)
 
 // @TODO: remove this line of comment

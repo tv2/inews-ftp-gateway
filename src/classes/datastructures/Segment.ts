@@ -15,7 +15,7 @@ export interface ISegment {
 export class RundownSegment implements ISegment {
 	public float: boolean
 
-	constructor (
+	constructor(
 		public rundownId: string,
 		public iNewsStory: INewsStoryGW,
 		public modified: Date,
@@ -26,14 +26,14 @@ export class RundownSegment implements ISegment {
 		this.float = iNewsStory.meta.float === 'float'
 	}
 
-	serialize (): Omit<ISegment, 'modified'> {
+	serialize(): Omit<ISegment, 'modified'> {
 		return {
-			rundownId:		this.rundownId,
-			iNewsStory: 	this.iNewsStory,
-			externalId:		this.externalId,
-			rank:				this.rank,
-			name:				this.name,
-			float:				this.float
+			rundownId: this.rundownId,
+			iNewsStory: this.iNewsStory,
+			externalId: this.externalId,
+			rank: this.rank,
+			name: this.name,
+			float: this.float,
 		}
 	}
 }

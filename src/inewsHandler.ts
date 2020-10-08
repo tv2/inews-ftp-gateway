@@ -1,9 +1,6 @@
 import * as _ from 'underscore'
 import * as Winston from 'winston'
-import {
-	CollectionObj,
-	PeripheralDeviceAPI as P
-} from 'tv-automation-server-core-integration'
+import { CollectionObj, PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
 import { mutateRundown, mutateSegment } from './mutate'
@@ -32,7 +29,6 @@ export interface INewsQueue {
 }
 
 export class InewsFTPHandler {
-
 	public iNewsConnection?: INewsClient
 	public userName?: string
 	public passWord?: string
@@ -47,16 +43,16 @@ export class InewsFTPHandler {
 	private _isConnected: boolean = false
 	private _reconnectAttempts: number = 0
 
-	constructor (logger: Winston.LoggerInstance, coreHandler: CoreHandler) {
+	constructor(logger: Winston.LoggerInstance, coreHandler: CoreHandler) {
 		this._logger = logger
 		this._coreHandler = coreHandler
 	}
 
-	get isConnected (): boolean {
+	get isConnected(): boolean {
 		return this._isConnected
 	}
 
-	async init (coreHandler: CoreHandler): Promise<void> {
+	async init(coreHandler: CoreHandler): Promise<void> {
 		let peripheralDevice = await coreHandler.core.getPeripheralDevice()
 		this._settings = peripheralDevice.settings || {}
 
@@ -68,7 +64,7 @@ export class InewsFTPHandler {
 	}
 
 	// Why is this async?
-	async dispose (): Promise<void> {
+	async dispose(): Promise<void> {
 		this._disposed = true
 		if (this.iNewsWatcher) {
 			return this.iNewsWatcher.dispose()
@@ -78,7 +74,7 @@ export class InewsFTPHandler {
 	/**
 	 * Find this peripheral device in peripheralDevices collection.
 	 */
-	private getThisPeripheralDevice (): CollectionObj | undefined {
+	private getThisPeripheralDevice(): CollectionObj | undefined {
 		let peripheralDevices = this._coreHandler.core.getCollection('peripheralDevices')
 		return peripheralDevices.findOne(this._coreHandler.core.deviceId)
 	}
@@ -86,19 +82,19 @@ export class InewsFTPHandler {
 	/**
 	 * Set up this device.
 	 */
-	private async _setupDevices (): Promise<void> {
+	private async _setupDevices(): Promise<void> {
 		if (this._disposed) return
 		if (!this._settings) return
 		if (!this._settings.hosts) throw new Error('No hosts available')
 		if (!this._settings.queues) throw new Error('No queues set')
 		this.iNewsConnection = inews({
-			hosts: this._settings.hosts.map(host => host.host),
+			hosts: this._settings.hosts.map((host) => host.host),
 			user: this._settings.user,
 			password: this._settings.password,
-			timeout: 10000
+			timeout: 10000,
 		} as INewsOptions)
 
-		this.iNewsConnection.on('status', async status => {
+		this.iNewsConnection.on('status', async (status) => {
 			if (status.name === 'disconnected') {
 				if (this._isConnected) {
 					this._isConnected = false
@@ -120,7 +116,7 @@ export class InewsFTPHandler {
 			}
 		})
 
-		this.iNewsConnection.on('error', error => {
+		this.iNewsConnection.on('error', (error) => {
 			this._logger.error('FTP error:', error.message)
 		})
 
@@ -129,10 +125,17 @@ export class InewsFTPHandler {
 			if (peripheralDevice) {
 				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 				this.iNewsWatcher = new RundownWatcher(
-					this._logger, this.iNewsConnection,
-					this._coreHandler, this._settings.queues,
-					'v0.2', this.ingestDataToRundowns('v0.2', this._settings.queues.map(q => q.queues)),
-					this)
+					this._logger,
+					this.iNewsConnection,
+					this._coreHandler,
+					this._settings.queues,
+					'v0.2',
+					this.ingestDataToRundowns(
+						'v0.2',
+						this._settings.queues.map((q) => q.queues)
+					),
+					this
+				)
 
 				this.updateChanges(this.iNewsWatcher)
 
@@ -146,30 +149,30 @@ export class InewsFTPHandler {
 	/**
 	 *  Get the current rundown state from Core and convert it to rundowns.
 	 */
-	ingestDataToRundowns (gatewayVersion: string, rundownExternalIds: string[]): RundownMap {
+	ingestDataToRundowns(gatewayVersion: string, rundownExternalIds: string[]): RundownMap {
 		const rundownMap: RundownMap = new Map()
 
 		let coreRundowns = this._coreHandler.GetRundownCache(rundownExternalIds)
 
 		let rundownsCache: RundownMap = new Map()
 
-		coreRundowns.forEach(ingestRundown => {
+		coreRundowns.forEach((ingestRundown) => {
 			let ingestSegments = this._coreHandler.GetSegmentsCacheForRundown(ingestRundown.externalId)
 
 			let rundown: ReducedRundown = {
 				externalId: ingestRundown.externalId,
 				name: ingestRundown.name,
 				gatewayVersion: ingestRundown.payload.gatewayVersion || gatewayVersion,
-				segments: []
+				segments: [],
 			}
 
-			ingestSegments.forEach(ingestSegment => {
+			ingestSegments.forEach((ingestSegment) => {
 				rundown.segments.push(
 					literal<ReducedSegment>({
 						externalId: ingestSegment.externalId,
 						name: ingestSegment.name,
 						modified: new Date(0), // Assume it was last modified long ago
-						rank: ingestSegment.rank
+						rank: ingestSegment.rank,
 					})
 				)
 			})
@@ -180,34 +183,44 @@ export class InewsFTPHandler {
 		return rundownMap
 	}
 
-	updateChanges (iNewsWatcher: RundownWatcher) {
+	updateChanges(iNewsWatcher: RundownWatcher) {
 		iNewsWatcher
-		.on('info', (message: any) => {
-			this._logger.info(message)
-		})
-		.on('error', (error: any) => {
-			this._logger.error(error)
-		})
-		.on('warning', (warning: any) => {
-			this._logger.error(warning)
-		})
-		.on('rundown_delete', (rundownExternalId) => {
-			this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
-		})
-		.on('rundown_create', (_rundownExternalId, rundown) => {
-			this._coreHandler.core.callMethod(P.methods.dataRundownCreate, [mutateRundown(rundown)]).catch(this._logger.error)
-		})
-		.on('rundown_update', (_rundownExternalId, rundown) => {
-			this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)]).catch(this._logger.error)
-		})
-		.on('segment_delete', (rundownExternalId, segmentId) => {
-			this._coreHandler.core.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, segmentId]).catch(this._logger.error)
-		})
-		.on('segment_create', (rundownExternalId, _segmentId, newSegment) => {
-			this._coreHandler.core.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSegment)]).catch(this._logger.error)
-		})
-		.on('segment_update', (rundownExternalId, _segmentId, newSegment) => {
-			this._coreHandler.core.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSegment)]).catch(this._logger.error)
-		})
+			.on('info', (message: any) => {
+				this._logger.info(message)
+			})
+			.on('error', (error: any) => {
+				this._logger.error(error)
+			})
+			.on('warning', (warning: any) => {
+				this._logger.error(warning)
+			})
+			.on('rundown_delete', (rundownExternalId) => {
+				this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
+			})
+			.on('rundown_create', (_rundownExternalId, rundown) => {
+				this._coreHandler.core
+					.callMethod(P.methods.dataRundownCreate, [mutateRundown(rundown)])
+					.catch(this._logger.error)
+			})
+			.on('rundown_update', (_rundownExternalId, rundown) => {
+				this._coreHandler.core
+					.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)])
+					.catch(this._logger.error)
+			})
+			.on('segment_delete', (rundownExternalId, segmentId) => {
+				this._coreHandler.core
+					.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, segmentId])
+					.catch(this._logger.error)
+			})
+			.on('segment_create', (rundownExternalId, _segmentId, newSegment) => {
+				this._coreHandler.core
+					.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSegment)])
+					.catch(this._logger.error)
+			})
+			.on('segment_update', (rundownExternalId, _segmentId, newSegment) => {
+				this._coreHandler.core
+					.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSegment)])
+					.catch(this._logger.error)
+			})
 	}
 }

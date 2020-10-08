@@ -8,15 +8,15 @@ export const INEWS_DEVICE_CONFIG_MANIFEST: DeviceConfigManifest = {
 			type: ConfigManifestEntryType.TABLE,
 			defaultType: 'default',
 			config: {
-				'default': [
+				default: [
 					{
 						id: 'host',
 						name: 'Host',
 						columnName: 'Hosts',
-						type: ConfigManifestEntryType.STRING
-					}
-				]
-			}
+						type: ConfigManifestEntryType.STRING,
+					},
+				],
+			},
 		},
 		{
 			id: 'queues',
@@ -24,25 +24,25 @@ export const INEWS_DEVICE_CONFIG_MANIFEST: DeviceConfigManifest = {
 			type: ConfigManifestEntryType.TABLE,
 			defaultType: 'default',
 			config: {
-				'default': [
+				default: [
 					{
 						id: 'queues',
 						name: 'Queue',
 						columnName: 'Queues',
-						type: ConfigManifestEntryType.STRING
-					}
-				]
-			}
+						type: ConfigManifestEntryType.STRING,
+					},
+				],
+			},
 		},
 		{
 			id: 'user',
 			name: 'User',
-			type: ConfigManifestEntryType.STRING
+			type: ConfigManifestEntryType.STRING,
 		},
 		{
 			id: 'password',
 			name: 'Password',
-			type: ConfigManifestEntryType.STRING
-		}
-	]
+			type: ConfigManifestEntryType.STRING,
+		},
+	],
 }

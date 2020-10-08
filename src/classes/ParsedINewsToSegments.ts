@@ -60,22 +60,25 @@ export class ParsedINewsIntoSegments {
 
 		const newOrderSegmentIds = inewsRaw.map(raw => raw.identifier)
 		const previousOrderSegmentIds = Array.from(rundownPreviousRanks.keys())
-		const movedSegments = this.getMovedSegments(previousOrderSegmentIds, newOrderSegmentIds)
+		const { movedSegments, notMovedSegments } = this.getMovedSegments(previousOrderSegmentIds, newOrderSegmentIds)
 		const insertedSegments = this.getInsertedSegments(previousOrderSegmentIds, newOrderSegmentIds)
-		const stayedSegments = newOrderSegmentIds.filter(segment => !movedSegments.includes(segment) && !insertedSegments.includes(segment)) // unmoved and still exist
+
+		const movedSegmentsSet = new Set(movedSegments)
+		const notMovedSegmentsSet = new Set(notMovedSegments)
 
 		let lastStayed: string = ''
 		const assignedRanks: number[] = []
 		inewsRaw.forEach((rawSegment) => {
 			// Previously existed and is in the same place
 			const previousRank = rundownPreviousRanks.get(rawSegment.identifier)?.rank
-			const newRank = previousRank ?? this.getNextAvailableRank(
+			const nextAvaliableRank = this.getNextAvailableRank(
 				rundownPreviousRanks,
 				assignedRanks,
 				// lastStayed,
-				stayedSegments[stayedSegments.indexOf(lastStayed) + 1]
+				notMovedSegments[notMovedSegments.indexOf(lastStayed) + 1]
 			)
-			if (stayedSegments.includes(rawSegment.identifier)) {
+			if (notMovedSegmentsSet.has(rawSegment.identifier)) {
+				const newRank = previousRank ?? nextAvaliableRank
 				segments.push(
 					new RundownSegment(
 						rundownId,
@@ -89,7 +92,8 @@ export class ParsedINewsIntoSegments {
 				)
 				assignedRanks.push(newRank)
 				lastStayed = rawSegment.identifier
-			} else if (insertedSegments.includes(rawSegment.identifier) || movedSegments.includes(rawSegment.identifier)) {
+			} else if (insertedSegments.includes(rawSegment.identifier) || movedSegmentsSet.has(rawSegment.identifier)) {
+				const newRank = nextAvaliableRank
 				segments.push(
 					new RundownSegment(
 						rundownId,
@@ -139,30 +143,68 @@ export class ParsedINewsIntoSegments {
 		return newOrder.filter(segment => !oldOrder.includes(segment))
 	}
 
-	static getMovedSegments (oldOrder: string[], newOrder: string[]): string[] {
-		const insertedSegments = this.getInsertedSegments(oldOrder, newOrder)
-		const deletedSegments = this.getDeletedSegments(oldOrder, newOrder)
-		const reducedOldOrder = oldOrder.filter(segment => !deletedSegments.includes(segment))
-		const reducedNewOrder = newOrder.filter(segment => !insertedSegments.includes(segment))
+	static getMovedSegments (oldOrder: string[], newOrder: string[]): { movedSegments: string[]; notMovedSegments: string[] } {
+		const insertedSegments = new Set(this.getInsertedSegments(oldOrder, newOrder))
+		const deletedSegments = new Set(this.getDeletedSegments(oldOrder, newOrder))
+		const reducedOldOrder = oldOrder.filter(segment => !deletedSegments.has(segment))
+		const reducedNewOrder = newOrder.filter(segment => !insertedSegments.has(segment))
 
-		const moved: string[] = []
+		const oldOrderInd: { [key: string]: number } = _.object(_.map(reducedOldOrder, (x,k) => [x, k]))
+		const newOrderInd: number[] = _.map(reducedNewOrder, (x) => oldOrderInd[x])
 
-		let newPointer = 0
-		let origPointer = 0
+		const notMovedIds = this.findLIS(newOrderInd)
+		const notMovedSet = new Set(notMovedIds)
 
-		while (origPointer < oldOrder.length) {
-			const newValue = reducedNewOrder[origPointer]
-			const oldValue = reducedOldOrder[newPointer]
+		const movedSegments = reducedOldOrder.filter((_segment, index) => !notMovedSet.has(index))
+		const notMovedSegments = reducedOldOrder.filter((_segment, index) => notMovedSet.has(index))
 
-			if (newValue !== oldValue && !moved.includes(newValue)) {
-				moved.push(oldValue)
+		return { movedSegments, notMovedSegments }
+	}
+
+	// Method for finding the Longest Increasing Subsequence
+	// Complexity: O(nlogn)
+	static findLIS (v: number[]) {
+		const P = new Array(v.length + 1).fill(Infinity)
+		const Q = new Array(v.length).fill(0)
+		P[0] = -Infinity
+		let length = 0
+		for (let i = 0; i < v.length; i++) {
+			let low = 0
+			let high = length
+			while (low <= high) {
+				const mid = Math.floor((low + high) / 2)
+				if (P[mid] < v[i]) {
+					low = mid + 1
+				} else {
+					high = mid - 1
+				}
 			}
-
-			newPointer++
-			origPointer++
+			P[low] = v[i]
+			Q[i] = low
+			if (length < low) {
+				length = low
+			}
 		}
 
-		return moved
+		const res: number[] = new Array(length)
+		let i = 0
+		for (let j = 1; j < v.length; j++) {
+			if (Q[j] > Q[i]) {
+				i = j
+			}
+		}
+		let tail = Q[i] - 1
+		res[tail] = v[i]
+		--tail
+		for (let j = i - 1; j >= 0; j--) {
+			if (v[j] < v[i] && Q[j] === Q[i] - 1) {
+				i = j
+				res[tail] = v[i]
+				tail--
+			}
+		}
+
+		return res
 	}
 
 }

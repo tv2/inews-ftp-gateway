@@ -40,6 +40,9 @@ describe('ParsedINewsIntoSegments', () => {
 		result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [1000, 2000, 5000])
 		expect(result).toEqual(6000)
 
+		result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [1000, 5000], undefined)
+		expect(result).toEqual(6000)
+
 		result = ParsedINewsIntoSegments.getNextAvailableRank(previousRanks, [1000], 'segment-02')
 		expect(result).toEqual(1500)
 
@@ -61,14 +64,41 @@ describe('ParsedINewsIntoSegments', () => {
 	})
 
 	it('Finds moved segments', () => {
-		let result = ParsedINewsIntoSegments.getMovedSegments(['segment-01', 'segment-02', 'segment-03'], ['segment-01', 'segment-03', 'segment-02'])
-		expect(result).toEqual(['segment-02'])
+		let result = ParsedINewsIntoSegments.getMovedSegments(
+			['segment-01', 'segment-02', 'segment-03'],
+			['segment-01', 'segment-03', 'segment-02'] // LIS: 01, 03
+		)
+		expect(result).toEqual({ movedSegments: ['segment-02'], notMovedSegments: ['segment-01', 'segment-03'] })
 
 		result = ParsedINewsIntoSegments.getMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
-			['segment-01', 'segment-03', 'segment-04', 'segment-05', 'segment-02']
+			['segment-01', 'segment-03', 'segment-04', 'segment-05', 'segment-02'] // LIS: 01, 03
 		)
-		expect(result).toEqual(['segment-02'])
+		expect(result).toEqual({ movedSegments: ['segment-02'], notMovedSegments: ['segment-01', 'segment-03'] })
+
+		result = ParsedINewsIntoSegments.getMovedSegments(
+			['segment-01', 'segment-02', 'segment-03'],
+			['segment-03', 'segment-01', 'segment-02', 'segment-04', 'segment-05'] // LIS: 01, 02
+		)
+		expect(result).toEqual({ movedSegments: ['segment-03'], notMovedSegments: ['segment-01', 'segment-02'] })
+
+		result = ParsedINewsIntoSegments.getMovedSegments(
+			['segment-01', 'segment-02', 'segment-03'],
+			['segment-04', 'segment-02', 'segment-03', 'segment-05', 'segment-01'] // LIS: 02, 04
+		)
+		expect(result).toEqual({ movedSegments: ['segment-01'], notMovedSegments: ['segment-02', 'segment-03'] })
+
+		result = ParsedINewsIntoSegments.getMovedSegments(
+			['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05'],
+			['segment-02', 'segment-03', 'segment-05', 'segment-04', 'segment-01'] // LIS: 02, 03, 05
+		)
+		expect(result).toEqual({ movedSegments: ['segment-01', 'segment-04'], notMovedSegments: ['segment-02', 'segment-03', 'segment-05'] })
+
+		result = ParsedINewsIntoSegments.getMovedSegments(
+			['segment-01', 'segment-02', 'segment-03', 'segment-04'],
+			['segment-01', 'segment-03', 'segment-02', 'segment-04'] // LIS: 01, 02, 04
+		)
+		expect(result).toEqual({ movedSegments: ['segment-03'], notMovedSegments: ['segment-01', 'segment-02', 'segment-04'] })
 	})
 
 	it('Assigns initial ranks', () => {
@@ -204,7 +234,7 @@ describe('ParsedINewsIntoSegments', () => {
 
 	it('Creates a new rank for a moved segment', () => {
 		const iNewsRaw: INewsStoryGW[] = [
-			segmentGW01, segmentGW03, segmentGW02
+			segmentGW01, segmentGW03, segmentGW02 // LIS: 01, 03
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks = makeSegmentRanks({
@@ -232,7 +262,7 @@ describe('ParsedINewsIntoSegments', () => {
 
 	it('Handles more than one segment changing rank', () => {
 		const iNewsRaw: INewsStoryGW[] = [
-			segmentGW02, segmentGW01, segmentGW04, segmentGW03
+			segmentGW02, segmentGW01, segmentGW04, segmentGW03 // LIS: 01, 04
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks = makeSegmentRanks({
@@ -245,11 +275,11 @@ describe('ParsedINewsIntoSegments', () => {
 		const result = ParsedINewsIntoSegments.parse(rundownId, iNewsRaw, previousRanks).map(res => { return { rank: res.rank, externalId: res.externalId } })
 		expect(result).toEqual([
 			{
-				rank: 1500,
+				rank: 500,
 				externalId: 'segment-02'
 			},
 			{
-				rank: 2250, // (02 + 04) / 2
+				rank: 1000,
 				externalId: 'segment-01'
 			},
 			{
@@ -265,7 +295,7 @@ describe('ParsedINewsIntoSegments', () => {
 
 	it('Handles more than one segment changing rank (with unaffected segments surrounding)', () => {
 		const iNewsRaw: INewsStoryGW[] = [
-			segmentGW05, segmentGW02, segmentGW01, segmentGW04, segmentGW03, segmentGW06
+			segmentGW05, segmentGW02, segmentGW01, segmentGW04, segmentGW03, segmentGW06 // LIS: 05, 01, 03, 06
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks = makeSegmentRanks({
@@ -284,19 +314,19 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-05'
 			},
 			{
-				rank: 2500,
+				rank: 1500,
 				externalId: 'segment-02'
 			},
 			{
-				rank: 3250,
+				rank: 2000,
 				externalId: 'segment-01'
 			},
 			{
-				rank: 4000,
+				rank: 2500,
 				externalId: 'segment-04'
 			},
 			{
-				rank: 4500,
+				rank: 3000,
 				externalId: 'segment-03'
 			},
 			{
@@ -308,15 +338,15 @@ describe('ParsedINewsIntoSegments', () => {
 
 	it('Handles more than one segment changing rank (with segments inserted)', () => {
 		const iNewsRaw: INewsStoryGW[] = [
-			segmentGW05, segmentGW02, segmentGW01, segmentGW04, segmentGW03, segmentGW07, segmentGW08, segmentGW06
+			segmentGW05, segmentGW02, segmentGW01, segmentGW04, segmentGW03, segmentGW07, segmentGW08, segmentGW06 // LIS: 05, 01, 03, 06
 		]
 		const rundownId = 'test-rundown'
 		const previousRanks = makeSegmentRanks({
 			'segment-05': { rank: 1000, position: 1 }, // Stay
-			'segment-01': { rank: 2000, position: 2 },
-			'segment-02': { rank: 2500, position: 3 }, // Stay
-			'segment-03': { rank: 3000, position: 4 },
-			'segment-04': { rank: 4000, position: 5 }, // Stay
+			'segment-01': { rank: 2000, position: 2 }, // Stay
+			'segment-02': { rank: 2500, position: 3 },
+			'segment-03': { rank: 3000, position: 4 }, // Stay
+			'segment-04': { rank: 4000, position: 5 },
 			'segment-06': { rank: 5000, position: 6 } // Stay
 		})
 
@@ -327,27 +357,27 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-05'
 			},
 			{
-				rank: 2500,
+				rank: 1500,
 				externalId: 'segment-02'
 			},
 			{
-				rank: 3250,
+				rank: 2000,
 				externalId: 'segment-01'
 			},
 			{
-				rank: 4000,
+				rank: 2500,
 				externalId: 'segment-04'
 			},
 			{
-				rank: 4500,
+				rank: 3000,
 				externalId: 'segment-03'
 			},
 			{
-				rank: 4750,
+				rank: 4000,
 				externalId: 'segment-07'
 			},
 			{
-				rank: 4875,
+				rank: 4500,
 				externalId: 'segment-08'
 			},
 			{
@@ -463,7 +493,7 @@ describe('ParsedINewsIntoSegments', () => {
 		])
 
 		iNewsRaw = [
-			segmentGW05, segmentGW01, segmentGW02, segmentGW04, segmentGW03, segmentGW07, segmentGW08, segmentGW06
+			segmentGW05, segmentGW01, segmentGW02, segmentGW04, segmentGW03, segmentGW07, segmentGW08, segmentGW06 // LIS: 05, 02, 04, 03, 07, 08, 09
 		]
 
 		previousRanks = makeSegmentRanks({
@@ -484,11 +514,11 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-05'
 			},
 			{
-				rank: 2000,
+				rank: 1250,
 				externalId: 'segment-01'
 			},
 			{
-				rank: 3000,
+				rank: 1500,
 				externalId: 'segment-02'
 			},
 			{
@@ -539,11 +569,11 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-01'
 			},
 			{
-				rank: 4000,
+				rank: 2500,
 				externalId: 'segment-04'
 			},
 			{
-				rank: 4062.5,
+				rank: 3000,
 				externalId: 'segment-02'
 			},
 			{
@@ -551,7 +581,7 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-03'
 			},
 			{
-				rank: 4562.5,
+				rank: 4500,
 				externalId: 'segment-08'
 			},
 			{

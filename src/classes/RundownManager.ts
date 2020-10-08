@@ -3,9 +3,11 @@ import * as Winston from 'winston'
 import { ParsedINewsIntoSegments, SegmentRankings } from './ParsedINewsToSegments'
 import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
 import { promisify } from 'util'
-import { INewsStoryGW } from './datastructures/Segment'
+import { INewsStoryGW, RundownSegment } from './datastructures/Segment'
 import _ = require('underscore')
-import { ReducedRundown } from './RundownWatcher'
+import { ReducedRundown, ReducedSegment } from './RundownWatcher'
+import { literal } from 'src/helpers'
+import { ParseDateFromInews } from 'src/helpers'
 
 function isFile (f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -29,17 +31,11 @@ export class RundownManager {
 	/**
 	 * Downloads a rundown by ID.
 	 */
-	async downloadRundown (rundownId: string, oldRundown?: ReducedRundown): Promise<INewsRundown> {
-		return this.convertRawtoSofie(rundownId, rundownId, rundownRaw)
+	async downloadRundown (rundownId: string): Promise<ReducedRundown> {
+		let reducedRundown = await this.downloadINewsRundown(rundownId)
+		return reducedRundown
 	}
-
-	/**
-	 * Convert a raw rundown from iNews to a sofie rundown.
-	 * @param _logger Logger instance.
-	 * @param rundownId ID of the rundown.
-	 * @param name Rundown name.
-	 * @param rundownRaw Rundown to convert.
-	 */
+	/*
 	convertRawtoSofie (rundownId: string, name: string, rundownRaw: INewsStoryGW[]): INewsRundown {
 		this._logger?.info('START : ', name, ' convert to Sofie Rundown')
 		// where should these data come from?
@@ -74,28 +70,30 @@ export class RundownManager {
 	 * @param queueName Name of queue to download.
 	 * @param oldRundown Old rundown object.
 	 */
-	async downloadINewsRundown (queueName: string, oldRundown?: INewsRundown): Promise<Array<INewsStoryGW>> {
-		let stories: Array<INewsStoryGW> = []
+	async downloadINewsRundown (queueName: string): Promise<ReducedRundown> {
+		const rundown: ReducedRundown = {
+			externalId: queueName,
+			name: queueName,
+			gatewayVersion: 'v0.2', // where should this come from?
+			segments: []
+		}
 		try {
 			let dirList = await this._listStories(queueName)
-			if (dirList.length > 0) {
-				stories = _.compact(await Promise.all(
-					dirList.map((ftpFileName: INewsDirItem) => {
-						if (!oldRundown) return this.downloadINewsStory(queueName, ftpFileName)
-						const oldSegment = this.findOldSegment(ftpFileName.file, oldRundown)
-						if (!oldSegment || this.shouldDownloadSegment(oldSegment, ftpFileName.modified)) {
-							return this.downloadINewsStory(queueName, ftpFileName)
-						} else {
-							return oldSegment
-						}
-					})))
-			} else {
-				this._logger?.error('Downloaded empty iNews rundown.')
-			}
+			dirList.forEach((ftpFileName: INewsDirItem, index) => {
+				if (isFile(ftpFileName)) {
+					rundown.segments.push(literal<ReducedSegment>({
+						externalId: ftpFileName.identifier,
+						name: ftpFileName.storyName,
+						modified: ftpFileName.modified || new Date(0),
+						rank: index
+					}))
+				}
+			})
+			// I got rid of the 'empty rundown' error because it's a normal state
 		} catch (err) {
 			this._logger?.error('Error downloading iNews rundown: ', err, err.stack)
 		}
-		return stories
+		return rundown
 	}
 
 	/**
@@ -130,10 +128,30 @@ export class RundownManager {
 		return oldSegment.iNewsStory
 	}
 
-	/**
-	 * Download an iNews story.
-	 * @param index Number of story in rundown.
-	 * @param queueName Name of queue to download from.
+	public async fetchINewsStoriesById (queueName: string, segmentExternalIds: string[]): Promise<Map<string, RundownSegment>> {
+		const stories = new Map<string, RundownSegment>()
+		segmentExternalIds.forEach(async (storyExternalId) => {
+			try {
+				const rawSegment = await this.downloadINewsStory(queueName )
+				if (rawSegment) {
+					const segment = new RundownSegment(
+						queueName,
+						rawSegment,
+						ParseDateFromInews(rawSegment.fields.modifyDate),
+						`${rawSegment.identifier}`,
+						0, // we'll have to set it later?
+						rawSegment.fields.title || ''
+					)
+					stories.set(storyExternalId, segment)
+				}
+			} catch (err) {
+				this._logger?.error('Error downloading iNews story:', storyExternalId)
+			}
+		})
+		return stories
+	}
+
+	 /* Download an iNews story.
 	 * @param storyFile File to download.
 	 * @param oldRundown Old rundown to overwrite.
 	 */
@@ -160,15 +178,15 @@ export class RundownManager {
 	 */
 	async downloadINewsStoryById (queueName: string, segmentId: string): Promise<INewsStoryGW | undefined> {
 		let dirList = await this._listStories(queueName)
+, dirList: Array<INewsDir?Item >
+dirliList | dirList || this._listStories(queueName)		if (dirList.length > 0) {
+	const segment = dirList.find((segment: INewsDirItem) => (segment as INewsFile).identifier === segmentId)
 
-		if (dirList.length > 0) {
-			const segment = dirList.find((segment: INewsDirItem) => (segment as INewsFile).identifier === segmentId)
+	if (!segment) return Promise.reject(`Cannot find segment with name ${segmentId}`)
 
-			if (!segment) return Promise.reject(`Cannot find segment with name ${segmentId}`)
-
-			return this.downloadINewsStory(queueName, segment)
-		} else {
-			return Promise.reject(`Cannot find rundown with Id ${queueName}`)
-		}
+	return this.downloadINewsStory(queueName, segment)
+} else {
+	return Promise.reject(`Cannot find rundown with Id ${queueName}`)
+}
 	}
 }

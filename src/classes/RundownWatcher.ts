@@ -10,6 +10,8 @@ import { INewsClient } from 'inews'
 import { CoreHandler } from '../coreHandler'
 import { PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
 import { ProcessUpdatedRundown } from './ProcessUpdatedRundown'
+import { SegmentRankings } from './ParsedINewsToSegments'
+import { literal } from 'src/helpers'
 
 dotenv.config()
 
@@ -69,8 +71,8 @@ export class RundownWatcher extends EventEmitter {
 		((event: 'warning', listener: (message: string) => void) => this) &
 
 		((event: 'rundown_delete', listener: (rundownId: string) => void) => this) &
-		((event: 'rundown_create', listener: (rundownId: string, rundown: INewsRundown) => void) => this) &
-		((event: 'rundown_update', listener: (rundownId: string, rundown: INewsRundown) => void) => this) &
+		((event: 'rundown_create', listener: (rundownId: string, rundown: ReducedRundown) => void) => this) &
+		((event: 'rundown_update', listener: (rundownId: string, rundown: ReducedRundown) => void) => this) &
 
 		((event: 'segment_delete', listener: (rundownId: string, segmentId: string) => void) => this) &
 		((event: 'segment_create', listener: (rundownId: string, segmentId: string, newSegment: RundownSegment) => void) => this) &
@@ -124,8 +126,7 @@ export class RundownWatcher extends EventEmitter {
 		let passoverTimings = 0
 		// First run
 		this.currentlyChecking = true
-		this.checkINewsRundowns().then(async queueList => {
-			console.log('DUMMY LOG : ', queueList)
+		this.checkINewsRundowns().then(async () => {
 			this.currentlyChecking = false
 			if (this.handler.isConnected) {
 				await this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
@@ -184,8 +185,8 @@ export class RundownWatcher extends EventEmitter {
 		this.stopWatcher()
 	}
 
-	async checkINewsRundowns (): Promise<INewsRundown[]> {
-		return Promise.all(this.iNewsQueue.map(roId => {
+	async checkINewsRundowns (): Promise<void> {
+		await Promise.all(this.iNewsQueue.map(roId => {
 			return this.checkINewsRundownById(roId.queues)
 		}))
 	}
@@ -194,52 +195,97 @@ export class RundownWatcher extends EventEmitter {
 		const storedRundown = this.rundowns.get(rundownId)
 		const rundown = await this.rundownManager.downloadRundown(rundownId, storedRundown)
 		if (rundown.gatewayVersion === this.gatewayVersion) {
-			this.processUpdatedRundown(rundown.externalId, rundown)
+			await this.processUpdatedRundown(rundown.externalId, rundown)
 		}
 		return rundown
 	}
 
-	private processUpdatedRundown (rundownId: string, rundown: INewsRundown) {
+	private async processUpdatedRundown (rundownId: string, rundown: ReducedRundown) {
+
+		// Assign the ranks
+
 		const updates = ProcessUpdatedRundown(rundownId, rundown, this.rundowns, this.logger)
 
 		this.rundowns.set(rundownId, rundown)
 
-		updates.forEach((update) => {
+		// Send DELETE messages first
+		const deleted = updates.filter(change => change.type === RundownChangeType.RUNDOWN_DELETE || change.type === RundownChangeType.SEGMENT_DELETE)
+		deleted.forEach(update => {
 			switch (update.type) {
 				case RundownChangeType.RUNDOWN_DELETE:
 					this.emit('rundown_delete', update.rundownExternalId)
 					break
+				case RundownChangeType.SEGMENT_DELETE:
+					this.emit('segment_delete', update.rundownExternalId, update.segmentExternalId)
+					break
+			}
+		})
+
+		// Rundown updates can be sent immedaitely
+		const rundownUpdated = updates.filter(change => change.type === RundownChangeType.RUNDOWN_UPDATE || change.type === RundownChangeType.RUNDOWN_CREATE)
+		rundownUpdated.forEach(update => {
+			switch (update.type) {
 				case RundownChangeType.RUNDOWN_CREATE:
+					// This creates the rundown without segments, segments will come later.
 					this.emit('rundown_create', update.rundownExternalId, rundown)
 					break
 				case RundownChangeType.RUNDOWN_UPDATE:
 					this.emit('rundown_update', update.rundownExternalId, rundown)
 					break
-				case RundownChangeType.SEGMENT_UPDATE:
-					this.emit(
-						'segment_update',
-						update.rundownExternalId,
-						update.segmentExternalId,
-						rundown.segments.find((segment) => segment.externalId === update.segmentExternalId)
-					)
-					break
-				case RundownChangeType.SEGMENT_DELETE:
-					this.emit(
-						'segment_delete',
-						update.rundownExternalId,
-						update.segmentExternalId
-					)
-					break
-				case RundownChangeType.SEGMENT_CREATE:
-					this.emit(
-						'segment_create',
-						update.rundownExternalId,
-						update.segmentExternalId,
-						rundown.segments.find((segment) => segment.externalId === update.segmentExternalId)
-					)
-					break
 			}
+		})
+
+		const updatedSegments: string[] = (updates.filter(change => change.type === RundownChangeType.SEGMENT_UPDATE) as RundownChangeSegmentUpdate[]).map(s => s.segmentExternalId)
+		const createdSegments: string[] = (updates.filter(change => change.type === RundownChangeType.SEGMENT_CREATE) as RundownChangeSegmentCreate[]).map(s => s.segmentExternalId)
+
+		// Make no assumption about whether the update / create assessment is correct.
+		// At this point we can only be sure that we need to check for a difference.
+		const updatedOrCreated: string[] = [...updatedSegments, ...createdSegments]
+
+		const ingestCacheDataPs: Promise<Map<string, RundownSegment>> = this.coreHandler.GetSegmentsCacheById(rundownId, updatedOrCreated)
+		const iNewsDataPs: Promise<Map<string, RundownSegment>> = this.rundownManager.fetchINewsStoriesById(rundownId, updatedOrCreated)
+
+		const [ingestCacheData, iNewsData] = await Promise.all([ingestCacheDataPs, iNewsDataPs])
+
+		updatedOrCreated.forEach((segmentId) => {
+			const cache = ingestCacheData.get(segmentId)
+			const inews = iNewsData.get(segmentId)
+
+			this.diffSegment(rundownId, segmentId, inews, cache)
 		})
 	}
 
+	/**
+	 * Compares the cached version of a segment to updates from iNews. Emits updates if changes have occured
+	 * @param rundownId Rundown to send updates to
+	 * @param segmentId Segment external Id
+	 * @param iNewsData Data fetched from iNews
+	 * @param cachedData Data fetched from ingestDataCache
+	 */
+	private diffSegment (rundownId: string, segmentId: string, iNewsData: RundownSegment | undefined, cachedData: RundownSegment | undefined) {
+		if (!iNewsData) {
+			this.logger.info(`Orphaned segment: ${segmentId}. Gateway expected segment to exist but it has been removed from iNews.`)
+			return
+		}
+
+		if (!cachedData) {
+			// Not previously existing, it has been created
+			this.emit(
+				'segment_create',
+				rundownId,
+				segmentId,
+				iNewsData
+			)
+		} else {
+			// Previously existed, diff for changes
+			if (!_.isEqual(iNewsData.serialize(), cachedData.serialize())) {
+				this.emit(
+					'segment_update',
+					rundownId,
+					segmentId,
+					iNewsData
+				)
+			}
+		}
+	}
 }

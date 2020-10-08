@@ -1,7 +1,6 @@
-import { RundownSegment, INewsStoryGW } from './datastructures/Segment'
-import winston = require('winston')
 import _ = require('underscore')
-import { ParseDateFromInews } from '../helpers'
+import { literal } from '../helpers'
+import { ReducedSegment, RundownChange, RundownChangeSegmentCreate, RundownChangeType } from './RundownWatcher'
 
 export interface IParsedElement {
 	data: {
@@ -29,7 +28,90 @@ const PAD_RANK = 1000
 
 export class ParsedINewsIntoSegments {
 
-	static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings, _logger?: winston.LoggerInstance, removedSegments?: string[]): RundownSegment[] {
+	static getUpdatesAndRanks (rundownId: string, inewsRaw: ReducedSegment[], previousRankings: SegmentRankings): { segments: ReducedSegment[], changes: RundownChange[] } {
+		const removedSegments: string[] = []
+		const segments: ReducedSegment[] = []
+		const changes: RundownChange[] = []
+
+		const rundownPreviousRanks = previousRankings.get(rundownId)
+
+		// Initial startup of gateway
+		if (
+			!rundownPreviousRanks ||
+			rundownPreviousRanks.size === 0
+		) {
+			inewsRaw.forEach((rawSegment, position) => {
+				segments.push(
+					literal<ReducedSegment>({
+						externalId: rawSegment.externalId,
+						name: rawSegment.name,
+						modified: rawSegment.modified,
+						rank: BASE_RANK + PAD_RANK * position
+					})
+				)
+				changes.push(
+					literal<RundownChangeSegmentCreate>({
+						type: RundownChangeType.SEGMENT_CREATE,
+						rundownExternalId: rundownId,
+						segmentExternalId: rawSegment.externalId
+					})
+				)
+			})
+			return { segments, changes }
+		}
+
+		const newOrderSegmentIds = inewsRaw.map(raw => raw.externalId)
+		const previousOrderSegmentIds = Array.from(rundownPreviousRanks.keys())
+		const { movedSegments, notMovedSegments } = this.getMovedSegments(previousOrderSegmentIds, newOrderSegmentIds)
+		const insertedSegments = this.getInsertedSegments(previousOrderSegmentIds, newOrderSegmentIds) // TODO: this can be returned by getMovedSegments
+		const deletedSegments = this.getDeletedSegments(previousOrderSegmentIds, newOrderSegmentIds) // TODO: this can be returned by getMovedSegments
+		if (removedSegments) {
+			removedSegments.push(...deletedSegments)
+		}
+
+		const movedSegmentsSet = new Set(movedSegments)
+		const notMovedSegmentsSet = new Set(notMovedSegments)
+
+		let lastStayed: string = ''
+		const assignedRanks: number[] = []
+		inewsRaw.forEach((rawSegment) => {
+			// Previously existed and is in the same place
+			const previousRank = rundownPreviousRanks.get(rawSegment.externalId)?.rank
+			const nextAvaliableRank = this.getNextAvailableRank(
+				rundownPreviousRanks,
+				assignedRanks,
+				notMovedSegments[notMovedSegments.indexOf(lastStayed) + 1]
+			)
+			if (notMovedSegmentsSet.has(rawSegment.externalId)) {
+				const newRank = previousRank ?? nextAvaliableRank
+				segments.push(
+					literal<ReducedSegment>({
+						externalId: rawSegment.externalId,
+						name: rawSegment.name,
+						modified: rawSegment.modified,
+						rank: newRank
+					})
+				)
+				assignedRanks.push(newRank)
+				lastStayed = rawSegment.externalId
+			} else if (insertedSegments.includes(rawSegment.externalId) || movedSegmentsSet.has(rawSegment.externalId)) {
+				const newRank = nextAvaliableRank
+				segments.push(
+					literal<ReducedSegment>({
+						externalId: rawSegment.externalId,
+						name: rawSegment.name,
+						modified: rawSegment.modified,
+						rank: newRank
+					})
+				)
+				assignedRanks.push(newRank)
+			}
+		})
+
+		return { segments: segments.sort((a, b) => a.rank < b.rank ? -1 : 1), changes: [] }
+	}
+
+	/*static parse (rundownId: string, inewsRaw: INewsStoryGW[], previousRankings: SegmentRankings, _logger?: winston.LoggerInstance, removedSegments?: string[]): RundownSegment[] {
 		let segments: RundownSegment[] = []
 
 		if (inewsRaw.some(rawSegment => !rawSegment.identifier)) {
@@ -111,7 +193,7 @@ export class ParsedINewsIntoSegments {
 		})
 
 		return segments.sort((a, b) => a.rank < b.rank ? -1 : 1)
-	}
+	}*/
 
 	static getNextAvailableRank (
 		previousRanks: Map<string, SegmentRankingsInner>,

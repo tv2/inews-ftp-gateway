@@ -212,8 +212,15 @@ export class ParsedINewsIntoSegments {
 		const reducedOldOrder = oldOrder.filter((segment) => !deletedSegmentsSet.has(segment))
 		const reducedNewOrder = newOrder.filter((segment) => !insertedSegmentsSet.has(segment))
 
-		const oldOrderInd: { [key: string]: number } = _.object(_.map(reducedOldOrder, (x, k) => [x, k]))
-		const newOrderInd: number[] = _.map(reducedNewOrder, (x) => oldOrderInd[x])
+		const oldOrderInd: Map<string, number> = new Map()
+		reducedOldOrder.forEach((ord, pos) => oldOrderInd.set(ord, pos))
+		const newOrderInd: number[] = []
+		reducedNewOrder.forEach((x) => {
+			const old = oldOrderInd.get(x)
+			if (old !== undefined) {
+				newOrderInd.push(old)
+			}
+		})
 
 		const notMovedIds = this.findLIS(newOrderInd)
 		const notMovedSet = new Set(notMovedIds)

@@ -317,7 +317,7 @@ export class RundownWatcher extends EventEmitter {
 			const newSegmentRankAssignement = segmentRanks.get(segmentId)?.rank || cache?.rank
 
 			// If no rank is assigned, update is not safe
-			if (newSegmentRankAssignement) {
+			if (newSegmentRankAssignement !== undefined) {
 				this.diffSegment(rundownId, segmentId, inews, cache, newSegmentRankAssignement)
 			} else {
 				this.logger.error(`Segment ${segmentId} has not been assigned a rank`)
@@ -346,23 +346,23 @@ export class RundownWatcher extends EventEmitter {
 			return
 		}
 
+		const downloadedSegment: RundownSegment = new RundownSegment(
+			iNewsData.rundownId,
+			iNewsData.iNewsStory,
+			iNewsData.modified,
+			iNewsData.externalId,
+			newRank,
+			iNewsData.name
+		)
+
 		if (!cachedData) {
 			// Not previously existing, it has been created
-			this.emit('segment_create', rundownId, segmentId, iNewsData)
+			this.emit('segment_create', rundownId, segmentId, downloadedSegment)
 		} else {
 			// Previously existed, diff for changes
 
-			const downloadedSegment: RundownSegment = new RundownSegment(
-				iNewsData.rundownId,
-				iNewsData.iNewsStory,
-				iNewsData.modified,
-				iNewsData.externalId,
-				newRank,
-				iNewsData.name
-			)
-
 			if (!_.isEqual(downloadedSegment.serialize(), cachedData.serialize())) {
-				this.emit('segment_update', rundownId, segmentId, iNewsData)
+				this.emit('segment_update', rundownId, segmentId, downloadedSegment)
 			}
 		}
 	}

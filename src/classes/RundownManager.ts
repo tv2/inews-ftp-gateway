@@ -67,7 +67,7 @@ export class RundownManager {
 	): Promise<Map<string, UnrankedSegment>> {
 		const stories = new Map<string, UnrankedSegment>()
 		const dirList = await this._listStories(queueName)
-		for (const storyExternalId in segmentExternalIds) {
+		for (const storyExternalId of segmentExternalIds) {
 			try {
 				const rawSegment = await this.downloadINewsStoryById(queueName, storyExternalId, dirList)
 				if (rawSegment) {

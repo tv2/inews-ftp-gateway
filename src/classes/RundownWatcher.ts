@@ -230,6 +230,7 @@ export class RundownWatcher extends EventEmitter {
 	private async processUpdatedRundown(rundownId: string, rundown: ReducedRundown) {
 		const { segments, changes } = ParsedINewsIntoSegments.GetUpdatesAndRanks(
 			rundownId,
+			rundown,
 			rundown.segments,
 			this.previousRanks,
 			this.rundowns.get(rundownId)

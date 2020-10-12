@@ -8,6 +8,8 @@ import {
 	RundownChangeSegmentUpdate,
 	RundownChangeSegmentDelete,
 	ReducedRundown,
+	RundownChangeRundownCreate,
+	RundownChangeRundownUpdate,
 } from './RundownWatcher'
 
 export interface IParsedElement {
@@ -35,6 +37,7 @@ const PAD_RANK = 1000
 export class ParsedINewsIntoSegments {
 	static GetUpdatesAndRanks(
 		rundownId: string,
+		rundown: ReducedRundown,
 		inewsRaw: ReducedSegment[],
 		previousRankings: SegmentRankings,
 		cachedRundown?: ReducedRundown
@@ -43,6 +46,24 @@ export class ParsedINewsIntoSegments {
 		const changes: RundownChange[] = []
 
 		const rundownPreviousRanks = previousRankings.get(rundownId)
+
+		if (!cachedRundown) {
+			changes.push(
+				literal<RundownChangeRundownCreate>({
+					type: RundownChangeType.RUNDOWN_CREATE,
+					rundownExternalId: rundownId,
+				})
+			)
+		} else {
+			if (!_.isEqual(_.omit(cachedRundown, 'segments'), _.omit(rundown, 'segments'))) {
+				changes.push(
+					literal<RundownChangeRundownUpdate>({
+						type: RundownChangeType.RUNDOWN_UPDATE,
+						rundownExternalId: rundownId,
+					})
+				)
+			}
+		}
 
 		// Initial startup of gateway
 		if (!rundownPreviousRanks || rundownPreviousRanks.size === 0) {

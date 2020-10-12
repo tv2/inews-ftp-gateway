@@ -28,8 +28,8 @@ export function mutateSegment(segment: RundownSegment): IngestSegment {
 
 export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): RundownSegment | undefined {
 	const rundownId = ingestSegment.payload?.rundownId
-	const inewsStory = ingestSegment.payload?.inewsStory
-	const modified = ingestSegment.payload.modified
+	const inewsStory = ingestSegment.payload?.iNewsStory
+	const modified = ingestSegment.payload?.modified
 
 	if (rundownId === undefined || inewsStory === undefined || modified === undefined) {
 		return undefined

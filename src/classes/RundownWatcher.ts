@@ -89,7 +89,7 @@ export class RundownWatcher extends EventEmitter {
 		) => this) // TODO: Change to IngestSegment + IngestRundown
 
 	// Fast = list diffs, Slow = fetch All
-	public pollInterval: number = 2000
+	public pollInterval: number = 10000
 
 	private pollTimer: NodeJS.Timer | undefined
 

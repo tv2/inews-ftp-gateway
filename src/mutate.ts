@@ -21,7 +21,7 @@ export function mutateSegment(segment: RundownSegment): IngestSegment {
 		externalId: segment.externalId,
 		name: segment.name,
 		rank: segment.rank,
-		payload: omit(segment, 'externalId', 'rank', 'name', 'rundownId') as MutatedSegment,
+		payload: omit(segment, 'externalId', 'rank', 'name') as MutatedSegment,
 		parts: [],
 	}
 }
@@ -45,7 +45,7 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 	)
 }
 
-export type MutatedSegment = Omit<ISegment, 'parts' | 'externalId' | 'rank' | 'name' | 'rundownId'>
+export type MutatedSegment = Omit<ISegment, 'parts' | 'externalId' | 'rank' | 'name'>
 
 interface IOmit {
 	<T extends object, K extends [...(keyof T)[]]>(obj: T, ...keys: K): {

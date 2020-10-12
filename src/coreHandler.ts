@@ -531,8 +531,8 @@ export class CoreHandler {
 			if (!segments) throw Error('"ingestDataCache" collection not found!')
 
 			const cachedSegments = (segments.find({
-				'payload.rundownId': rundownExternalId,
-				externalId: { $in: segmentExternalIds },
+				'data.payload.rundownIn': rundownExternalId,
+				'data.externalId': { $in: segmentExternalIds },
 			}) as unknown) as IngestSegment[]
 
 			const rundownSegments: Map<string, RundownSegment> = new Map()

@@ -193,7 +193,7 @@ export class CoreHandler {
 			}),
 			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
 			this.core.autoSubscribe('peripheralDevices', this.core.deviceId),
-			this.core.autoSubscribe('ingestDataCache', { type: { $in: ['rundown', 'segment'] } }),
+			this.core.autoSubscribe('ingestDataCache', {}),
 		])
 		this._subscriptions = this._subscriptions.concat(subs)
 		this.setupObserverForPeripheralDeviceCommands() // Sets up observers
@@ -503,13 +503,9 @@ export class CoreHandler {
 		let rundowns = this.core.getCollection('ingestDataCache')
 		if (!rundowns) throw Error('"ingestDataCache" collection not found!')
 
-		let fullIngestCache = (rundowns.find({
-			'data.externalId': { $in: rundownExternalIds },
-			'data.type': INGEST_RUNDOWN_TYPE,
-			type: 'rundown',
-		}) as unknown) as { data: IngestRundown }[]
-
-		this.logger.info(`CACHE: ${rundowns.find({}).length}`)
+		let fullIngestCache = ((rundowns.find({ type: 'rundown' }) as unknown) as { data: IngestRundown }[]).filter(
+			(rundown) => rundownExternalIds.includes(rundown.data.externalId) && rundown.data.type === INGEST_RUNDOWN_TYPE
+		)
 
 		this.logger.info(`Found ${fullIngestCache.length} of ${rundownExternalIds.length} rundowns in cache`)
 
@@ -523,10 +519,10 @@ export class CoreHandler {
 
 		const cachedSegments = ((segments.find({
 			type: 'segment',
-			'data.payload.rundownId': rundownExternalId,
 		}) as unknown) as {
 			data: IngestSegment
 		}[])
+			.filter((segment) => segment.data.payload.rundownId === rundownExternalId)
 			.sort((a, b) => a.data.rank - b.data.rank)
 			.map((s) => s.data)
 
@@ -545,11 +541,12 @@ export class CoreHandler {
 			let segments = this.core.getCollection('ingestDataCache')
 			if (!segments) throw Error('"ingestDataCache" collection not found!')
 
-			const cachedSegments = (segments.find({
+			const cachedSegments = ((segments.find({
 				type: 'segment',
-				'data.payload.rundownId': rundownExternalId,
-				'data.externalId': { $in: segmentExternalIds },
-			}) as unknown) as { data: IngestSegment }[]
+			}) as unknown) as { data: IngestSegment }[]).filter(
+				(segment) =>
+					segment.data.payload.rundownId === rundownExternalId && segmentExternalIds.includes(segment.data.externalId)
+			)
 
 			this.logger.info(`Found ${cachedSegments.length} cached segments for rundown ${rundownExternalId}`)
 

@@ -212,11 +212,9 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	async checkINewsRundowns(): Promise<void> {
-		await Promise.all(
-			this.iNewsQueue.map((roId) => {
-				return this.checkINewsRundownById(roId.queues)
-			})
-		)
+		for (let queue of this.iNewsQueue) {
+			await this.checkINewsRundownById(queue.queues)
+		}
 	}
 
 	async checkINewsRundownById(rundownId: string): Promise<ReducedRundown> {

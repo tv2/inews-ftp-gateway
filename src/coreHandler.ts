@@ -539,6 +539,7 @@ export class CoreHandler {
 		segmentExternalIds: string[]
 	): Promise<Map<string, RundownSegment>> {
 		this.logger.info(`Making a call to core (GetSegmentsCacheById)`)
+		this.logger.info(`Looking for external IDs ${JSON.stringify(segmentExternalIds)}`)
 		return new Promise((resolve) => {
 			let segments = this.core.getCollection('ingestDataCache')
 			if (!segments) throw Error('"ingestDataCache" collection not found!')

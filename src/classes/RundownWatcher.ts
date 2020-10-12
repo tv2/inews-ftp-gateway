@@ -362,6 +362,7 @@ export class RundownWatcher extends EventEmitter {
 
 		if (!cachedData) {
 			// Not previously existing, it has been created
+			this.logger.info(`Creating segment: ${segmentId}`)
 			this.emit('segment_create', rundownId, segmentId, downloadedSegment)
 		} else {
 			// Previously existed, diff for changes

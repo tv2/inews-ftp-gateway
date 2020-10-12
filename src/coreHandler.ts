@@ -548,7 +548,9 @@ export class CoreHandler {
 					segment.data.payload.rundownId === rundownExternalId && segmentExternalIds.includes(segment.data.externalId)
 			)
 
-			this.logger.info(`Found ${cachedSegments.length} cached segments for rundown ${rundownExternalId}`)
+			this.logger.info(
+				`Found ${cachedSegments.length} of ${segmentExternalIds.length} cached segments for rundown ${rundownExternalId}`
+			)
 
 			const rundownSegments: Map<string, RundownSegment> = new Map()
 			cachedSegments.forEach((segment) => {

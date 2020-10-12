@@ -500,6 +500,7 @@ export class CoreHandler {
 	 * Returns Sofie rundown orders state
 	 */
 	public GetRundownCache(rundownExternalIds: string[]): Array<IngestRundown> {
+		this.logger.info(`Making a call to core (GetRundownCache)`)
 		let rundowns = this.core.getCollection('ingestDataCache')
 		if (!rundowns) throw Error('"ingestDataCache" collection not found!')
 
@@ -511,6 +512,7 @@ export class CoreHandler {
 	}
 
 	public GetSegmentsCacheForRundown(rundownExternalId: string): Array<IngestSegment> {
+		this.logger.info(`Making a call to core (GetSegmentsCacheForRundown)`)
 		let segments = this.core.getCollection('ingestDataCache')
 		if (!segments) throw Error('"ingestDataCache" collection not found!')
 
@@ -523,6 +525,7 @@ export class CoreHandler {
 		rundownExternalId: string,
 		segmentExternalIds: string[]
 	): Promise<Map<string, RundownSegment>> {
+		this.logger.info(`Making a call to core (GetSegmentsCacheById)`)
 		return new Promise((resolve) => {
 			let segments = this.core.getCollection('ingestDataCache')
 			if (!segments) throw Error('"ingestDataCache" collection not found!')

@@ -516,7 +516,7 @@ export class CoreHandler {
 		let segments = this.core.getCollection('ingestDataCache')
 		if (!segments) throw Error('"ingestDataCache" collection not found!')
 
-		return ((segments.find({ 'payload.rundownId': rundownExternalId }) as unknown) as IngestSegment[]).sort(
+		return ((segments.find({ 'data.payload.rundownId': rundownExternalId }) as unknown) as IngestSegment[]).sort(
 			(a, b) => a.rank - b.rank
 		)
 	}
@@ -531,7 +531,7 @@ export class CoreHandler {
 			if (!segments) throw Error('"ingestDataCache" collection not found!')
 
 			const cachedSegments = (segments.find({
-				'data.payload.rundownIn': rundownExternalId,
+				'data.payload.rundownId': rundownExternalId,
 				'data.externalId': { $in: segmentExternalIds },
 			}) as unknown) as IngestSegment[]
 

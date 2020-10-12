@@ -506,8 +506,12 @@ export class CoreHandler {
 
 		let fullIngestCache = (rundowns.find({
 			'data.externalId': { $in: rundownExternalIds },
-			type: INGEST_RUNDOWN_TYPE,
+			'data.type': INGEST_RUNDOWN_TYPE,
+			type: 'rundown',
 		}) as unknown) as { data: IngestRundown }[]
+
+		this.logger.info(`Found ${rundownExternalIds.length} of ${rundownExternalIds.length} rundowns in cache`)
+
 		return fullIngestCache.map((r) => r.data)
 	}
 
@@ -516,9 +520,18 @@ export class CoreHandler {
 		let segments = this.core.getCollection('ingestDataCache')
 		if (!segments) throw Error('"ingestDataCache" collection not found!')
 
-		return ((segments.find({ 'data.payload.rundownId': rundownExternalId }) as unknown) as { data: IngestSegment }[])
+		const cachedSegments = ((segments.find({
+			type: 'segment',
+			'data.payload.rundownId': rundownExternalId,
+		}) as unknown) as {
+			data: IngestSegment
+		}[])
 			.sort((a, b) => a.data.rank - b.data.rank)
 			.map((s) => s.data)
+
+		this.logger.info(`Found ${cachedSegments.length} cached segments for rundown ${rundownExternalId}`)
+
+		return cachedSegments
 	}
 
 	public async GetSegmentsCacheById(
@@ -531,9 +544,12 @@ export class CoreHandler {
 			if (!segments) throw Error('"ingestDataCache" collection not found!')
 
 			const cachedSegments = (segments.find({
+				type: 'segment',
 				'data.payload.rundownId': rundownExternalId,
 				'data.externalId': { $in: segmentExternalIds },
 			}) as unknown) as { data: IngestSegment }[]
+
+			this.logger.info(`Found ${cachedSegments.length} cached segments for rundown ${rundownExternalId}`)
 
 			const rundownSegments: Map<string, RundownSegment> = new Map()
 			cachedSegments.forEach((segment) => {

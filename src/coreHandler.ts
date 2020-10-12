@@ -13,7 +13,7 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateSegment, INGEST_RUNDOWN_TYPE, IngestSegmentToRundownSegment } from './mutate'
+import { mutateSegment, IngestSegmentToRundownSegment, INGEST_RUNDOWN_TYPE } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
@@ -193,8 +193,7 @@ export class CoreHandler {
 			}),
 			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
 			this.core.autoSubscribe('peripheralDevices', this.core.deviceId),
-			this.core.autoSubscribe('ingestDataCache', {}),
-			this.core.autoSubscribe('rundowns', {}),
+			this.core.autoSubscribe('ingestDataCache', { type: { $in: ['rundown', 'segment'] } }),
 		])
 		this._subscriptions = this._subscriptions.concat(subs)
 		this.setupObserverForPeripheralDeviceCommands() // Sets up observers
@@ -510,7 +509,9 @@ export class CoreHandler {
 			type: 'rundown',
 		}) as unknown) as { data: IngestRundown }[]
 
-		this.logger.info(`Found ${rundownExternalIds.length} of ${rundownExternalIds.length} rundowns in cache`)
+		this.logger.info(`CACHE: ${rundowns.find({}).length}`)
+
+		this.logger.info(`Found ${fullIngestCache.length} of ${rundownExternalIds.length} rundowns in cache`)
 
 		return fullIngestCache.map((r) => r.data)
 	}

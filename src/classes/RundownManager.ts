@@ -81,7 +81,7 @@ export class RundownManager {
 					stories.set(storyExternalId, segment)
 				}
 			} catch (err) {
-				this._logger?.error('Error downloading iNews story:', storyExternalId)
+				this._logger?.error('Error fetching iNews story:', storyExternalId)
 			}
 		}
 

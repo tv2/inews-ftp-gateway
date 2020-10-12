@@ -299,6 +299,11 @@ export class RundownWatcher extends EventEmitter {
 		// At this point we can only be sure that we need to check for a difference.
 		const updatedOrCreated: string[] = [...updatedSegments, ...createdSegments]
 
+		// No updates, don't make any calls to core / iNews
+		if (!updatedOrCreated.length) {
+			return
+		}
+
 		const ingestCacheDataPs: Promise<Map<string, RundownSegment>> = this.coreHandler.GetSegmentsCacheById(
 			rundownId,
 			updatedOrCreated

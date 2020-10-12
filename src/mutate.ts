@@ -13,7 +13,7 @@ export function mutateRundown(rundown: ReducedRundown): IngestRundown {
 		name: rundown.name,
 		type: INGEST_RUNDOWN_TYPE,
 		payload: omit(rundown, 'segments'),
-		segments: _.values(rundown.segments || []).map(mutateSegment),
+		segments: [],
 	}
 }
 export function mutateSegment(segment: RundownSegment): IngestSegment {

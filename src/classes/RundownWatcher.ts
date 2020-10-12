@@ -360,7 +360,7 @@ export class RundownWatcher extends EventEmitter {
 			iNewsData.name
 		)
 
-		if (!cachedData) {
+		if (cachedData === undefined) {
 			// Not previously existing, it has been created
 			this.logger.info(`Creating segment: ${segmentId}`)
 			this.emit('segment_create', rundownId, segmentId, downloadedSegment)

@@ -558,6 +558,8 @@ export class CoreHandler {
 
 				if (parsed) {
 					rundownSegments.set(segment.data.externalId, parsed)
+				} else {
+					console.log(`Failed to parse segment: ${segment.data.externalId}`)
 				}
 			})
 

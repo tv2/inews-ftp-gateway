@@ -1,72 +1,40 @@
 import { Connector, Config } from './connector'
 import * as Winston from 'winston'
-import _ = require('underscore')
+import * as _ from 'underscore'
+import yargs = require('yargs/yargs')
 
-// TODO: Consider using yargs
+const argv = yargs(process.argv.slice(2))
+	.options({
+		host: { type: 'string', default: '127.0.0.1', describe: 'Host of core' },
+		port: { type: 'number', default: 3000, describe: 'Port of core' },
+		log: { type: 'string', required: false, describe: 'File path to output logs to' },
+		id: { type: 'string', required: false, describe: 'Set device Id' },
+		token: { type: 'string', required: false, describe: 'Token for core communication' },
+		debug: { type: 'boolean', default: false, describe: 'Debug mode' },
+		certificates: { type: 'array', string: true, required: false, describe: 'Provide paths to SSL certificates' },
+		disableWatchdog: {
+			type: 'boolean',
+			default: false,
+			describe: 'Disable the watchdog (Killing the process if no commands are received after some time)',
+		},
+		unsafeSSL: {
+			type: 'boolean',
+			default: false,
+			describe: 'Accept all certificates. Not recommended outside of development environments.',
+		},
+	})
+	.help('help').argv
 
-// CLI arguments / Environment variables --------------
-let host: string = process.env.CORE_HOST || '127.0.0.1'
-let port: number = parseInt(process.env.CORE_PORT + '', 10) || 3000
-let logPath: string = process.env.CORE_LOG || ''
-let deviceId: string = process.env.DEVICE_ID || ''
-let deviceToken: string = process.env.DEVICE_TOKEN || ''
-let disableWatchdog: boolean = process.env.DISABLE_WATCHDOG === '1' || false
-let unsafeSSL: boolean = process.env.UNSAFE_SSL === '1' || false
-let certs: string[] = (process.env.CERTIFICATES || '').split(';') || []
-let debug: boolean = false
-let printHelp: boolean = false
-logPath = logPath
-
-let prevProcessArg = ''
-process.argv.forEach((val) => {
-	val = val + ''
-
-	let nextPrevProcessArg = val
-	if (prevProcessArg.match(/-host/i)) {
-		host = val
-	} else if (prevProcessArg.match(/-port/i)) {
-		port = parseInt(val, 10)
-	} else if (prevProcessArg.match(/-log/i)) {
-		logPath = val
-	} else if (prevProcessArg.match(/-id/i)) {
-		deviceId = val
-	} else if (prevProcessArg.match(/-token/i)) {
-		deviceToken = val
-	} else if ((val + '').match(/-debug/i)) {
-		debug = true
-	} else if ((val + ' ').match(/-h(elp)? /i)) {
-		printHelp = true
-	} else if (prevProcessArg.match(/-certificates/i)) {
-		certs.push(val)
-		nextPrevProcessArg = prevProcessArg // so that we can get multiple certificates
-
-		// arguments with no options:
-	} else if (val.match(/-disableWatchdog/i)) {
-		disableWatchdog = true
-	} else if (val.match(/-unsafeSSL/i)) {
-		// Will cause the Node applocation to blindly accept all certificates. Not recommenced unless in local, controlled networks.
-		unsafeSSL = true
-	}
-	prevProcessArg = nextPrevProcessArg + ''
-})
-
-if (printHelp) {
-	console.log(`
-The iNews-FTP-gateway acts as a gateway between iNews-FTP-devices and Core
-Options:
-CLI                ENV
--host              CORE_HOST         Host of Core  Default: '127.0.0.1'
--port              CORE_PORT         Port of Core  Default: '3000'
--log               CORE_LOG          File path to output log to (if not set, logs are sent to console)
--id                DEVICE_ID         Custom id of this device
--disableWatchdog   DISABLE_WATCHDOG  Disable the watchdog (Killing the process if no commands are received after some time)
--certificates      CERTIFICATES      Provide paths to SSL certificates, (for self-signed certificates). '-certificates path1 path2 path3'
--unsafeSSL         UNSAFE_SSL        Will cause the Node applocation to blindly accept all certificates. Not recommenced unless in local, controlled networks.
--debug                               Debug mode
--h, -help                            Displays this help message
-`)
-	process.exit(0)
-}
+// CLI arguments / Environment variables
+let host: string = process.env.CORE_HOST ?? argv.host
+let port: number = parseInt(process.env.CORE_PORT + '', 10) || argv.port
+let logPath: string = process.env.CORE_LOG ?? argv.log ?? ''
+let deviceId: string = process.env.DEVICE_ID ?? argv.id ?? ''
+let deviceToken: string = process.env.DEVICE_TOKEN ?? argv.token ?? ''
+let disableWatchdog: boolean = process.env.DISABLE_WATCHDOG === '1' || argv.disableWatchdog
+let unsafeSSL: boolean = process.env.UNSAFE_SSL === '1' || argv.unsafeSSL
+let certs: string[] = (process.env.CERTIFICATES ?? '').split(';') || (argv.certificates ?? [])
+let debug: boolean = argv.debug
 
 /**
  * Used when JSON.stringifying values that might be circular
@@ -96,7 +64,7 @@ let JSONStringifyCircular = () => {
 	}
 	return stringifyFixer
 }
-// Setup logging --------------------------------------
+// Setup logging
 let logger = new Winston.Logger({})
 
 if (logPath) {
@@ -151,7 +119,6 @@ if (logPath) {
 	// @ts-ignore
 	if (!process.env.DEV) {
 		console.log = function (...args: any[]) {
-			// orgConsoleLog('a')
 			if (args.length >= 1) {
 				// @ts-ignore one or more arguments
 				logger.debug(...args)
@@ -168,7 +135,6 @@ process.on('warning', (e: any) => {
 	logger.warn('Unhandled warning:', e, e.reason || e.message, e.stack)
 })
 
-logger.info('------------------------------------------------------------------')
 logger.info('-----------------------------------')
 logger.info('Statup options:')
 
@@ -188,7 +154,7 @@ logger.info('-----------------------------------')
 let config: Config = {
 	process: {
 		unsafeSSL: unsafeSSL,
-		certificates: _.compact(certs),
+		certificates: certs,
 	},
 	device: {
 		deviceId: deviceId,
@@ -203,6 +169,6 @@ let config: Config = {
 
 let c = new Connector(logger, config)
 
-logger.info('Core:          ' + config.core.host + ':' + config.core.port)
-logger.info('------------------------------------------------------------------')
+logger.info(`Core: ${config.core.host}:${config.core.port}`)
+logger.info('-----------------------------------')
 c.init().catch(logger.error)

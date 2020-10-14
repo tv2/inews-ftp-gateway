@@ -86,7 +86,17 @@ export class RundownWatcher extends EventEmitter {
 		((
 			event: 'segment_update',
 			listener: (rundownId: string, segmentId: string, newSegment: RundownSegment) => void
-		) => this) // TODO: Change to IngestSegment + IngestRundown
+		) => this)
+
+	emit!: ((event: 'info', message: string) => boolean) &
+		((event: 'error', message: string) => boolean) &
+		((event: 'warning', message: string) => boolean) &
+		((event: 'rundown_delete', rundownId: string) => boolean) &
+		((event: 'rundown_create', rundownId: string, rundown: ReducedRundown) => boolean) &
+		((event: 'rundown_update', rundownId: string, rundown: ReducedRundown) => boolean) &
+		((event: 'segment_delete', rundownId: string, segmentId: string) => boolean) &
+		((event: 'segment_create', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean) &
+		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean)
 
 	// Fast = list diffs, Slow = fetch All
 	public pollInterval: number = 10000

@@ -193,16 +193,19 @@ describe('ParsedINewsIntoSegments', () => {
 				type: RundownChangeType.SEGMENT_CREATE,
 				rundownExternalId: rundownId,
 				segmentExternalId: 'segment-01',
+				skipCache: true,
 			}),
 			literal<RundownChangeSegmentCreate>({
 				type: RundownChangeType.SEGMENT_CREATE,
 				rundownExternalId: rundownId,
 				segmentExternalId: 'segment-02',
+				skipCache: true,
 			}),
 			literal<RundownChangeSegmentCreate>({
 				type: RundownChangeType.SEGMENT_CREATE,
 				rundownExternalId: rundownId,
 				segmentExternalId: 'segment-03',
+				skipCache: true,
 			}),
 		])
 	})

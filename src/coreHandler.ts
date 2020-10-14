@@ -397,7 +397,7 @@ export class CoreHandler {
 	async triggerReloadRundown(rundownId: string): Promise<IngestRundown | null> {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
 		if (this.iNewsHandler?.iNewsWatcher) {
-			this.iNewsHandler.iNewsWatcher.rundowns.delete(rundownId)
+			this.iNewsHandler.iNewsWatcher.ResyncRundown(rundownId)
 		}
 		return null
 

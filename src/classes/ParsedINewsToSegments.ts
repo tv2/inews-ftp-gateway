@@ -81,6 +81,7 @@ export class ParsedINewsIntoSegments {
 						type: RundownChangeType.SEGMENT_CREATE,
 						rundownExternalId: rundownId,
 						segmentExternalId: rawSegment.externalId,
+						skipCache: true,
 					})
 				)
 			})

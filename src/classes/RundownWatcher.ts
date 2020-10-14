@@ -53,6 +53,8 @@ export interface RundownChangeSegmentDelete extends RundownChangeSegment {
 
 export interface RundownChangeSegmentCreate extends RundownChangeSegment {
 	type: RundownChangeType.SEGMENT_CREATE
+	/** For cases e.g. reload iNews data where cache should be ignored */
+	skipCache?: true
 }
 
 export type RundownChange =
@@ -221,6 +223,11 @@ export class RundownWatcher extends EventEmitter {
 		this.stopWatcher()
 	}
 
+	public ResyncRundown(rundownExternalId: string) {
+		this.rundowns.delete(rundownExternalId)
+		this.previousRanks.delete(rundownExternalId)
+	}
+
 	async checkINewsRundowns(): Promise<void> {
 		for (let queue of this.iNewsQueue) {
 			await this.checkINewsRundownById(queue.queues)
@@ -296,12 +303,19 @@ export class RundownWatcher extends EventEmitter {
 		changes: RundownChange[],
 		segmentRanks: Map<string, SegmentRankingsInner>
 	) {
+		const skipCache: Map<string, boolean> = new Map()
+
 		const updatedSegments: string[] = (changes.filter(
 			(change) => change.type === RundownChangeType.SEGMENT_UPDATE
 		) as RundownChangeSegmentUpdate[]).map((s) => s.segmentExternalId)
 		const createdSegments: string[] = (changes.filter(
 			(change) => change.type === RundownChangeType.SEGMENT_CREATE
-		) as RundownChangeSegmentCreate[]).map((s) => s.segmentExternalId)
+		) as RundownChangeSegmentCreate[]).map((s) => {
+			if (s.skipCache) {
+				skipCache.set(s.segmentExternalId, true)
+			}
+			return s.segmentExternalId
+		})
 
 		// Make no assumption about whether the update / create assessment is correct.
 		// At this point we can only be sure that we need to check for a difference.
@@ -324,7 +338,7 @@ export class RundownWatcher extends EventEmitter {
 		const [ingestCacheData, iNewsData] = await Promise.all([ingestCacheDataPs, iNewsDataPs])
 
 		updatedOrCreated.forEach((segmentId) => {
-			const cache = ingestCacheData.get(segmentId)
+			const cache = !skipCache.get(segmentId) ? ingestCacheData.get(segmentId) : undefined
 			const inews = iNewsData.get(segmentId)
 
 			const newSegmentRankAssignement = segmentRanks.get(segmentId)?.rank || cache?.rank

@@ -184,7 +184,7 @@ logger.info(`unsafeSSL: ${unsafeSSL}`)
 
 logger.info('-----------------------------------')
 
-// App config -----------------------------------------
+// App config
 let config: Config = {
 	process: {
 		unsafeSSL: unsafeSSL,
@@ -204,12 +204,5 @@ let config: Config = {
 let c = new Connector(logger, config)
 
 logger.info('Core:          ' + config.core.host + ':' + config.core.port)
-// logger.info('My Mos id:     ' + config.mos.self.mosID)
-// config.mos.devices.forEach((device) => {
-// 	if (device.primary) logger.info('Mos Primary:   ' + device.primary.host)
-// 	if (device.secondary) logger.info('Mos Secondary: ' + device.secondary.host)
-// })
 logger.info('------------------------------------------------------------------')
 c.init().catch(logger.error)
-
-// @TODO: remove this line of comment

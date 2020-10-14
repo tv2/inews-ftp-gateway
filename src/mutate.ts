@@ -6,7 +6,6 @@ import { ParseDateFromInews } from './helpers'
 
 export const INGEST_RUNDOWN_TYPE = 'inews'
 
-/** These are temorary mutation functions to convert sheet types to ingest types */
 export function mutateRundown(rundown: ReducedRundown): IngestRundown {
 	return {
 		externalId: rundown.externalId,

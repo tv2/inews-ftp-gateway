@@ -13,7 +13,7 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateSegment, IngestSegmentToRundownSegment, INGEST_RUNDOWN_TYPE } from './mutate'
+import { mutateSegment, IngestSegmentToRundownSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
@@ -498,37 +498,25 @@ export class CoreHandler {
 	/**
 	 * Returns Sofie rundown orders state
 	 */
-	public GetRundownCache(rundownExternalIds: string[]): Array<IngestRundown> {
+	public async GetRundownCache(rundownExternalIds: string[]): Promise<Array<IngestRundown>> {
 		this.logger.info(`Making a call to core (GetRundownCache)`)
-		let rundowns = this.core.getCollection('ingestDataCache')
-		if (!rundowns) throw Error('"ingestDataCache" collection not found!')
+		const res: IngestRundown[] = []
 
-		let fullIngestCache = ((rundowns.find({ type: 'rundown' }) as unknown) as { data: IngestRundown }[]).filter(
-			(rundown) => rundownExternalIds.includes(rundown.data.externalId) && rundown.data.type === INGEST_RUNDOWN_TYPE
-		)
+		for (let id of rundownExternalIds) {
+			let rundown: IngestRundown | undefined
+			try {
+				rundown = await this.core.callMethodLowPrio(P.methods.dataRundownGet, [id])
+			} catch (err) {
+				this.logger.info(`No cached data found for ${id}`)
+			}
 
-		this.logger.info(`Found ${fullIngestCache.length} of ${rundownExternalIds.length} rundowns in cache`)
+			if (rundown) {
+				this.logger.info(`Found cached rundown ${rundown.externalId}`)
+				res.push(rundown)
+			}
+		}
 
-		return fullIngestCache.map((r) => r.data)
-	}
-
-	public GetSegmentsCacheForRundown(rundownExternalId: string): Array<IngestSegment> {
-		this.logger.info(`Making a call to core (GetSegmentsCacheForRundown)`)
-		let segments = this.core.getCollection('ingestDataCache')
-		if (!segments) throw Error('"ingestDataCache" collection not found!')
-
-		const cachedSegments = ((segments.find({
-			type: 'segment',
-		}) as unknown) as {
-			data: IngestSegment
-		}[])
-			.filter((segment) => segment.data.payload.rundownId === rundownExternalId)
-			.sort((a, b) => a.data.rank - b.data.rank)
-			.map((s) => s.data)
-
-		this.logger.info(`Found ${cachedSegments.length} cached segments for rundown ${rundownExternalId}`)
-
-		return cachedSegments
+		return res
 	}
 
 	public async GetSegmentsCacheById(
@@ -537,33 +525,32 @@ export class CoreHandler {
 	): Promise<Map<string, RundownSegment>> {
 		this.logger.info(`Making a call to core (GetSegmentsCacheById)`)
 		this.logger.info(`Looking for external IDs ${JSON.stringify(segmentExternalIds)}`)
-		return new Promise((resolve) => {
-			let segments = this.core.getCollection('ingestDataCache')
-			if (!segments) throw Error('"ingestDataCache" collection not found!')
 
-			const cachedSegments = ((segments.find({
-				type: 'segment',
-			}) as unknown) as { data: IngestSegment }[]).filter(
-				(segment) =>
-					segment.data.payload.rundownId === rundownExternalId && segmentExternalIds.includes(segment.data.externalId)
-			)
+		const cachedSegments: IngestSegment[] = []
+		for (let id of segmentExternalIds) {
+			let segment: IngestSegment | undefined
+			try {
+				segment = await this.core.callMethodLowPrio(P.methods.dataRundownGet, [rundownExternalId, id])
+			} catch (err) {
+				this.logger.info(`No cached data found for ${id}`)
+			}
 
-			this.logger.info(
-				`Found ${cachedSegments.length} of ${segmentExternalIds.length} cached segments for rundown ${rundownExternalId}`
-			)
+			if (segment) {
+				this.logger.info(`Found cached segment ${segment.externalId}`)
+				cachedSegments.push(segment)
+			}
+		}
 
-			const rundownSegments: Map<string, RundownSegment> = new Map()
-			cachedSegments.forEach((segment) => {
-				const parsed = IngestSegmentToRundownSegment(segment.data)
+		const rundownSegments: Map<string, RundownSegment> = new Map()
+		cachedSegments.forEach((segment) => {
+			const parsed = IngestSegmentToRundownSegment(segment)
 
-				if (parsed) {
-					rundownSegments.set(segment.data.externalId, parsed)
-				} else {
-					this.logger.info(`Failed to parse segment: ${segment.data.externalId} (${JSON.stringify(segment.data)})`)
-				}
-			})
-
-			resolve(rundownSegments)
+			if (parsed) {
+				rundownSegments.set(segment.externalId, parsed)
+			} else {
+				this.logger.info(`Failed to parse segment: ${segment.externalId} (${JSON.stringify(segment)})`)
+			}
 		})
+		return rundownSegments
 	}
 }

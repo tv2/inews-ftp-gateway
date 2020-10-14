@@ -6,6 +6,7 @@ import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './cl
 import { mutateRundown, mutateSegment } from './mutate'
 import * as inews from 'inews'
 import { literal } from './helpers'
+import { RundownSegment } from './classes/datastructures/Segment'
 
 type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions
@@ -124,16 +125,17 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
+				const ingestCache = await this.ingestDataToRundowns(
+					'v0.2',
+					this._settings.queues.map((q) => q.queues)
+				)
 				this.iNewsWatcher = new RundownWatcher(
 					this._logger,
 					this.iNewsConnection,
 					this._coreHandler,
 					this._settings.queues,
 					'v0.2',
-					this.ingestDataToRundowns(
-						'v0.2',
-						this._settings.queues.map((q) => q.queues)
-					),
+					ingestCache,
 					this
 				)
 
@@ -149,16 +151,14 @@ export class InewsFTPHandler {
 	/**
 	 *  Get the current rundown state from Core and convert it to rundowns.
 	 */
-	ingestDataToRundowns(gatewayVersion: string, rundownExternalIds: string[]): RundownMap {
+	async ingestDataToRundowns(gatewayVersion: string, rundownExternalIds: string[]): Promise<RundownMap> {
 		const rundownMap: RundownMap = new Map()
 
-		let coreRundowns = this._coreHandler.GetRundownCache(rundownExternalIds)
+		let coreRundowns = await this._coreHandler.GetRundownCache(rundownExternalIds)
 
 		let rundownsCache: RundownMap = new Map()
 
 		coreRundowns.forEach((ingestRundown) => {
-			let ingestSegments = this._coreHandler.GetSegmentsCacheForRundown(ingestRundown.externalId)
-
 			let rundown: ReducedRundown = {
 				externalId: ingestRundown.externalId,
 				name: ingestRundown.name,
@@ -166,12 +166,12 @@ export class InewsFTPHandler {
 				segments: [],
 			}
 
-			ingestSegments.forEach((ingestSegment) => {
+			ingestRundown.segments.forEach((ingestSegment) => {
 				rundown.segments.push(
 					literal<ReducedSegment>({
 						externalId: ingestSegment.externalId,
 						name: ingestSegment.name,
-						modified: new Date(0), // Assume it was last modified long ago
+						modified: (ingestSegment.payload as RundownSegment).modified,
 						rank: ingestSegment.rank,
 					})
 				)

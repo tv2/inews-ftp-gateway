@@ -72,7 +72,7 @@
     "jobs-queue": "git+https://github.com/sparkpunkd/node-jobs-queue.git#master",
     "timeline-state-resolver-types": "git+https://github.com/olzzon/tv-automation-state-timeline-resolver#dist_types20200922_1",
     "tslib": "^2.0.0",
-    "tv-automation-server-core-integration": "git+https://github.com/olzzon/tv-automation-server-core-integration.git#v20200910_1",
+    "tv-automation-server-core-integration": "git+https://github.com/olzzon/tv-automation-server-core-integration.git#v20201014_1",
     "tv-automation-sofie-blueprints-integration": "git+https://github.com/olzzon/tv-automation-sofie-blueprints-integration.git#dist20200911_3",
     "underscore": "^1.9.1",
     "winston": "^2.4.2",

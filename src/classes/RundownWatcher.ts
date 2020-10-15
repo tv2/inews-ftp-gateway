@@ -252,7 +252,8 @@ export class RundownWatcher extends EventEmitter {
 			rundown,
 			rundown.segments,
 			this.previousRanks,
-			this.rundowns.get(rundownId)
+			this.rundowns.get(rundownId),
+			this._logger
 		)
 
 		// Store ranks

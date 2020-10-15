@@ -11,6 +11,7 @@ import {
 	RundownChangeRundownCreate,
 	RundownChangeRundownUpdate,
 } from './RundownWatcher'
+import * as Winston from 'winston'
 
 export interface IParsedElement {
 	data: {
@@ -40,7 +41,8 @@ export class ParsedINewsIntoSegments {
 		rundown: ReducedRundown,
 		inewsRaw: ReducedSegment[],
 		previousRankings: SegmentRankings,
-		cachedRundown?: ReducedRundown
+		cachedRundown?: ReducedRundown,
+		logger?: Winston.LoggerInstance
 	): { segments: ReducedSegment[]; changes: RundownChange[] } {
 		const segments: ReducedSegment[] = []
 		const changes: RundownChange[] = []
@@ -143,6 +145,7 @@ export class ParsedINewsIntoSegments {
 
 			if (cachedSegment && newSegment) {
 				if (cachedSegment.modified !== newSegment.modified) {
+					logger?.info(`MODIFIED DIFF: CACHED: ${cachedSegment.modified}, NEW: ${newSegment.modified}`)
 					changes.push(
 						literal<RundownChangeSegmentUpdate>({
 							type: RundownChangeType.SEGMENT_UPDATE,

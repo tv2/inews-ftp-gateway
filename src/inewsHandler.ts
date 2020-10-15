@@ -152,8 +152,6 @@ export class InewsFTPHandler {
 	 *  Get the current rundown state from Core and convert it to rundowns.
 	 */
 	async ingestDataToRundowns(gatewayVersion: string, rundownExternalIds: string[]): Promise<RundownMap> {
-		const rundownMap: RundownMap = new Map()
-
 		let coreRundowns = await this._coreHandler.GetRundownCache(rundownExternalIds)
 
 		let rundownsCache: RundownMap = new Map()
@@ -180,7 +178,7 @@ export class InewsFTPHandler {
 			rundownsCache.set(ingestRundown.externalId, rundown)
 		})
 
-		return rundownMap
+		return rundownsCache
 	}
 
 	updateChanges(iNewsWatcher: RundownWatcher) {

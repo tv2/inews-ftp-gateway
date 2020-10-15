@@ -228,7 +228,14 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	public ResyncRundown(rundownExternalId: string) {
-		this.rundowns.delete(rundownExternalId)
+		const rundown = this.rundowns.get(rundownExternalId)
+
+		if (!rundown) {
+			return
+		}
+
+		rundown.segments = []
+		this.rundowns.set(rundownExternalId, rundown)
 		this.previousRanks.delete(rundownExternalId)
 	}
 

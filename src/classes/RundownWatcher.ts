@@ -101,7 +101,7 @@ export class RundownWatcher extends EventEmitter {
 		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean)
 
 	// Fast = list diffs, Slow = fetch All
-	public pollInterval: number = 10000
+	public pollInterval: number = 2000
 
 	private pollTimer: NodeJS.Timer | undefined
 

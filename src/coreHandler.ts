@@ -505,7 +505,7 @@ export class CoreHandler {
 
 		const ps: Array<Promise<IngestRundown>> = []
 		for (let id of rundownExternalIds) {
-			ps.push(this.core.callMethodLowPrio(P.methods.dataRundownGet, [id]))
+			ps.push(this.core.callMethod(P.methods.dataRundownGet, [id]))
 		}
 
 		const results = await Promise.all(ps.map(ReflectPromise))
@@ -530,7 +530,7 @@ export class CoreHandler {
 		const cachedSegments: IngestSegment[] = []
 		const ps: Array<Promise<IngestSegment>> = []
 		for (let id of segmentExternalIds) {
-			ps.push(this.core.callMethodLowPrio(P.methods.dataSegmentGet, [rundownExternalId, id]))
+			ps.push(this.core.callMethod(P.methods.dataSegmentGet, [rundownExternalId, id]))
 		}
 
 		const results = await Promise.all(ps.map(ReflectPromise))

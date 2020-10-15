@@ -530,7 +530,7 @@ export class CoreHandler {
 		for (let id of segmentExternalIds) {
 			let segment: IngestSegment | undefined
 			try {
-				segment = await this.core.callMethodLowPrio(P.methods.dataRundownGet, [rundownExternalId, id])
+				segment = await this.core.callMethodLowPrio(P.methods.dataSegmentGet, [rundownExternalId, id])
 			} catch (err) {
 				this.logger.info(`No cached data found for ${id}`)
 			}

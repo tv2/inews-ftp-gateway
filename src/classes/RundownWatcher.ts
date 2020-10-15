@@ -132,6 +132,10 @@ export class RundownWatcher extends EventEmitter {
 		super()
 		this._logger = this.logger
 
+		for (let rundown of rundowns.entries()) {
+			this.updatePreviousRanks(rundown[0], rundown[1].segments)
+		}
+
 		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
 
 		if (!delayStart) {
@@ -252,6 +256,14 @@ export class RundownWatcher extends EventEmitter {
 		)
 
 		// Store ranks
+		const ranksMap = this.updatePreviousRanks(rundownId, segments)
+		this.rundowns.set(rundownId, rundown)
+
+		await this.processAndEmitRundownChanges(rundown, changes)
+		await this.processAndEmitSegmentUpdates(rundownId, changes, ranksMap)
+	}
+
+	private updatePreviousRanks(rundownId: string, segments: ReducedSegment[]): Map<string, SegmentRankingsInner> {
 		const ranksMap: Map<string, SegmentRankingsInner> = new Map()
 		segments.forEach((segment) => {
 			ranksMap.set(segment.externalId, {
@@ -259,10 +271,7 @@ export class RundownWatcher extends EventEmitter {
 			})
 		})
 		this.previousRanks.set(rundownId, ranksMap)
-		this.rundowns.set(rundownId, rundown)
-
-		await this.processAndEmitRundownChanges(rundown, changes)
-		await this.processAndEmitSegmentUpdates(rundownId, changes, ranksMap)
+		return ranksMap
 	}
 
 	private async processAndEmitRundownChanges(rundown: ReducedRundown, changes: RundownChange[]) {

@@ -401,21 +401,6 @@ export class CoreHandler {
 			this.iNewsHandler.iNewsWatcher.ResyncRundown(rundownId)
 		}
 		return null
-
-		// Maybe we can use this code one day when core is smarter about timeouts on peripheral device commands.
-		/*if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			const oldRundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
-
-			if (!oldRundown) return Promise.reject(`iNews gateway can't find rundown with Id ${oldRundown}`)
-
-			const rundown = await this.iNewsHandler.iNewsWatcher.rundownManager.downloadRundown(rundownId)
-
-			this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = rundown
-
-			return mutateRundown(rundown)
-		} else {
-			return Promise.reject(`iNews gateway is still connecting to iNews`)
-		}*/
 	}
 
 	/**

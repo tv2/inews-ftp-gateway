@@ -25,11 +25,11 @@ Going back to the Sofie Rundowns view, your queues will appear as rundowns.
 
 **CLI arguments:**
 
-| Argument  | Description | Environment variable |
-| ------------- | ------------- | --- |
-| -host  | Hostname or IP of Core  | CORE_HOST  |
-| -port  | Port of Core   |  CORE_PORT |
-| -log  | Path to output log |  CORE_LOG |
+| Argument | Description            | Environment variable |
+| -------- | ---------------------- | -------------------- |
+| -host    | Hostname or IP of Core | CORE_HOST            |
+| -port    | Port of Core           | CORE_PORT            |
+| -log     | Path to output log     | CORE_LOG             |
 
 ## Installation for dev
 
@@ -39,8 +39,8 @@ yarn build
 
 ### Dev dependencies
 
-* yarn:
- <https://yarnpkg.com>
+- yarn:
+  <https://yarnpkg.com>
 
-* jest:
- `yarn global add jest`
+- jest:
+  `yarn global add jest`

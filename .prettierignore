@@ -1,0 +1,5 @@
+package*.json
+*.snap
+*.xml
+dist
+**/**/__mocks_/*.json

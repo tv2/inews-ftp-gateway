@@ -1,9 +1,9 @@
-import { CoreConnection,
+import {
+	CoreConnection,
 	CoreOptions,
 	PeripheralDeviceAPI as P,
 	DDPConnectorOptions,
-  CollectionObj,
-  Observer
+	Observer,
 } from 'tv-automation-server-core-integration'
 import * as Winston from 'winston'
 import * as fs from 'fs'
@@ -13,11 +13,12 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateRundown, mutateSegment } from './mutate'
+import { mutateSegment, IngestSegmentToRundownSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
-// import { STATUS_CODES } from 'http'
+import { ReflectPromise } from './helpers'
+
 export interface PeripheralDeviceCommand {
 	_id: string
 
@@ -32,15 +33,14 @@ export interface PeripheralDeviceCommand {
 	time: number // time
 }
 export interface CoreConfig {
-	host: string,
-	port: number,
+	host: string
+	port: number
 	watchdog: boolean
 }
 /**
  * Represents a connection between mos-integration and Core
  */
 export class CoreHandler {
-
 	public core: CoreConnection
 
 	private logger: Winston.LoggerInstance
@@ -48,26 +48,26 @@ export class CoreHandler {
 	private _onConnected?: () => any
 	private _subscriptions: Array<any> = []
 	private _isInitialized: boolean = false
-	private _executedFunctions: {[id: string]: boolean} = {}
+	private _executedFunctions: { [id: string]: boolean } = {}
 	private _coreConfig?: CoreConfig
 	private _process?: Process
 	private _studioId?: string
 	public iNewsHandler?: InewsFTPHandler
 
-	constructor (logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
+	constructor(logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
 		this.logger = logger
 		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'iNews Gateway'))
 	}
 
-	async init (_deviceOptions: DeviceConfig, config: CoreConfig, process: Process): Promise<void> {
-		// this.logger.info('========')
-
+	async init(_deviceOptions: DeviceConfig, config: CoreConfig, process: Process): Promise<void> {
 		this._coreConfig = config
 		this._process = process
 
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
-			if (this._isInitialized) this.onConnectionRestored().catch(e => this.logger.error('onConnected error', e, e.stack))
+			if (this._isInitialized) {
+				this.onConnectionRestored().catch((e) => this.logger.error('onConnected error', e, e.stack))
+			}
 		})
 		this.core.onDisconnected(() => {
 			this.logger.info('Core Disconnected!')
@@ -78,11 +78,11 @@ export class CoreHandler {
 
 		let ddpConfig: DDPConnectorOptions = {
 			host: config.host,
-			port: config.port
+			port: config.port,
 		}
 		if (this._process && this._process.certificates.length) {
 			ddpConfig.tlsOpts = {
-				ca: this._process.certificates
+				ca: this._process.certificates,
 			}
 		}
 		await this.core.init(ddpConfig)
@@ -95,34 +95,34 @@ export class CoreHandler {
 	/**
 	 * Destroy gateway
 	 */
-	async dispose (): Promise<void> {
+	async dispose(): Promise<void> {
 		await this.core.setStatus({
 			statusCode: P.StatusCode.FATAL,
-			messages: ['Shutting down']
+			messages: ['Shutting down'],
 		})
 		await this.core.destroy()
 	}
 	/**
 	 * Report gateway status to core
 	 */
-	async setStatus (statusCode: P.StatusCode, messages: string[]): Promise<P.StatusObject> {
+	async setStatus(statusCode: P.StatusCode, messages: string[]): Promise<P.StatusObject> {
 		try {
 			return this.core.setStatus({
 				statusCode: statusCode,
-				messages: messages
+				messages: messages,
 			})
 		} catch (e) {
 			this.logger.warn(`Error when setting status: + ${e}`)
 			return {
 				statusCode: P.StatusCode.WARNING_MAJOR,
-				messages: [ 'Error when setting status', e ]
+				messages: ['Error when setting status', e],
 			}
 		}
 	}
 	/**
 	 * Get options for connecting to core
 	 */
-	getCoreConnectionOptions (deviceOptions: DeviceConfig, name: string): CoreOptions {
+	getCoreConnectionOptions(deviceOptions: DeviceConfig, name: string): CoreOptions {
 		let credentials: {
 			deviceId: string
 			deviceToken: string
@@ -131,16 +131,16 @@ export class CoreHandler {
 		if (deviceOptions.deviceId && deviceOptions.deviceToken) {
 			credentials = {
 				deviceId: deviceOptions.deviceId,
-				deviceToken: deviceOptions.deviceToken
+				deviceToken: deviceOptions.deviceToken,
 			}
 		} else if (deviceOptions.deviceId) {
 			this.logger.warn('Token not set, only id! This might be unsecure!')
 			credentials = {
 				deviceId: deviceOptions.deviceId + name,
-				deviceToken: 'unsecureToken'
+				deviceToken: 'unsecureToken',
 			}
 		} else {
-			credentials = CoreConnection.getCredentials(name.replace(/ /g,''))
+			credentials = CoreConnection.getCredentials(name.replace(/ /g, ''))
 		}
 		let options: CoreOptions = {
 			...credentials,
@@ -150,9 +150,9 @@ export class CoreHandler {
 			deviceSubType: P.SUBTYPE_PROCESS,
 
 			deviceName: name,
-			watchDog: (this._coreConfig ? this._coreConfig.watchdog : true),
+			watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
 
-			configManifest: INEWS_DEVICE_CONFIG_MANIFEST
+			configManifest: INEWS_DEVICE_CONFIG_MANIFEST,
 		}
 		options.versions = this._getVersions()
 		return options
@@ -160,25 +160,24 @@ export class CoreHandler {
 	/**
 	 * Called when reconnected to core
 	 */
-	async onConnectionRestored () {
+	async onConnectionRestored() {
 		// The following command was placed after subscription setup but being
 		// executed before it.
 		if (this._onConnected) this._onConnected()
-		await this.setupSubscriptionsAndObservers()
-		.catch((e) => {
+		await this.setupSubscriptionsAndObservers().catch((e) => {
 			this.logger.error('setupSubscriptionsAndObservers error', e, e.stack)
 		})
 	}
 	/**
 	 * Called when connected to core.
 	 */
-	onConnected (fcn: () => any) {
+	onConnected(fcn: () => any) {
 		this._onConnected = fcn
 	}
 	/**
 	 * Subscribes to events in the core.
 	 */
-	async setupSubscriptionsAndObservers (): Promise<void> {
+	async setupSubscriptionsAndObservers(): Promise<void> {
 		if (this._observers.length) {
 			this.logger.info('Core: Clearing observers..')
 			this._observers.forEach((obs: Observer) => {
@@ -191,23 +190,23 @@ export class CoreHandler {
 		this.logger.info('Core: Setting up subscriptions for ' + this.core.deviceId + '..')
 		let subs = await Promise.all([
 			this.core.autoSubscribe('peripheralDevices', {
-				_id: this.core.deviceId
+				_id: this.core.deviceId,
 			}),
 			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
 			this.core.autoSubscribe('peripheralDevices', this.core.deviceId),
 			this.core.autoSubscribe('ingestDataCache', {}),
-			this.core.autoSubscribe('rundowns', {})
 		])
 		this._subscriptions = this._subscriptions.concat(subs)
 		this.setupObserverForPeripheralDeviceCommands() // Sets up observers
-		this.executePeripheralDeviceCommands()
-		  .catch(e => this.logger.error(`executePeripheralDeviceCommands error`, e, e.stack)) // Runs any commands async
+		this.executePeripheralDeviceCommands().catch((e) =>
+			this.logger.error(`executePeripheralDeviceCommands error`, e, e.stack)
+		) // Runs any commands async
 		this.setupObserverForPeripheralDevices()
 	}
 	/**
 	 * Executes a peripheral device command.
 	 */
-	async executeFunction (cmd: PeripheralDeviceCommand): Promise<void> {
+	async executeFunction(cmd: PeripheralDeviceCommand): Promise<void> {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
 			this.logger.debug(cmd.functionName, cmd.args)
@@ -252,14 +251,15 @@ export class CoreHandler {
 			} catch (err) {
 				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, err.stack)
 				if (!success) {
-					await this.core.callMethod(P.methods.functionReply, [cmd._id, err.toString(), null])
-					  .catch(e => this.logger.error('executeFunction reply error after execution failure', e, e.stack))
+					await this.core
+						.callMethod(P.methods.functionReply, [cmd._id, err.toString(), null])
+						.catch((e) => this.logger.error('executeFunction reply error after execution failure', e, e.stack))
 				}
 			}
 		}
 	}
 
-	retireExecuteFunction (cmdId: string) {
+	retireExecuteFunction(cmdId: string) {
 		delete this._executedFunctions[cmdId]
 	}
 
@@ -267,7 +267,7 @@ export class CoreHandler {
 	 * Listen for commands.
 	 */
 	// Made async as it does async work ...
-	setupObserverForPeripheralDeviceCommands () {
+	setupObserverForPeripheralDeviceCommands() {
 		let observer = this.core.observe('peripheralDeviceCommands')
 		this.killProcess(0) // just make sure it exists
 		this._observers.push(observer)
@@ -283,7 +283,9 @@ export class CoreHandler {
 			let cmd = cmds.findOne(id) as PeripheralDeviceCommand
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
 			if (cmd.deviceId === this.core.deviceId) {
-				this.executeFunction(cmd).catch(e => this.logger.error('Error executing command recieved from core', e, e.stack))
+				this.executeFunction(cmd).catch((e) =>
+					this.logger.error('Error executing command recieved from core', e, e.stack)
+				)
 			}
 			return
 		}
@@ -301,22 +303,24 @@ export class CoreHandler {
 	/**
 	 *  Execute all relevant commands now
 	 */
-	async executePeripheralDeviceCommands (): Promise<void> {
+	async executePeripheralDeviceCommands(): Promise<void> {
 		let cmds = this.core.getCollection('peripheralDeviceCommands')
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
-		await Promise.all(cmds.find({}).map((cmd0) => {
-			let cmd = cmd0 as PeripheralDeviceCommand
-			if (cmd.deviceId === this.core.deviceId) {
-				return this.executeFunction(cmd)
-			}
-			return
-		}))
+		await Promise.all(
+			cmds.find({}).map((cmd0) => {
+				let cmd = cmd0 as PeripheralDeviceCommand
+				if (cmd.deviceId === this.core.deviceId) {
+					return this.executeFunction(cmd)
+				}
+				return
+			})
+		)
 	}
 
 	/**
 	 * Subscribes to changes to the device to get its associated studio ID.
 	 */
-	setupObserverForPeripheralDevices () {
+	setupObserverForPeripheralDevices() {
 		// Setup observer.
 		let observer = this.core.observe('peripheralDevices')
 		this.killProcess(0)
@@ -351,7 +355,7 @@ export class CoreHandler {
 	 * Kills the gateway.
 	 * @param actually Whether to actually kill the gateway, or just test this function.
 	 */
-	killProcess (actually: number) {
+	killProcess(actually: number) {
 		if (actually === 1) {
 			this.logger.info('KillProcess command received, shutting down in 1000ms!')
 			setTimeout(() => {
@@ -365,19 +369,19 @@ export class CoreHandler {
 	 * Respond to ping from core.
 	 * @param message Response.
 	 */
-	pingResponse (message: string) {
+	pingResponse(message: string) {
 		this.core.setPingResponse(message)
 		return true
 	}
 	/** Get snapshot of the gateway. */
-	getSnapshot (): any {
+	getSnapshot(): any {
 		this.logger.info('getSnapshot')
 		if (this.iNewsHandler?.iNewsWatcher?.rundowns) {
 			const ret: any = {}
-			Object.keys(this.iNewsHandler.iNewsWatcher.rundowns).forEach(key => {
-				const rundown = this.iNewsHandler?.iNewsWatcher?.rundowns[key]
+			Object.keys(this.iNewsHandler.iNewsWatcher.rundowns).forEach((key) => {
+				const rundown = this.iNewsHandler?.iNewsWatcher?.rundowns.get(key)
 				if (rundown) {
-					ret[key] = mutateRundown(rundown)
+					ret[key] = rundown
 				}
 			})
 			return ret
@@ -391,27 +395,12 @@ export class CoreHandler {
 	 * Promise is rejected if the rundown cannot be found, or if the gateway is initialising.
 	 * @param rundownId Rundown to reload.
 	 */
-	async triggerReloadRundown (rundownId: string): Promise<IngestRundown | null> {
+	async triggerReloadRundown(rundownId: string): Promise<IngestRundown | null> {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
 		if (this.iNewsHandler?.iNewsWatcher) {
-			this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = undefined
+			this.iNewsHandler.iNewsWatcher.ResyncRundown(rundownId)
 		}
 		return null
-
-		// Maybe we can use this code one day when core is smarter about timeouts on peripheral device commands.
-		/*if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			const oldRundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
-
-			if (!oldRundown) return Promise.reject(`iNews gateway can't find rundown with Id ${oldRundown}`)
-
-			const rundown = await this.iNewsHandler.iNewsWatcher.rundownManager.downloadRundown(rundownId)
-
-			this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = rundown
-
-			return mutateRundown(rundown)
-		} else {
-			return Promise.reject(`iNews gateway is still connecting to iNews`)
-		}*/
 	}
 
 	/**
@@ -420,30 +409,36 @@ export class CoreHandler {
 	 * @param rundownId Rundown to fetch from.
 	 * @param segmentId Segment to reload.
 	 */
-	async triggerReloadSegment (rundownId: string, segmentId: string): Promise<IngestSegment | null> {
+	async triggerReloadSegment(rundownId: string, segmentId: string): Promise<IngestSegment | null> {
 		this.logger.info(`Reloading segment ${segmentId} from rundown ${rundownId}`)
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			const rundown = this.iNewsHandler.iNewsWatcher.rundowns[rundownId]
+			const rundown = this.iNewsHandler.iNewsWatcher.rundowns.get(rundownId)
 
 			if (rundown) {
 				const segmentIndex = rundown.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
 				if (segmentIndex === -1) return Promise.reject(`iNews gateway can't find segment ${segmentId}`)
 
 				const prevSegment = rundown.segments[segmentIndex]
-				const rawSegment = await this.iNewsHandler.iNewsWatcher.rundownManager.downloadINewsStoryById(rundownId, segmentId)
+				const rawSegments = await this.iNewsHandler.iNewsWatcher.rundownManager.fetchINewsStoriesById(rundownId, [
+					segmentId,
+				])
+				const rawSegment = rawSegments.get(segmentId)
+
+				if (!rawSegment) {
+					return null
+				}
 
 				const segment = new RundownSegment(
 					rundownId,
-					rawSegment,
-					rawSegment.fields.modifyDate,
-					`${rawSegment.identifier}`,
+					rawSegment.iNewsStory,
+					rawSegment.modified,
+					`${rawSegment.externalId}`,
 					prevSegment.rank,
-					rawSegment.fields.title || '',
-					false
+					rawSegment.name
 				)
 
 				rundown.segments[segmentIndex] = segment
-				this.iNewsHandler.iNewsWatcher.rundowns[rundownId] = rundown
+				this.iNewsHandler.iNewsWatcher.rundowns.set(rundownId, rundown)
 
 				return mutateSegment(segment)
 			} else {
@@ -458,16 +453,14 @@ export class CoreHandler {
 	 * Get the versions of installed packages.
 	 */
 	// Allowing sync methods here as only called during initialization
-	private _getVersions () {
-		let versions: {[packageName: string]: string} = {}
+	private _getVersions() {
+		let versions: { [packageName: string]: string } = {}
 
 		if (process.env.npm_package_version) {
 			versions['_process'] = process.env.npm_package_version
 		}
 
-		let dirNames = [
-			'tv-automation-server-core-integration'
-		]
+		let dirNames = ['tv-automation-server-core-integration']
 		try {
 			let nodeModulesDirectories = fs.readdirSync('node_modules')
 			_.each(nodeModulesDirectories, (dir) => {
@@ -489,36 +482,62 @@ export class CoreHandler {
 	}
 
 	/**
-	 * Returns the ID of the currently active rundown.
-	 */
-	public GetLiveRundown (): string | undefined {
-		let rundowns = this.core.getCollection('rundowns')
-		if (!rundowns) throw Error('"rundowns" collection not found!')
-
-		let activeRundown = rundowns.findOne({ studioId: this._studioId, active: true })
-		return activeRundown.externalId
-	}
-
-	/**
 	 * Returns Sofie rundown orders state
 	 */
-	public GetRundownCache (): Array<CollectionObj> {
-		let rundowns = this.core.getCollection('ingestDataCache')
-		if (!rundowns) throw Error('"ingestDataCache" collection not found!')
+	public async GetRundownCache(rundownExternalIds: string[]): Promise<Array<IngestRundown>> {
+		this.logger.info(`Making a call to core (GetRundownCache)`)
+		const res: IngestRundown[] = []
 
-		let fullIngestCache = rundowns.find({})
-		return fullIngestCache
+		const ps: Array<Promise<IngestRundown>> = []
+		for (let id of rundownExternalIds) {
+			ps.push(this.core.callMethod(P.methods.dataRundownGet, [id]))
+		}
+
+		const results = await Promise.all(ps.map(ReflectPromise))
+
+		results.forEach((result) => {
+			if (result.status === 'fulfilled') {
+				this.logger.info(`Found cached rundown ${result.value.externalId}`)
+				res.push(result.value)
+			}
+		})
+
+		return res
 	}
 
-	/**
-	 * Checks if a rundown is active.
-	 * @param externalId External ID of the active rundown.
-	 */
-	public IsRundownLive (externalId: string): boolean {
-		let rundowns = this.core.getCollection('rundowns')
-		if (!rundowns) throw Error('"rundowns" collection not found!')
+	public async GetSegmentsCacheById(
+		rundownExternalId: string,
+		segmentExternalIds: string[]
+	): Promise<Map<string, RundownSegment>> {
+		this.logger.info(`Making a call to core (GetSegmentsCacheById)`)
+		this.logger.info(`Looking for external IDs ${JSON.stringify(segmentExternalIds)}`)
 
-		let rundown = rundowns.findOne({ studioId: this._studioId, externalId: externalId })
-		return rundown.active
+		const cachedSegments: IngestSegment[] = []
+		const ps: Array<Promise<IngestSegment>> = []
+		for (let id of segmentExternalIds) {
+			ps.push(this.core.callMethod(P.methods.dataSegmentGet, [rundownExternalId, id]))
+		}
+
+		const results = await Promise.all(ps.map(ReflectPromise))
+
+		results.forEach((result) => {
+			if (result.status === 'fulfilled') {
+				this.logger.info(`Found cached segment ${result.value.externalId}`)
+				cachedSegments.push(result.value)
+			}
+		})
+
+		const rundownSegments: Map<string, RundownSegment> = new Map()
+		cachedSegments.forEach((segment) => {
+			const parsed = IngestSegmentToRundownSegment(segment)
+
+			if (parsed) {
+				rundownSegments.set(segment.externalId, parsed)
+			} else {
+				this.logger.info(`Failed to parse segment: ${segment.externalId} (${JSON.stringify(segment)})`)
+			}
+		})
+
+		return rundownSegments
 	}
 }

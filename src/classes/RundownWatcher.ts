@@ -328,7 +328,7 @@ export class RundownWatcher extends EventEmitter {
 
 		const ingestCacheDataPs: Promise<Map<string, RundownSegment>> = this.coreHandler.GetSegmentsCacheById(
 			rundownId,
-			updatedOrCreated
+			updatedOrCreated.filter((segmentId) => !skipCache.get(segmentId))
 		)
 		const iNewsDataPs: Promise<Map<string, UnrankedSegment>> = this.rundownManager.fetchINewsStoriesById(
 			rundownId,

@@ -144,7 +144,7 @@ export class ParsedINewsIntoSegments {
 			const newSegment = inewsRaw.find((s) => s.externalId === segmentId)
 
 			if (cachedSegment && newSegment) {
-				if (cachedSegment.modified !== newSegment.modified) {
+				if (cachedSegment.modified.getTime() !== newSegment.modified.getTime()) {
 					logger?.info(`MODIFIED DIFF: CACHED: ${cachedSegment.modified}, NEW: ${newSegment.modified}`)
 					changes.push(
 						literal<RundownChangeSegmentUpdate>({

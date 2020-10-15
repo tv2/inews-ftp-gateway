@@ -33,7 +33,10 @@ let deviceId: string = process.env.DEVICE_ID ?? argv.id ?? ''
 let deviceToken: string = process.env.DEVICE_TOKEN ?? argv.token ?? ''
 let disableWatchdog: boolean = process.env.DISABLE_WATCHDOG === '1' || argv.disableWatchdog
 let unsafeSSL: boolean = process.env.UNSAFE_SSL === '1' || argv.unsafeSSL
-let certs: string[] = (process.env.CERTIFICATES ?? '').split(';') || (argv.certificates ?? [])
+let certs: string[] = process.env.CERTIFICATES ? process.env.CERTIFICATES.split(';').filter((c) => c && c.length) : []
+if (!certs.length) {
+	certs = argv.certificates ?? []
+}
 let debug: boolean = argv.debug
 
 /**

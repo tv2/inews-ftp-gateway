@@ -3,7 +3,7 @@ import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
-import { literal, ParseDateFromInews } from '../helpers'
+import { literal, ParseDateFromInews, ReflectPromise } from '../helpers'
 
 function isFile(f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -67,23 +67,29 @@ export class RundownManager {
 	): Promise<Map<string, UnrankedSegment>> {
 		const stories = new Map<string, UnrankedSegment>()
 		const dirList = await this._listStories(queueName)
+		const ps: Array<Promise<INewsStory | undefined>> = []
+
 		for (const storyExternalId of segmentExternalIds) {
-			try {
-				const rawSegment = await this.downloadINewsStoryById(queueName, storyExternalId, dirList)
+			ps.push(this.downloadINewsStoryById(queueName, storyExternalId, dirList))
+		}
+
+		const results = await Promise.all(ps.map(ReflectPromise))
+
+		results.forEach((result) => {
+			if (result.status === 'fulfilled') {
+				const rawSegment = result.value
 				if (rawSegment) {
 					const segment: UnrankedSegment = {
-						externalId: storyExternalId,
+						externalId: rawSegment.identifier,
 						name: rawSegment.fields.title,
 						modified: ParseDateFromInews(rawSegment.fields.modifyDate),
 						rundownId: queueName,
 						iNewsStory: rawSegment,
 					}
-					stories.set(storyExternalId, segment)
+					stories.set(rawSegment.identifier, segment)
 				}
-			} catch (err) {
-				this._logger?.error('Error fetching iNews story:', storyExternalId)
 			}
-		}
+		})
 
 		return stories
 	}

@@ -11,3 +11,12 @@ export function ParseDateFromInews(date: string) {
 
 	return isValidDate(modifyDate) ? modifyDate : new Date()
 }
+
+export function ReflectPromise<T>(
+	ps: Promise<T>
+): Promise<{ value: T; status: 'fulfilled' } | { e: any; status: 'rejected' }> {
+	return ps.then(
+		(value) => ({ value, status: 'fulfilled' }),
+		(e) => ({ e, status: 'rejected' })
+	)
+}

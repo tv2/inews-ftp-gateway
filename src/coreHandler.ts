@@ -17,6 +17,7 @@ import { mutateSegment, IngestSegmentToRundownSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
+import { ReflectPromise } from './helpers'
 
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -502,19 +503,19 @@ export class CoreHandler {
 		this.logger.info(`Making a call to core (GetRundownCache)`)
 		const res: IngestRundown[] = []
 
+		const ps: Array<Promise<IngestRundown>> = []
 		for (let id of rundownExternalIds) {
-			let rundown: IngestRundown | undefined
-			try {
-				rundown = await this.core.callMethodLowPrio(P.methods.dataRundownGet, [id])
-			} catch (err) {
-				this.logger.info(`No cached data found for ${id}`)
-			}
-
-			if (rundown) {
-				this.logger.info(`Found cached rundown ${rundown.externalId}`)
-				res.push(rundown)
-			}
+			ps.push(this.core.callMethodLowPrio(P.methods.dataRundownGet, [id]))
 		}
+
+		const results = await Promise.all(ps.map(ReflectPromise))
+
+		results.forEach((result) => {
+			if (result.status === 'fulfilled') {
+				this.logger.info(`Found cached rundown ${result.value.externalId}`)
+				res.push(result.value)
+			}
+		})
 
 		return res
 	}
@@ -527,19 +528,19 @@ export class CoreHandler {
 		this.logger.info(`Looking for external IDs ${JSON.stringify(segmentExternalIds)}`)
 
 		const cachedSegments: IngestSegment[] = []
+		const ps: Array<Promise<IngestSegment>> = []
 		for (let id of segmentExternalIds) {
-			let segment: IngestSegment | undefined
-			try {
-				segment = await this.core.callMethodLowPrio(P.methods.dataSegmentGet, [rundownExternalId, id])
-			} catch (err) {
-				this.logger.info(`No cached data found for ${id}`)
-			}
-
-			if (segment) {
-				this.logger.info(`Found cached segment ${segment.externalId}`)
-				cachedSegments.push(segment)
-			}
+			ps.push(this.core.callMethodLowPrio(P.methods.dataSegmentGet, [rundownExternalId, id]))
 		}
+
+		const results = await Promise.all(ps.map(ReflectPromise))
+
+		results.forEach((result) => {
+			if (result.status === 'fulfilled') {
+				this.logger.info(`Found cached segment ${result.value.externalId}`)
+				cachedSegments.push(result.value)
+			}
+		})
 
 		const rundownSegments: Map<string, RundownSegment> = new Map()
 		cachedSegments.forEach((segment) => {
@@ -551,6 +552,7 @@ export class CoreHandler {
 				this.logger.info(`Failed to parse segment: ${segment.externalId} (${JSON.stringify(segment)})`)
 			}
 		})
+
 		return rundownSegments
 	}
 }

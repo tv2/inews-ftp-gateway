@@ -44,6 +44,8 @@ export class RundownManager {
 			let dirList = await this._listStories(queueName)
 			dirList.forEach((ftpFileName: INewsDirItem, index) => {
 				if (isFile(ftpFileName)) {
+					this._logger?.info(`LOCATOR: ${ftpFileName.locator}`)
+					this._logger?.info(`FILE: ${JSON.stringify(ftpFileName)}`)
 					rundown.segments.push(
 						literal<ReducedSegment>({
 							externalId: ftpFileName.identifier,

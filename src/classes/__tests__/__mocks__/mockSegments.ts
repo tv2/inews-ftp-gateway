@@ -7,6 +7,7 @@ export const segmentGW01: ReducedSegment = {
 	modified: new Date(0),
 	externalId: 'segment-01',
 	rank: 1,
+	locator: 'segment01',
 }
 
 export const segmentGW02: ReducedSegment = {
@@ -14,6 +15,7 @@ export const segmentGW02: ReducedSegment = {
 	modified: new Date(0),
 	externalId: 'segment-02',
 	rank: 2,
+	locator: 'segment02',
 }
 
 export const segmentGW03: ReducedSegment = {
@@ -21,6 +23,7 @@ export const segmentGW03: ReducedSegment = {
 	modified: new Date(0),
 	externalId: 'segment-03',
 	rank: 3,
+	locator: 'segment03',
 }
 
 export const segmentGW04: ReducedSegment = {
@@ -28,6 +31,7 @@ export const segmentGW04: ReducedSegment = {
 	modified: new Date(0),
 	externalId: 'segment-04',
 	rank: 4,
+	locator: 'segment04',
 }
 
 export const segmentGW05: ReducedSegment = {
@@ -35,6 +39,7 @@ export const segmentGW05: ReducedSegment = {
 	modified: new Date(0),
 	externalId: 'segment-05',
 	rank: 5,
+	locator: 'segment05',
 }
 
 export const segmentGW06: ReducedSegment = {
@@ -42,6 +47,7 @@ export const segmentGW06: ReducedSegment = {
 	modified: new Date(0),
 	externalId: 'segment-06',
 	rank: 6,
+	locator: 'segment06',
 }
 
 export const segmentGW07: ReducedSegment = {
@@ -49,6 +55,7 @@ export const segmentGW07: ReducedSegment = {
 	modified: new Date(0),
 	externalId: 'segment-07',
 	rank: 7,
+	locator: 'segment07',
 }
 
 export const segmentGW08: ReducedSegment = {
@@ -56,6 +63,7 @@ export const segmentGW08: ReducedSegment = {
 	modified: new Date(0),
 	externalId: 'segment-08',
 	rank: 8,
+	locator: 'segment08',
 }
 
 export function RundownSegmentFromMockSegment(rundownId: string, segmentGW: INewsStoryGW): RundownSegment {
@@ -63,6 +71,7 @@ export function RundownSegmentFromMockSegment(rundownId: string, segmentGW: INew
 		rundownId,
 		_.clone(segmentGW),
 		new Date(segmentGW.fields.modifyDate),
+		segmentGW.locator,
 		segmentGW.identifier,
 		0,
 		segmentGW.fields.title

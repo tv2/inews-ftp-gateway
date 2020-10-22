@@ -432,6 +432,7 @@ export class CoreHandler {
 					rundownId,
 					rawSegment.iNewsStory,
 					rawSegment.modified,
+					rawSegment.locator,
 					`${rawSegment.externalId}`,
 					prevSegment.rank,
 					rawSegment.name

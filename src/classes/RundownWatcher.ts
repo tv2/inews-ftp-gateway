@@ -68,7 +68,7 @@ export type RundownChange =
 export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gatewayVersion'> & {
 	segments: ReducedSegment[]
 }
-export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name'>
+export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name' | 'locator'>
 export type UnrankedSegment = Omit<ISegment, 'rank' | 'float'>
 
 export type RundownMap = Map<string, ReducedRundown>
@@ -394,6 +394,7 @@ export class RundownWatcher extends EventEmitter {
 			iNewsData.rundownId,
 			iNewsData.iNewsStory,
 			iNewsData.modified,
+			iNewsData.locator,
 			iNewsData.externalId,
 			newRank,
 			iNewsData.name

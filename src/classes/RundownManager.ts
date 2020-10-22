@@ -49,6 +49,7 @@ export class RundownManager {
 							externalId: ftpFileName.identifier,
 							name: ftpFileName.storyName,
 							modified: ftpFileName.modified || new Date(0),
+							locator: ftpFileName.locator,
 							rank: index,
 						})
 					)
@@ -67,7 +68,7 @@ export class RundownManager {
 	): Promise<Map<string, UnrankedSegment>> {
 		const stories = new Map<string, UnrankedSegment>()
 		const dirList = await this._listStories(queueName)
-		const ps: Array<Promise<INewsStory | undefined>> = []
+		const ps: Array<Promise<INewsStoryGW | undefined>> = []
 
 		for (const storyExternalId of segmentExternalIds) {
 			ps.push(this.downloadINewsStoryById(queueName, storyExternalId, dirList))
@@ -83,6 +84,7 @@ export class RundownManager {
 						externalId: rawSegment.identifier,
 						name: rawSegment.fields.title,
 						modified: ParseDateFromInews(rawSegment.fields.modifyDate),
+						locator: rawSegment.locator,
 						rundownId: queueName,
 						iNewsStory: rawSegment,
 					}

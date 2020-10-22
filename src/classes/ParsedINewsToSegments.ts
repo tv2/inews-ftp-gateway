@@ -42,7 +42,7 @@ export class ParsedINewsIntoSegments {
 		inewsRaw: ReducedSegment[],
 		previousRankings: SegmentRankings,
 		cachedRundown?: ReducedRundown,
-		logger?: Winston.LoggerInstance
+		_logger?: Winston.LoggerInstance
 	): { segments: ReducedSegment[]; changes: RundownChange[] } {
 		const segments: ReducedSegment[] = []
 		const changes: RundownChange[] = []
@@ -75,6 +75,7 @@ export class ParsedINewsIntoSegments {
 						externalId: rawSegment.externalId,
 						name: rawSegment.name,
 						modified: rawSegment.modified,
+						locator: rawSegment.locator,
 						rank: BASE_RANK + PAD_RANK * position,
 					})
 				)
@@ -144,8 +145,7 @@ export class ParsedINewsIntoSegments {
 			const newSegment = inewsRaw.find((s) => s.externalId === segmentId)
 
 			if (cachedSegment && newSegment) {
-				if (cachedSegment.modified.getTime() !== newSegment.modified.getTime()) {
-					logger?.info(`MODIFIED DIFF: CACHED: ${cachedSegment.modified}, NEW: ${newSegment.modified}`)
+				if (cachedSegment.locator !== newSegment.locator) {
 					changes.push(
 						literal<RundownChangeSegmentUpdate>({
 							type: RundownChangeType.SEGMENT_UPDATE,
@@ -177,6 +177,7 @@ export class ParsedINewsIntoSegments {
 						externalId: rawSegment.externalId,
 						name: rawSegment.name,
 						modified: rawSegment.modified,
+						locator: rawSegment.locator,
 						rank: newRank,
 					})
 				)
@@ -189,6 +190,7 @@ export class ParsedINewsIntoSegments {
 						externalId: rawSegment.externalId,
 						name: rawSegment.name,
 						modified: rawSegment.modified,
+						locator: rawSegment.locator,
 						rank: newRank,
 					})
 				)

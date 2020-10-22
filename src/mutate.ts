@@ -29,8 +29,9 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 	const rundownId = ingestSegment.payload?.rundownId
 	const inewsStory = ingestSegment.payload?.iNewsStory
 	const modified = ingestSegment.payload?.modified
+	const locator = ingestSegment.payload?.locator
 
-	if (rundownId === undefined || inewsStory === undefined || modified === undefined) {
+	if (rundownId === undefined || inewsStory === undefined || modified === undefined || locator === undefined) {
 		return undefined
 	}
 
@@ -38,6 +39,7 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 		rundownId,
 		inewsStory,
 		ParseDateFromInews(modified),
+		locator,
 		ingestSegment.externalId,
 		ingestSegment.rank,
 		ingestSegment.name

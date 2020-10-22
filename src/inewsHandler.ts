@@ -171,6 +171,7 @@ export class InewsFTPHandler {
 						name: ingestSegment.name,
 						modified: (ingestSegment.payload as RundownSegment).modified,
 						rank: ingestSegment.rank,
+						locator: (ingestSegment.payload as RundownSegment).iNewsStory.locator,
 					})
 				)
 			})

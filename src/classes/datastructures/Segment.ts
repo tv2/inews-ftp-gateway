@@ -6,6 +6,8 @@ export interface ISegment {
 	rundownId: string
 	iNewsStory: INewsStoryGW
 	modified: Date
+	// Changes whenever a story is modified
+	locator: string
 	externalId: string // unique within the parent rundown
 	rank: number
 	name: string
@@ -19,6 +21,7 @@ export class RundownSegment implements ISegment {
 		public rundownId: string,
 		public iNewsStory: INewsStoryGW,
 		public modified: Date,
+		public locator: string,
 		public externalId: string,
 		public rank: number,
 		public name: string
@@ -26,7 +29,7 @@ export class RundownSegment implements ISegment {
 		this.float = iNewsStory.meta.float === 'float'
 	}
 
-	serialize(): Omit<ISegment, 'modified'> {
+	serialize(): Omit<ISegment, 'modified' | 'locator'> {
 		return {
 			rundownId: this.rundownId,
 			iNewsStory: this.iNewsStory,

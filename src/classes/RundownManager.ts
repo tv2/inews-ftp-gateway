@@ -104,7 +104,11 @@ export class RundownManager {
 	async downloadINewsStory(queueName: string, storyFile: INewsDirItem): Promise<INewsStoryGW | undefined> {
 		let story: INewsStoryGW
 		try {
-			story = { ...(await this._getStory(queueName, storyFile.file)), identifier: (storyFile as INewsFile).identifier }
+			story = {
+				...(await this._getStory(queueName, storyFile.file)),
+				identifier: (storyFile as INewsFile).identifier,
+				locator: (storyFile as INewsFile).locator,
+			}
 		} catch (err) {
 			this._logger?.error(`Error downloading iNews story: ${err}`)
 			return undefined

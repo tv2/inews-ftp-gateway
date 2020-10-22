@@ -29,7 +29,7 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 	const rundownId = ingestSegment.payload?.rundownId
 	const inewsStory = ingestSegment.payload?.iNewsStory
 	const modified = ingestSegment.payload?.modified
-	const locator = ingestSegment.payload?.locator
+	const locator = ingestSegment.payload?.iNewsStory.locator
 
 	if (rundownId === undefined || inewsStory === undefined || modified === undefined || locator === undefined) {
 		return undefined

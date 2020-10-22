@@ -44,8 +44,6 @@ export class RundownManager {
 			let dirList = await this._listStories(queueName)
 			dirList.forEach((ftpFileName: INewsDirItem, index) => {
 				if (isFile(ftpFileName)) {
-					this._logger?.info(`LOCATOR: ${ftpFileName.locator}`)
-					this._logger?.info(`FILE: ${JSON.stringify(ftpFileName)}`)
 					rundown.segments.push(
 						literal<ReducedSegment>({
 							externalId: ftpFileName.identifier,
@@ -106,7 +104,11 @@ export class RundownManager {
 	async downloadINewsStory(queueName: string, storyFile: INewsDirItem): Promise<INewsStoryGW | undefined> {
 		let story: INewsStoryGW
 		try {
-			story = { ...(await this._getStory(queueName, storyFile.file)), identifier: (storyFile as INewsFile).identifier }
+			story = {
+				...(await this._getStory(queueName, storyFile.file)),
+				identifier: (storyFile as INewsFile).identifier,
+				locator: (storyFile as INewsFile).locator,
+			}
 		} catch (err) {
 			this._logger?.error(`Error downloading iNews story: ${err}`)
 			return undefined

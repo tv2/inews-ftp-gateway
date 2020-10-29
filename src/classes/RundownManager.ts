@@ -4,6 +4,7 @@ import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
 import { literal, ParseDateFromInews, ReflectPromise } from '../helpers'
+import { VERSION } from '../version'
 
 function isFile(f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -37,7 +38,7 @@ export class RundownManager {
 		const rundown: ReducedRundown = {
 			externalId: queueName,
 			name: queueName,
-			gatewayVersion: 'v0.2', // where should this come from?
+			gatewayVersion: VERSION,
 			segments: [],
 		}
 		try {

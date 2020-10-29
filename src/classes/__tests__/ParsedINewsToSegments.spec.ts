@@ -19,11 +19,12 @@ import {
 	ReducedRundown,
 	RundownChangeRundownCreate,
 } from '../RundownWatcher'
+import { VERSION } from '../../version'
 
 const rundownId = 'test-rundown'
 const mockrundown: ReducedRundown = {
 	externalId: rundownId,
-	gatewayVersion: 'v0.2',
+	gatewayVersion: VERSION,
 	name: 'Mock Rundown',
 	segments: [],
 }

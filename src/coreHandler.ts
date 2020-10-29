@@ -18,6 +18,8 @@ import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
 import { ReflectPromise } from './helpers'
+import { ReducedRundown } from './classes/RundownWatcher'
+import { VersionIsCompatible } from './version'
 
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -499,7 +501,9 @@ export class CoreHandler {
 		results.forEach((result) => {
 			if (result.status === 'fulfilled') {
 				this.logger.debug(`Found cached rundown ${result.value.externalId}`)
-				res.push(result.value)
+				if (VersionIsCompatible((result.value.payload as ReducedRundown | undefined)?.gatewayVersion)) {
+					res.push(result.value)
+				}
 			}
 		})
 

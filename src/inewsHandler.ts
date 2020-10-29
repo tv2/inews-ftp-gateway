@@ -7,6 +7,7 @@ import { mutateRundown, mutateSegment } from './mutate'
 import * as inews from 'inews'
 import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
+import { VERSION } from './version'
 
 type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions
@@ -126,7 +127,7 @@ export class InewsFTPHandler {
 			if (peripheralDevice) {
 				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 				const ingestCache = await this.ingestDataToRundowns(
-					'v0.2',
+					VERSION,
 					this._settings.queues.map((q) => q.queues)
 				)
 				this.iNewsWatcher = new RundownWatcher(
@@ -134,7 +135,7 @@ export class InewsFTPHandler {
 					this.iNewsConnection,
 					this._coreHandler,
 					this._settings.queues,
-					'v0.2',
+					VERSION,
 					ingestCache,
 					this
 				)

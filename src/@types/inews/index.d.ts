@@ -5,7 +5,6 @@ declare module 'inews' {
 	export = inews
 
 	namespace inews {
-
 		type UnparsedCue = string[] | null
 
 		interface INewsOptions {

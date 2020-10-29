@@ -55,7 +55,6 @@ export class RundownManager {
 					)
 				}
 			})
-			// I got rid of the 'empty rundown' error because it's a normal state
 		} catch (err) {
 			this._logger?.error('Error downloading iNews rundown: ', err, err.stack)
 		}

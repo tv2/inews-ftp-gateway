@@ -12,10 +12,10 @@ type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions
 
 export interface INewsDeviceSettings {
-	hosts: Array<INewsHost>
-	user: string
-	password: string
-	queues: Array<INewsQueue>
+	hosts?: Array<INewsHost>
+	user?: string
+	password?: string
+	queues?: Array<INewsQueue>
 }
 
 export interface INewsHost {
@@ -89,7 +89,7 @@ export class InewsFTPHandler {
 		if (!this._settings.hosts) throw new Error('No hosts available')
 		if (!this._settings.queues) throw new Error('No queues set')
 		this.iNewsConnection = inews({
-			hosts: this._settings.hosts.map((host) => host.host),
+			hosts: this._settings.hosts.map((host) => host.host) ?? [],
 			user: this._settings.user,
 			password: this._settings.password,
 			timeout: 10000,
@@ -104,7 +104,7 @@ export class InewsFTPHandler {
 					this._logger.warn(`Disconnected from iNews at ${status.host}`)
 				} else {
 					this._reconnectAttempts++
-					if (this._reconnectAttempts >= this._settings!.hosts.length) {
+					if (this._reconnectAttempts >= (this._settings?.hosts ?? []).length) {
 						await this._coreHandler.setStatus(P.StatusCode.BAD, ['No servers available'])
 						this._logger.warn(`Cannot connect to any of the iNews hosts`)
 					}

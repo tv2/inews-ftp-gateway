@@ -486,7 +486,7 @@ export class CoreHandler {
 	 * Returns Sofie rundown orders state
 	 */
 	public async GetRundownCache(rundownExternalIds: string[]): Promise<Array<IngestRundown>> {
-		this.logger.info(`Making a call to core (GetRundownCache)`)
+		this.logger.debug(`Making a call to core (GetRundownCache)`)
 		const res: IngestRundown[] = []
 
 		const ps: Array<Promise<IngestRundown>> = []
@@ -498,7 +498,7 @@ export class CoreHandler {
 
 		results.forEach((result) => {
 			if (result.status === 'fulfilled') {
-				this.logger.info(`Found cached rundown ${result.value.externalId}`)
+				this.logger.debug(`Found cached rundown ${result.value.externalId}`)
 				res.push(result.value)
 			}
 		})
@@ -510,8 +510,8 @@ export class CoreHandler {
 		rundownExternalId: string,
 		segmentExternalIds: string[]
 	): Promise<Map<string, RundownSegment>> {
-		this.logger.info(`Making a call to core (GetSegmentsCacheById)`)
-		this.logger.info(`Looking for external IDs ${JSON.stringify(segmentExternalIds)}`)
+		this.logger.debug(`Making a call to core (GetSegmentsCacheById)`)
+		this.logger.debug(`Looking for external IDs ${JSON.stringify(segmentExternalIds)}`)
 
 		const cachedSegments: IngestSegment[] = []
 		const ps: Array<Promise<IngestSegment>> = []
@@ -523,7 +523,7 @@ export class CoreHandler {
 
 		results.forEach((result) => {
 			if (result.status === 'fulfilled') {
-				this.logger.info(`Found cached segment ${result.value.externalId}`)
+				this.logger.debug(`Found cached segment ${result.value.externalId}`)
 				cachedSegments.push(result.value)
 			}
 		})
@@ -535,7 +535,7 @@ export class CoreHandler {
 			if (parsed) {
 				rundownSegments.set(segment.externalId, parsed)
 			} else {
-				this.logger.info(`Failed to parse segment: ${segment.externalId} (${JSON.stringify(segment)})`)
+				this.logger.debug(`Failed to parse segment: ${segment.externalId} (${JSON.stringify(segment)})`)
 			}
 		})
 

@@ -384,7 +384,7 @@ export class RundownWatcher extends EventEmitter {
 		newRank: number
 	) {
 		if (!iNewsData) {
-			this.logger.info(
+			this.logger.error(
 				`Orphaned segment: ${segmentId}. Gateway expected segment to exist but it has been removed from iNews.`
 			)
 			return
@@ -402,7 +402,7 @@ export class RundownWatcher extends EventEmitter {
 
 		if (cachedData === undefined) {
 			// Not previously existing, it has been created
-			this.logger.info(`Creating segment: ${segmentId}`)
+			this.logger.debug(`Creating segment: ${segmentId}`)
 			this.emit('segment_create', rundownId, segmentId, downloadedSegment)
 		} else {
 			// Previously existed, diff for changes

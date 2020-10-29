@@ -5,6 +5,9 @@ declare module 'inews' {
 	export = inews
 
 	namespace inews {
+
+		type UnparsedCue = string[] | null
+
 		interface INewsOptions {
 			hosts: string | string[]
 			user: string
@@ -18,14 +21,26 @@ declare module 'inews' {
 		 */
 		interface INewsFields {
 			title: string
-			modifyDate: string
+			modifyDate: string // number
 			pageNumber?: string
+			tapeTime: string // number
+			audioTime: string // number
+			totalTime: string // number
+			cumeTime: string // number
+			backTime: string // number
 		}
 
 		interface INewsMetaData {
-			rate: string
-			words: string
+			wire?: 'f' | 'b' | 'u' | 'r' | 'o'
+			mail?: 'read' | 'unread'
+			locked?: 'pass' | 'user'
+			words?: string // number
+			rate?: string // number
+			break?: string
+			mcserror?: string
+			hold?: string
 			float?: 'float' | undefined
+			delete?: string
 		}
 
 		interface INewsStory {
@@ -34,7 +49,7 @@ declare module 'inews' {
 			locator: string
 			fields: INewsFields
 			meta: INewsMetaData
-			cues: Array<Array<string | null>>
+			cues: Array<UnparsedCue | null>
 			body?: string
 		}
 

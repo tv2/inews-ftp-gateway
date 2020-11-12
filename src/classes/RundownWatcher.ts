@@ -265,6 +265,7 @@ export class RundownWatcher extends EventEmitter {
 
 		// Store ranks
 		const ranksMap = this.updatePreviousRanks(rundownId, segments)
+		rundown.segments = segments
 		this.rundowns.set(rundownId, rundown)
 
 		await this.processAndEmitRundownChanges(rundown, changes)

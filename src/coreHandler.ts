@@ -418,7 +418,7 @@ export class CoreHandler {
 
 			if (rundown) {
 				const segmentIndex = rundown.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
-				if (segmentIndex === -1) return Promise.reject(`iNews gateway can't find segment ${segmentId}`)
+				if (segmentIndex === -1) return Promise.reject(`iNews gateway: segment does not exist ${segmentId}`)
 
 				const prevSegment = rundown.segments[segmentIndex]
 				const rawSegments = await this.iNewsHandler.iNewsWatcher.rundownManager.fetchINewsStoriesById(rundownId, [

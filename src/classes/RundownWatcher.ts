@@ -100,12 +100,9 @@ export class RundownWatcher extends EventEmitter {
 		((event: 'segment_create', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean) &
 		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean)
 
-	// Fast = list diffs, Slow = fetch All
 	public pollInterval: number = 2000
+	private pollTimer: NodeJS.Timeout | undefined
 
-	private pollTimer: NodeJS.Timer | undefined
-
-	private currentlyChecking: boolean = false
 	public rundownManager: RundownManager
 	private _logger: Winston.LoggerInstance
 	private previousRanks: SegmentRankings = new Map()
@@ -150,73 +147,50 @@ export class RundownWatcher extends EventEmitter {
 		this.logger.info('Clear all watchers')
 		this.stopWatcher()
 		this.logger.info('Start watchers')
-		let passoverTimings = 0
-		// First run
-		this.currentlyChecking = true
+
+		// Subsequent runs
+		this.startPollTimer()
+	}
+
+	private watch() {
+		this.stopPollTimer()
+		this.logger.info('Check rundowns for updates')
+
 		this.checkINewsRundowns()
 			.then(
 				async () => {
-					this.currentlyChecking = false
+					if (this.iNewsConnection.queueLength() > 0) {
+						this.logger.error(
+							`INews library queue length was ${this.iNewsConnection.queueLength()} when it should be 0.`
+						)
+					}
+
 					if (this.handler.isConnected) {
 						await this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
 					}
 				},
-				(err) => {
-					this._logger.error('Error in iNews Rundown list', err)
-					this.currentlyChecking = false
+				async (error) => {
+					this.logger.error('Something went wrong during check', error, error.stack)
+					await this.coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['Check INews rundows failed'])
 				}
 			)
 			.catch(this._logger.error)
-
-		// Subsequent runs
-		this.pollTimer = setInterval(() => {
-			if (this.currentlyChecking) {
-				if (passoverTimings++ > 10) {
-					this._logger.warn(`Check iNews rundown has been skipped ${passoverTimings} times.`)
-					if (this.handler.isConnected) {
-						this.coreHandler
-							.setStatus(P.StatusCode.WARNING_MINOR, [
-								`Check iNews not run for ${passoverTimings * this.pollInterval}ms`,
-							])
-							.catch(this.logger.error)
-					}
-				}
-				return
-			} else {
-				passoverTimings = 0
-			}
-			this.logger.info('Check rundowns for updates')
-			this.currentlyChecking = true
-
-			this.checkINewsRundowns()
-				.then(
-					async () => {
-						// this.rundownManager.EmptyInewsFtpBuffer()
-						if (this.iNewsConnection.queueLength() > 0) {
-							this.logger.error(
-								`INews library queue length was ${this.iNewsConnection.queueLength()} when it should be 0.`
-							)
-						}
-						// console.log('slow check done')
-						this.currentlyChecking = false
-						if (this.handler.isConnected) {
-							await this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
-						}
-					},
-					(error) => {
-						this.logger.error('Something went wrong during check', error, error.stack)
-						this.currentlyChecking = false
-						return this.coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['Check INews rundows failed'])
-					}
-				)
-				.catch(this._logger.error)
-		}, this.pollInterval)
+			.finally(() => this.startPollTimer())
 	}
 
 	/**
 	 * Stop the watcher
 	 */
 	stopWatcher() {
+		this.stopPollTimer()
+	}
+
+	private startPollTimer() {
+		this.stopPollTimer()
+		this.pollTimer = setTimeout(() => this.watch(), this.pollInterval)
+	}
+
+	private stopPollTimer() {
 		if (this.pollTimer) {
 			clearInterval(this.pollTimer)
 			this.pollTimer = undefined

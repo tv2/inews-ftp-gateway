@@ -242,6 +242,10 @@ export class RundownWatcher extends EventEmitter {
 		rundown.segments = segments
 		this.rundowns.set(rundownId, rundown)
 
+		for (const [key, val] of ranksMap.entries()) {
+			this.logger.info(`ASSIGNED RANK ${val.rank} to ${key}`)
+		}
+
 		await this.processAndEmitRundownChanges(rundown, changes)
 		await this.processAndEmitSegmentUpdates(rundownId, changes, ranksMap)
 	}

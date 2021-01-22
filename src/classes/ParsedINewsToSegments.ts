@@ -35,6 +35,8 @@ export interface SegmentRankingsInner {
 const BASE_RANK = 1000
 const PAD_RANK = 1000
 
+type UpdatesAndRanks = { segments: ReducedSegment[]; changes: RundownChange[]; recalculatedAsIntegers: boolean }
+
 export class ParsedINewsIntoSegments {
 	static GetUpdatesAndRanks(
 		rundownId: string,
@@ -43,7 +45,7 @@ export class ParsedINewsIntoSegments {
 		previousRankings: SegmentRankings,
 		cachedRundown?: ReducedRundown,
 		_logger?: Winston.LoggerInstance
-	): { segments: ReducedSegment[]; changes: RundownChange[] } {
+	): UpdatesAndRanks {
 		const segments: ReducedSegment[] = []
 		const changes: RundownChange[] = []
 
@@ -69,26 +71,7 @@ export class ParsedINewsIntoSegments {
 
 		// Initial startup of gateway
 		if (!rundownPreviousRanks || rundownPreviousRanks.size === 0) {
-			inewsRaw.forEach((rawSegment, position) => {
-				segments.push(
-					literal<ReducedSegment>({
-						externalId: rawSegment.externalId,
-						name: rawSegment.name,
-						modified: rawSegment.modified,
-						locator: rawSegment.locator,
-						rank: BASE_RANK + PAD_RANK * position,
-					})
-				)
-				changes.push(
-					literal<RundownChangeSegmentCreate>({
-						type: RundownChangeType.SEGMENT_CREATE,
-						rundownExternalId: rundownId,
-						segmentExternalId: rawSegment.externalId,
-						skipCache: true,
-					})
-				)
-			})
-			return { segments, changes }
+			return ParsedINewsIntoSegments.RecalcualteRanksAsIntegerValues(rundownId, inewsRaw, changes)
 		}
 
 		const newOrderSegmentIds = inewsRaw.map((raw) => raw.externalId)
@@ -198,7 +181,36 @@ export class ParsedINewsIntoSegments {
 			}
 		})
 
-		return { segments: segments.sort((a, b) => (a.rank < b.rank ? -1 : 1)), changes }
+		return { segments: segments.sort((a, b) => (a.rank < b.rank ? -1 : 1)), changes, recalculatedAsIntegers: true }
+	}
+
+	static RecalcualteRanksAsIntegerValues(
+		rundownId: string,
+		inewsRaw: ReducedSegment[],
+		changes: RundownChange[]
+	): UpdatesAndRanks {
+		const segments: ReducedSegment[] = []
+
+		inewsRaw.forEach((rawSegment, position) => {
+			segments.push(
+				literal<ReducedSegment>({
+					externalId: rawSegment.externalId,
+					name: rawSegment.name,
+					modified: rawSegment.modified,
+					locator: rawSegment.locator,
+					rank: BASE_RANK + PAD_RANK * position,
+				})
+			)
+			changes.push(
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: rawSegment.externalId,
+					skipCache: true,
+				})
+			)
+		})
+		return { segments, changes, recalculatedAsIntegers: true }
 	}
 
 	static getNextAvailableRank(

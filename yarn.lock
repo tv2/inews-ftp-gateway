@@ -5530,9 +5530,9 @@ tunnel-agent@^0.6.0:
   dependencies:
     safe-buffer "^5.0.1"
 
-"tv-automation-server-core-integration@git+https://github.com/olzzon/tv-automation-server-core-integration.git#v20201014_1":
+"tv-automation-server-core-integration@git+https://github.com/olzzon/tv-automation-server-core-integration.git#v20210122_1":
   version "1.5.1"
-  resolved "git+https://github.com/olzzon/tv-automation-server-core-integration.git#015ac1d4c13e92eda2a43883abe16a4d78a077b3"
+  resolved "git+https://github.com/olzzon/tv-automation-server-core-integration.git#92b155a1e829acd788ba04f924a5b7a2476a32c0"
   dependencies:
     data-store "3.1.0"
     ddp "git+http://github.com/nytamin/node-ddp-client.git#v0.12.2-next2"

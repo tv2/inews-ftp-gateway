@@ -222,5 +222,8 @@ export class InewsFTPHandler {
 					.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSegment)])
 					.catch(this._logger.error)
 			})
+			.on('segment_ranks_update', (rundownExteralId, segmentIds, newRanks) => {
+				this._coreHandler.core.callMethod(P.methods.dataSegmentRanksUpdate, [rundownExteralId, segmentIds, newRanks])
+			})
 	}
 }

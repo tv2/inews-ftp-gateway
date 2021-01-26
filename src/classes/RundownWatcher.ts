@@ -10,6 +10,7 @@ import { INewsClient } from 'inews'
 import { CoreHandler } from '../coreHandler'
 import { PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
 import { ParsedINewsIntoSegments, SegmentRankings, SegmentRankingsInner } from './ParsedINewsToSegments'
+import { literal } from '../helpers'
 
 dotenv.config()
 
@@ -20,6 +21,7 @@ export enum RundownChangeType {
 	SEGMENT_UPDATE,
 	SEGMENT_DELETE,
 	SEGMENT_CREATE,
+	SEGMENT_RANK_UPDATE,
 }
 
 export interface RundownChangeBase {
@@ -57,6 +59,11 @@ export interface RundownChangeSegmentCreate extends RundownChangeSegment {
 	skipCache?: true
 }
 
+export interface RundownChangeSegmentRankUpdate extends RundownChangeSegment {
+	type: RundownChangeType.SEGMENT_RANK_UPDATE
+	rank: number
+}
+
 export type RundownChange =
 	| RundownChangeRundownCreate
 	| RundownChangeRundownDelete
@@ -64,6 +71,7 @@ export type RundownChange =
 	| RundownChangeSegmentCreate
 	| RundownChangeSegmentDelete
 	| RundownChangeSegmentUpdate
+	| RundownChangeSegmentRankUpdate
 
 export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gatewayVersion'> & {
 	segments: ReducedSegment[]
@@ -72,6 +80,10 @@ export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' |
 export type UnrankedSegment = Omit<ISegment, 'rank' | 'float'>
 
 export type RundownMap = Map<string, ReducedRundown>
+
+const RECALCULATE_RANKS_CHANGE_THRESHOLD = 50
+const MAX_TIME_BEFORE_RECALCULATE_RANKS = 60 * 60 * 1000 // One hour
+const MINIMUM_ALLOWED_RANK = Math.pow(1 / 2, 30)
 
 export class RundownWatcher extends EventEmitter {
 	on!: ((event: 'info', listener: (message: string) => void) => this) &
@@ -88,6 +100,10 @@ export class RundownWatcher extends EventEmitter {
 		((
 			event: 'segment_update',
 			listener: (rundownId: string, segmentId: string, newSegment: RundownSegment) => void
+		) => this) &
+		((
+			event: 'segment_ranks_update',
+			listener: (rundownId: string, segmentIds: string[], newRanks: number[]) => void
 		) => this)
 
 	emit!: ((event: 'info', message: string) => boolean) &
@@ -98,7 +114,8 @@ export class RundownWatcher extends EventEmitter {
 		((event: 'rundown_update', rundownId: string, rundown: ReducedRundown) => boolean) &
 		((event: 'segment_delete', rundownId: string, segmentId: string) => boolean) &
 		((event: 'segment_create', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean) &
-		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean)
+		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean) &
+		((event: 'segment_ranks_update', rundownId: string, segmentIds: string[], newRanks: number[]) => boolean)
 
 	public pollInterval: number = 2000
 	private pollTimer: NodeJS.Timeout | undefined
@@ -106,6 +123,7 @@ export class RundownWatcher extends EventEmitter {
 	public rundownManager: RundownManager
 	private _logger: Winston.LoggerInstance
 	private previousRanks: SegmentRankings = new Map()
+	private lastForcedRankRecalculation: number
 
 	/**
 	 * A Rundown watcher which will poll iNews FTP server for changes and emit events
@@ -128,6 +146,7 @@ export class RundownWatcher extends EventEmitter {
 	) {
 		super()
 		this._logger = this.logger
+		this.lastForcedRankRecalculation = Date.now()
 
 		for (let rundown of rundowns.entries()) {
 			this.updatePreviousRanks(rundown[0], rundown[1].segments)
@@ -166,7 +185,7 @@ export class RundownWatcher extends EventEmitter {
 					}
 
 					if (this.handler.isConnected) {
-						await this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
+						await this.coreHandler.setStatus(P.StatusCode.GOOD, [])
 					}
 				},
 				async (error) => {
@@ -227,8 +246,13 @@ export class RundownWatcher extends EventEmitter {
 		return rundown
 	}
 
+	static numberOfDecimals(val: number) {
+		if (Math.floor(val) === val) return 0
+		return val.toString().split('.')[1].length || 0
+	}
+
 	private async processUpdatedRundown(rundownId: string, rundown: ReducedRundown) {
-		const { segments, changes } = ParsedINewsIntoSegments.GetUpdatesAndRanks(
+		let { segments, changes, recalculatedAsIntegers } = ParsedINewsIntoSegments.GetUpdatesAndRanks(
 			rundownId,
 			rundown,
 			rundown.segments,
@@ -237,14 +261,63 @@ export class RundownWatcher extends EventEmitter {
 			this._logger
 		)
 
+		// Check if we should recalculate ranks to integer values from scratch.
+		let prevRank: number | undefined = undefined
+		let minRank = Number.POSITIVE_INFINITY
+		if (!recalculatedAsIntegers) {
+			for (const segment of segments) {
+				if (prevRank !== undefined) {
+					const diffRank = segment.rank - prevRank
+					minRank = Math.min(minRank, diffRank)
+				}
+				prevRank = segment.rank
+			}
+		}
+
+		if (
+			!recalculatedAsIntegers &&
+			(minRank < MINIMUM_ALLOWED_RANK ||
+				changes.length >= RECALCULATE_RANKS_CHANGE_THRESHOLD ||
+				Date.now() - this.lastForcedRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
+				segments.some((segment) => RundownWatcher.numberOfDecimals(segment.rank) > 3))
+		) {
+			segments = ParsedINewsIntoSegments.RecalcualteRanksAsIntegerValues(rundownId, rundown.segments, []).segments
+
+			const previousRanks = this.previousRanks.get(rundownId)
+
+			if (previousRanks) {
+				for (let segment of segments) {
+					const previousRank = previousRanks.get(segment.externalId)
+
+					if (!previousRank) {
+						continue
+					}
+
+					const alreadyUpdating = changes.some(
+						(change) =>
+							change.type === RundownChangeType.SEGMENT_UPDATE && change.segmentExternalId === segment.externalId
+					)
+
+					if (!alreadyUpdating && previousRank.rank !== segment.rank) {
+						changes.push(
+							literal<RundownChangeSegmentRankUpdate>({
+								type: RundownChangeType.SEGMENT_RANK_UPDATE,
+								rundownExternalId: rundownId,
+								segmentExternalId: segment.externalId,
+								rank: segment.rank,
+							})
+						)
+					}
+				}
+			}
+
+			this.lastForcedRankRecalculation = Date.now()
+		}
+
 		// Store ranks
 		const ranksMap = this.updatePreviousRanks(rundownId, segments)
 		rundown.segments = segments
 		this.rundowns.set(rundownId, rundown)
-
-		for (const [key, val] of ranksMap.entries()) {
-			this.logger.info(`ASSIGNED RANK ${val.rank} to ${key}`)
-		}
 
 		await this.processAndEmitRundownChanges(rundown, changes)
 		await this.processAndEmitSegmentUpdates(rundownId, changes, ranksMap)
@@ -312,6 +385,20 @@ export class RundownWatcher extends EventEmitter {
 			}
 			return s.segmentExternalId
 		})
+
+		const updatedRanks: RundownChangeSegmentRankUpdate[] = changes.filter(
+			(change) => change.type === RundownChangeType.SEGMENT_RANK_UPDATE
+		) as RundownChangeSegmentRankUpdate[]
+
+		if (updatedRanks.length) {
+			const segmentsWithUpdatedRanks: string[] = []
+			const newRanks: number[] = []
+			for (const updatedRank of updatedRanks) {
+				segmentsWithUpdatedRanks.push(updatedRank.segmentExternalId)
+				newRanks.push(updatedRank.rank)
+			}
+			this.emit('segment_ranks_update', rundownId, segmentsWithUpdatedRanks, newRanks)
+		}
 
 		// Make no assumption about whether the update / create assessment is correct.
 		// At this point we can only be sure that we need to check for a difference.

@@ -83,6 +83,8 @@ export type RundownMap = Map<string, ReducedRundown>
 
 const RECALCULATE_RANKS_CHANGE_THRESHOLD = 50
 const MAX_TIME_BEFORE_RECALCULATE_RANKS = 60 * 60 * 1000 // One hour
+const MINIMUM_ALLOWED_RANK = Math.pow(1 / 2, 30)
+
 export class RundownWatcher extends EventEmitter {
 	on!: ((event: 'info', listener: (message: string) => void) => this) &
 		((event: 'error', listener: (error: any, stack?: any) => void) => this) &
@@ -260,9 +262,22 @@ export class RundownWatcher extends EventEmitter {
 		)
 
 		// Check if we should recalculate ranks to integer values from scratch.
+		let prevRank: number | undefined = undefined
+		let minRank = Number.POSITIVE_INFINITY
+		if (!recalculatedAsIntegers) {
+			for (const segment of segments) {
+				if (prevRank !== undefined) {
+					const diffRank = segment.rank - prevRank
+					minRank = Math.min(minRank, diffRank)
+				}
+				prevRank = segment.rank
+			}
+		}
+
 		if (
 			!recalculatedAsIntegers &&
-			(changes.length >= RECALCULATE_RANKS_CHANGE_THRESHOLD ||
+			(minRank < MINIMUM_ALLOWED_RANK ||
+				changes.length >= RECALCULATE_RANKS_CHANGE_THRESHOLD ||
 				Date.now() - this.lastForcedRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
 				segments.some((segment) => RundownWatcher.numberOfDecimals(segment.rank) > 3))
 		) {

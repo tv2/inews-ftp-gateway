@@ -184,7 +184,7 @@ export class RundownWatcher extends EventEmitter {
 					}
 
 					if (this.handler.isConnected) {
-						await this.coreHandler.setStatus(P.StatusCode.GOOD, [`Watching iNews Queues`])
+						await this.coreHandler.setStatus(P.StatusCode.GOOD, [])
 					}
 				},
 				async (error) => {

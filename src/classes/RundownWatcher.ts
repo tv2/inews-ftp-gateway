@@ -10,7 +10,6 @@ import { INewsClient } from 'inews'
 import { CoreHandler } from '../coreHandler'
 import { PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
 import { ParsedINewsIntoSegments, SegmentRankings, SegmentRankingsInner } from './ParsedINewsToSegments'
-import { values } from 'underscore'
 import { literal } from '../helpers'
 
 dotenv.config()
@@ -245,9 +244,9 @@ export class RundownWatcher extends EventEmitter {
 		return rundown
 	}
 
-	private numberOfDecimals(val: number) {
+	static numberOfDecimals(val: number) {
 		if (Math.floor(val) === val) return 0
-		return values.toString().split('.')[1].length || 0
+		return val.toString().split('.')[1].length || 0
 	}
 
 	private async processUpdatedRundown(rundownId: string, rundown: ReducedRundown) {
@@ -265,7 +264,7 @@ export class RundownWatcher extends EventEmitter {
 			!recalculatedAsIntegers &&
 			(changes.length >= RECALCULATE_RANKS_CHANGE_THRESHOLD ||
 				Date.now() - this.lastForcedRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
-				segments.some((segment) => this.numberOfDecimals(segment.rank) > 3))
+				segments.some((segment) => RundownWatcher.numberOfDecimals(segment.rank) > 3))
 		) {
 			segments = ParsedINewsIntoSegments.RecalcualteRanksAsIntegerValues(rundownId, rundown.segments, []).segments
 

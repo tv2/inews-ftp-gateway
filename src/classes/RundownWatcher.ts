@@ -82,7 +82,7 @@ export type UnrankedSegment = Omit<ISegment, 'rank' | 'float'>
 export type RundownMap = Map<string, ReducedRundown>
 
 const RECALCULATE_RANKS_CHANGE_THRESHOLD = 50
-const MAX_TIME_BEFORE_RECALCULATE_RANKS = 60 * 1000
+const MAX_TIME_BEFORE_RECALCULATE_RANKS = 60 * 60 * 1000 // One hour
 export class RundownWatcher extends EventEmitter {
 	on!: ((event: 'info', listener: (message: string) => void) => this) &
 		((event: 'error', listener: (error: any, stack?: any) => void) => this) &

@@ -1,4 +1,4 @@
-import { DeviceConfigManifest, ConfigManifestEntryType } from 'tv-automation-server-core-integration'
+import { DeviceConfigManifest, ConfigManifestEntryType } from '@sofie-automation/server-core-integration'
 
 export const INEWS_DEVICE_CONFIG_MANIFEST: DeviceConfigManifest = {
 	deviceConfig: [

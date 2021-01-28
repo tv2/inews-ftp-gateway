@@ -1,6 +1,6 @@
 import * as _ from 'underscore'
 import * as Winston from 'winston'
-import { CollectionObj, PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
+import { CollectionObj, PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
 import { mutateRundown, mutateSegment } from './mutate'
@@ -222,8 +222,8 @@ export class InewsFTPHandler {
 					.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSegment)])
 					.catch(this._logger.error)
 			})
-			.on('segment_ranks_update', (rundownExteralId, segmentIds, newRanks) => {
-				this._coreHandler.core.callMethod(P.methods.dataSegmentRanksUpdate, [rundownExteralId, segmentIds, newRanks])
+			.on('segment_ranks_update', (rundownExteralId, newRanks) => {
+				this._coreHandler.core.callMethod(P.methods.dataSegmentRanksUpdate, [rundownExteralId, newRanks])
 			})
 	}
 }

@@ -3,7 +3,7 @@ import { CoreHandler, CoreConfig } from './coreHandler'
 import * as Winston from 'winston'
 import * as _ from 'underscore'
 import { Process } from './process'
-import { Observer } from 'tv-automation-server-core-integration'
+import { Observer } from '@sofie-automation/server-core-integration'
 
 export interface Config {
 	process: ProcessConfig

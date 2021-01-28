@@ -8,7 +8,7 @@ import * as Winston from 'winston'
 import { INewsQueue, InewsFTPHandler } from '../inewsHandler'
 import { INewsClient } from 'inews'
 import { CoreHandler } from '../coreHandler'
-import { PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
+import { PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
 import { ParsedINewsIntoSegments, SegmentRankings, SegmentRankingsInner } from './ParsedINewsToSegments'
 import { literal } from '../helpers'
 
@@ -103,7 +103,7 @@ export class RundownWatcher extends EventEmitter {
 		) => this) &
 		((
 			event: 'segment_ranks_update',
-			listener: (rundownId: string, segmentIds: string[], newRanks: number[]) => void
+			listener: (rundownId: string, newRanks: { [segmentExternalId: string]: number }) => void
 		) => this)
 
 	emit!: ((event: 'info', message: string) => boolean) &
@@ -115,7 +115,7 @@ export class RundownWatcher extends EventEmitter {
 		((event: 'segment_delete', rundownId: string, segmentId: string) => boolean) &
 		((event: 'segment_create', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean) &
 		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean) &
-		((event: 'segment_ranks_update', rundownId: string, segmentIds: string[], newRanks: number[]) => boolean)
+		((event: 'segment_ranks_update', rundownId: string, newRanks: { [segmentExternalId: string]: number }) => boolean)
 
 	public pollInterval: number = 2000
 	private pollTimer: NodeJS.Timeout | undefined
@@ -391,13 +391,11 @@ export class RundownWatcher extends EventEmitter {
 		) as RundownChangeSegmentRankUpdate[]
 
 		if (updatedRanks.length) {
-			const segmentsWithUpdatedRanks: string[] = []
-			const newRanks: number[] = []
+			const newRanks: { [segmentExternalId: string]: number } = {}
 			for (const updatedRank of updatedRanks) {
-				segmentsWithUpdatedRanks.push(updatedRank.segmentExternalId)
-				newRanks.push(updatedRank.rank)
+				newRanks[updatedRank.segmentExternalId] = updatedRank.rank
 			}
-			this.emit('segment_ranks_update', rundownId, segmentsWithUpdatedRanks, newRanks)
+			this.emit('segment_ranks_update', rundownId, newRanks)
 		}
 
 		// Make no assumption about whether the update / create assessment is correct.

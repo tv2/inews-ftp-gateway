@@ -424,6 +424,8 @@ export class RundownWatcher extends EventEmitter {
 
 			const newSegmentRankAssignement = segmentRanks.get(segmentId)?.rank || cache?.rank
 
+			this._logger.debug(`Rundown ${rundownId} Segment ${segmentId} Rank ${newSegmentRankAssignement}`)
+
 			// If no rank is assigned, update is not safe
 			if (newSegmentRankAssignement !== undefined) {
 				this.diffSegment(rundownId, segmentId, inews, cache, newSegmentRankAssignement)

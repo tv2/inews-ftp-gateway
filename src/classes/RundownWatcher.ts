@@ -228,6 +228,9 @@ export class RundownWatcher extends EventEmitter {
 		}
 
 		rundown.segments = []
+
+		this.emit('rundown_create', rundownExternalId, rundown)
+
 		this.rundowns.set(rundownExternalId, rundown)
 		this.previousRanks.delete(rundownExternalId)
 	}

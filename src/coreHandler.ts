@@ -493,6 +493,7 @@ export class CoreHandler {
 
 		const ps: Array<Promise<IngestRundown>> = []
 		for (let id of rundownExternalIds) {
+			this.logger.debug(`Getting cach for rundown ${id}`)
 			ps.push(this.core.callMethod(P.methods.dataRundownGet, [id]))
 		}
 

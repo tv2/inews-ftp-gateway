@@ -17,6 +17,7 @@ export interface INewsDeviceSettings {
 	user?: string
 	password?: string
 	queues?: Array<INewsQueue>
+	debug?: boolean
 }
 
 export interface INewsHost {

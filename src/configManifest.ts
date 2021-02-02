@@ -44,5 +44,10 @@ export const INEWS_DEVICE_CONFIG_MANIFEST: DeviceConfigManifest = {
 			name: 'Password',
 			type: ConfigManifestEntryType.STRING,
 		},
+		{
+			id: 'debug',
+			name: 'Debug Logging',
+			type: ConfigManifestEntryType.BOOLEAN,
+		},
 	],
 }

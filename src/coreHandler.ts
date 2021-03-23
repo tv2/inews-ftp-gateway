@@ -195,7 +195,6 @@ export class CoreHandler {
 				_id: this.core.deviceId,
 			}),
 			this.core.autoSubscribe('peripheralDeviceCommands', this.core.deviceId),
-			this.core.autoSubscribe('peripheralDevices', this.core.deviceId),
 			this.core.autoSubscribe('ingestDataCache', {}),
 		])
 		this._subscriptions = this._subscriptions.concat(subs)

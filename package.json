@@ -40,7 +40,7 @@
     "release": "yarn reset && yarn test && yarn changelog",
     "reset": "git clean -dfx && git reset --hard && yarn",
     "ci": "yarn test",
-    "validate:dependencies": "yarn audit",
+    "validate:dependencies": "yarn audit --groups dependencies",
     "license-validate": "node-license-validator -p -d --allow-licenses MIT MIT/X11 BSD BSD-3-Clause BSD-2-Clause ISC Apache Apache-2.0 Unlicense --allow-packages cycle",
     "start": "node dist/index.js",
     "debug": "node --inspect dist/index.js",
@@ -76,7 +76,7 @@
     "underscore": "^1.9.1",
     "winston": "^2.4.2",
     "xml2js": "^0.4.19",
-    "yargs": "^16.0.3"
+    "yargs": "^16.2.0"
   },
   "resolutions": {
     "minimist": "^1.2.3"

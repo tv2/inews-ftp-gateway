@@ -44,7 +44,7 @@
     "license-validate": "node-license-validator -p -d --allow-licenses MIT MIT/X11 BSD BSD-3-Clause BSD-2-Clause ISC Apache Apache-2.0 Unlicense --allow-packages cycle",
     "start": "node dist/index.js",
     "debug": "node --inspect dist/index.js",
-    "unlinkall": "yarn unlink tv-automation-server-core-integration && yarn --check-files"
+    "unlinkall": "yarn unlink @sofie-automation/server-core-integration && yarn --check-files"
   },
   "scripts-info": {
     "info": "Display information about the scripts",
@@ -70,10 +70,9 @@
     "dotenv": "^8.0.0",
     "inews": "https://github.com/SuperFlyTV/node-inews.git#20200917_2",
     "jobs-queue": "git+https://github.com/sparkpunkd/node-jobs-queue.git#master",
-    "timeline-state-resolver-types": "git+https://github.com/olzzon/tv-automation-state-timeline-resolver#dist_types20201216_1",
     "tslib": "^2.0.0",
-    "tv-automation-server-core-integration": "git+https://github.com/olzzon/tv-automation-server-core-integration.git#v20210122_1",
-    "tv-automation-sofie-blueprints-integration": "git+https://github.com/olzzon/tv-automation-sofie-blueprints-integration.git#dist20201216_1",
+    "@sofie-automation/server-core-integration": "https://github.com/olzzon/tv-automation-server-core.git#dist_server_core_integration20210127_1",
+    "@sofie-automation/blueprints-integration": "https://github.com/olzzon/tv-automation-server-core.git#dist_blueprints_integration20210127_4",
     "underscore": "^1.9.1",
     "winston": "^2.4.2",
     "xml2js": "^0.4.19",

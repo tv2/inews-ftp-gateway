@@ -1,6 +1,6 @@
 import * as _ from 'underscore'
 import * as Winston from 'winston'
-import { CollectionObj, PeripheralDeviceAPI as P } from 'tv-automation-server-core-integration'
+import { CollectionObj, PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
 import { mutateRundown, mutateSegment } from './mutate'
@@ -17,6 +17,7 @@ export interface INewsDeviceSettings {
 	user?: string
 	password?: string
 	queues?: Array<INewsQueue>
+	debug?: boolean
 }
 
 export interface INewsHost {
@@ -126,10 +127,8 @@ export class InewsFTPHandler {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
 				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
-				const ingestCache = await this.ingestDataToRundowns(
-					VERSION,
-					this._settings.queues.map((q) => q.queues)
-				)
+				const queues = (this._settings.queues ?? []).filter((q) => !!q && !!q.queues).map((q) => q.queues)
+				const ingestCache = await this.ingestDataToRundowns(VERSION, queues)
 				this.iNewsWatcher = new RundownWatcher(
 					this._logger,
 					this.iNewsConnection,
@@ -142,8 +141,8 @@ export class InewsFTPHandler {
 
 				this.updateChanges(this.iNewsWatcher)
 
-				this._settings.queues.forEach((q) => {
-					this._logger.info(`Starting watch of `, q.queues)
+				queues.forEach((q) => {
+					this._logger.info(`Starting watch of `, q)
 				})
 			}
 		}
@@ -153,9 +152,13 @@ export class InewsFTPHandler {
 	 *  Get the current rundown state from Core and convert it to rundowns.
 	 */
 	async ingestDataToRundowns(gatewayVersion: string, rundownExternalIds: string[]): Promise<RundownMap> {
-		let coreRundowns = await this._coreHandler.GetRundownCache(rundownExternalIds)
-
 		let rundownsCache: RundownMap = new Map()
+
+		if (!rundownExternalIds.length) {
+			return rundownsCache
+		}
+
+		let coreRundowns = await this._coreHandler.GetRundownCache(rundownExternalIds)
 
 		coreRundowns.forEach((ingestRundown) => {
 			let rundown: ReducedRundown = {
@@ -222,8 +225,8 @@ export class InewsFTPHandler {
 					.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSegment)])
 					.catch(this._logger.error)
 			})
-			.on('segment_ranks_update', (rundownExteralId, segmentIds, newRanks) => {
-				this._coreHandler.core.callMethod(P.methods.dataSegmentRanksUpdate, [rundownExteralId, segmentIds, newRanks])
+			.on('segment_ranks_update', (rundownExteralId, newRanks) => {
+				this._coreHandler.core.callMethod(P.methods.dataSegmentRanksUpdate, [rundownExteralId, newRanks])
 			})
 	}
 }

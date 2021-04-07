@@ -4,7 +4,7 @@ import {
 	PeripheralDeviceAPI as P,
 	DDPConnectorOptions,
 	Observer,
-} from 'tv-automation-server-core-integration'
+} from '@sofie-automation/server-core-integration'
 import * as Winston from 'winston'
 import * as fs from 'fs'
 import { Process } from './process'
@@ -15,7 +15,7 @@ import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
 import { mutateSegment, IngestSegmentToRundownSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
-import { IngestSegment, IngestRundown } from 'tv-automation-sofie-blueprints-integration'
+import { IngestSegment, IngestRundown } from '@sofie-automation/blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
 import { ReflectPromise } from './helpers'
 import { ReducedRundown } from './classes/RundownWatcher'
@@ -462,7 +462,7 @@ export class CoreHandler {
 			versions['_process'] = process.env.npm_package_version
 		}
 
-		let dirNames = ['tv-automation-server-core-integration']
+		let dirNames = ['@sofie-automation/server-core-integration']
 		try {
 			let nodeModulesDirectories = fs.readdirSync('node_modules')
 			_.each(nodeModulesDirectories, (dir) => {
@@ -492,6 +492,7 @@ export class CoreHandler {
 
 		const ps: Array<Promise<IngestRundown>> = []
 		for (let id of rundownExternalIds) {
+			this.logger.debug(`Getting cach for rundown ${id}`)
 			ps.push(this.core.callMethod(P.methods.dataRundownGet, [id]))
 		}
 

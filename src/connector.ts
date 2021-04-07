@@ -3,7 +3,8 @@ import { CoreHandler, CoreConfig } from './coreHandler'
 import * as Winston from 'winston'
 import * as _ from 'underscore'
 import { Process } from './process'
-import { Observer } from 'tv-automation-server-core-integration'
+import { Observer } from '@sofie-automation/server-core-integration'
+import { SetLogLevel } from './logger'
 
 export interface Config {
 	process: ProcessConfig
@@ -28,10 +29,12 @@ export class Connector {
 	private _logger: Winston.LoggerInstance
 	private _process: Process
 	private _settings?: INewsDeviceSettings
+	private _debug: boolean
 
-	constructor(logger: Winston.LoggerInstance, config: Config) {
+	constructor(logger: Winston.LoggerInstance, config: Config, debug: boolean) {
 		this._logger = logger
 		this._config = config
+		this._debug = debug
 		this._process = new Process(this._logger)
 		this.coreHandler = new CoreHandler(this._logger, this._config.device)
 		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this.coreHandler)
@@ -98,7 +101,7 @@ export class Connector {
 			if (dev) {
 				let settings: INewsDeviceSettings = dev.settings || {}
 				settings.queues = settings.queues?.filter((q) => q.queues !== '')
-				if (!this._settings || !_.isEqual(settings, this._settings)) {
+				if (!this._settings || !_.isEqual(_.omit(settings, 'debug'), _.omit(this._settings, 'debug'))) {
 					this.iNewsFTPHandler
 						.dispose()
 						.then(() => {
@@ -110,6 +113,12 @@ export class Connector {
 							throw new Error('Failed to update iNewsFTP settings')
 						})
 				}
+
+				if (settings.debug !== undefined && settings.debug !== this._debug) {
+					this._debug = settings.debug
+					SetLogLevel(this._debug ? 'debug' : 'info')
+				}
+
 				this._settings = settings
 			}
 		}

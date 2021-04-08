@@ -185,30 +185,34 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-03',
 			},
 		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeRundownCreate>({
-				type: RundownChangeType.RUNDOWN_CREATE,
-				rundownExternalId: rundownId,
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-01',
-				skipCache: true,
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-02',
-				skipCache: true,
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-03',
-				skipCache: true,
-			}),
-		])
+		expect(result.changes).toEqual({
+			rundown: {
+				change: literal<RundownChangeRundownCreate>({
+					type: RundownChangeType.RUNDOWN_CREATE,
+					rundownExternalId: rundownId,
+				}),
+			},
+			segments: [
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-01',
+					skipCache: true,
+				}),
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-02',
+					skipCache: true,
+				}),
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-03',
+					skipCache: true,
+				}),
+			],
+		})
 	})
 
 	it('Preserves existing ranks', () => {
@@ -244,7 +248,7 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-03',
 			},
 		])
-		expect(result.changes).toEqual([])
+		expect(result.changes).toEqual({ rundown: {}, segments: [] })
 	})
 
 	it('Creates a new rank for a new segment', () => {
@@ -284,13 +288,16 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-03',
 			},
 		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-04',
-			}),
-		])
+		expect(result.changes).toEqual({
+			rundown: {},
+			segments: [
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-04',
+				}),
+			],
+		})
 	})
 
 	it('Preserves existing ranks and creates new', () => {
@@ -355,33 +362,36 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-07',
 			},
 		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-08',
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-04',
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-05',
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-06',
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-07',
-			}),
-		])
+		expect(result.changes).toEqual({
+			rundown: {},
+			segments: [
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-08',
+				}),
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-04',
+				}),
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-05',
+				}),
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-06',
+				}),
+				literal<RundownChangeSegmentCreate>({
+					type: RundownChangeType.SEGMENT_CREATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-07',
+				}),
+			],
+		})
 	})
 
 	it('Creates a new rank for a moved segment', () => {
@@ -421,13 +431,16 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-02',
 			},
 		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeSegmentUpdate>({
-				type: RundownChangeType.SEGMENT_UPDATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-02',
-			}),
-		])
+		expect(result.changes).toEqual({
+			rundown: {},
+			segments: [
+				literal<RundownChangeSegmentUpdate>({
+					type: RundownChangeType.SEGMENT_UPDATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-02',
+				}),
+			],
+		})
 	})
 
 	it('Handles more than one segment changing rank', () => {
@@ -473,18 +486,21 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-03',
 			},
 		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeSegmentUpdate>({
-				type: RundownChangeType.SEGMENT_UPDATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-02',
-			}),
-			literal<RundownChangeSegmentUpdate>({
-				type: RundownChangeType.SEGMENT_UPDATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-03',
-			}),
-		])
+		expect(result.changes).toEqual({
+			rundown: {},
+			segments: [
+				literal<RundownChangeSegmentUpdate>({
+					type: RundownChangeType.SEGMENT_UPDATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-02',
+				}),
+				literal<RundownChangeSegmentUpdate>({
+					type: RundownChangeType.SEGMENT_UPDATE,
+					rundownExternalId: rundownId,
+					segmentExternalId: 'segment-03',
+				}),
+			],
+		})
 	})
 
 	it('Handles more than one segment changing rank (with unaffected segments surrounding)', () => {

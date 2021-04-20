@@ -6,13 +6,13 @@ import { ParseDateFromInews } from './helpers'
 
 export const INGEST_RUNDOWN_TYPE = 'inews'
 
-export function mutateRundown(rundown: ReducedRundown): IngestRundown {
+export function mutateRundown(rundown: ReducedRundown, segments: RundownSegment[]): IngestRundown {
 	return {
 		externalId: rundown.externalId,
 		name: rundown.name,
 		type: INGEST_RUNDOWN_TYPE,
 		payload: omit(rundown, 'segments'),
-		segments: [],
+		segments: segments.map(mutateSegment),
 	}
 }
 export function mutateSegment(segment: RundownSegment): IngestSegment {

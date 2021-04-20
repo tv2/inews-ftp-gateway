@@ -514,6 +514,10 @@ export class CoreHandler {
 		rundownExternalId: string,
 		segmentExternalIds: string[]
 	): Promise<Map<string, RundownSegment>> {
+		if (!segmentExternalIds.length) {
+			return new Map()
+		}
+
 		this.logger.debug(`Making a call to core (GetSegmentsCacheById)`)
 		this.logger.debug(`Looking for external IDs ${JSON.stringify(segmentExternalIds)}`)
 

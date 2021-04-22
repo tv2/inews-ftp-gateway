@@ -3,7 +3,7 @@ import * as Winston from 'winston'
 import { CollectionObj, PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
-import { mutateRundown, mutateSegment } from './mutate'
+import { mutateSegment } from './mutate'
 import * as inews from 'inews'
 import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
@@ -201,14 +201,10 @@ export class InewsFTPHandler {
 				this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
 			})
 			.on('rundown_create', (_rundownExternalId, rundown) => {
-				this._coreHandler.core
-					.callMethod(P.methods.dataRundownCreate, [mutateRundown(rundown)])
-					.catch(this._logger.error)
+				this._coreHandler.core.callMethod(P.methods.dataRundownCreate, [rundown]).catch(this._logger.error)
 			})
 			.on('rundown_update', (_rundownExternalId, rundown) => {
-				this._coreHandler.core
-					.callMethod(P.methods.dataRundownUpdate, [mutateRundown(rundown)])
-					.catch(this._logger.error)
+				this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [rundown]).catch(this._logger.error)
 			})
 			.on('segment_delete', (rundownExternalId, segmentId) => {
 				this._coreHandler.core

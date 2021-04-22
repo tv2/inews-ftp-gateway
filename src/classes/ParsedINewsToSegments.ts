@@ -2,7 +2,6 @@ import _ = require('underscore')
 import { literal } from '../helpers'
 import {
 	ReducedSegment,
-	RundownChange,
 	RundownChangeSegmentCreate,
 	RundownChangeType,
 	RundownChangeSegmentUpdate,
@@ -10,6 +9,7 @@ import {
 	ReducedRundown,
 	RundownChangeRundownCreate,
 	RundownChangeRundownUpdate,
+	RundownChangeMap,
 } from './RundownWatcher'
 import * as Winston from 'winston'
 
@@ -35,7 +35,7 @@ export interface SegmentRankingsInner {
 const BASE_RANK = 1000
 const PAD_RANK = 1000
 
-type UpdatesAndRanks = { segments: ReducedSegment[]; changes: RundownChange[]; recalculatedAsIntegers: boolean }
+type UpdatesAndRanks = { segments: ReducedSegment[]; changes: RundownChangeMap; recalculatedAsIntegers: boolean }
 
 export class ParsedINewsIntoSegments {
 	static GetUpdatesAndRanks(
@@ -47,31 +47,30 @@ export class ParsedINewsIntoSegments {
 		_logger?: Winston.LoggerInstance
 	): UpdatesAndRanks {
 		const segments: ReducedSegment[] = []
-		const changes: RundownChange[] = []
+		const changes: RundownChangeMap = {
+			rundown: {},
+			segments: [],
+		}
 
 		const rundownPreviousRanks = previousRankings.get(rundownId)
 
 		if (!cachedRundown) {
-			changes.push(
-				literal<RundownChangeRundownCreate>({
-					type: RundownChangeType.RUNDOWN_CREATE,
-					rundownExternalId: rundownId,
-				})
-			)
+			changes.rundown.change = literal<RundownChangeRundownCreate>({
+				type: RundownChangeType.RUNDOWN_CREATE,
+				rundownExternalId: rundownId,
+			})
 		} else {
 			if (!_.isEqual(_.omit(cachedRundown, 'segments'), _.omit(rundown, 'segments'))) {
-				changes.push(
-					literal<RundownChangeRundownUpdate>({
-						type: RundownChangeType.RUNDOWN_UPDATE,
-						rundownExternalId: rundownId,
-					})
-				)
+				changes.rundown.change = literal<RundownChangeRundownUpdate>({
+					type: RundownChangeType.RUNDOWN_UPDATE,
+					rundownExternalId: rundownId,
+				})
 			}
 		}
 
 		// Initial startup of gateway
 		if (!rundownPreviousRanks || rundownPreviousRanks.size === 0) {
-			return ParsedINewsIntoSegments.RecalcualteRanksAsIntegerValues(rundownId, inewsRaw, changes)
+			return ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundownId, inewsRaw, changes)
 		}
 
 		const newOrderSegmentIds = inewsRaw.map((raw) => raw.externalId)
@@ -86,7 +85,7 @@ export class ParsedINewsIntoSegments {
 
 		deletedSegments.forEach((segmentId) => {
 			if (!changedSegments.has(segmentId)) {
-				changes.push(
+				changes.segments.push(
 					literal<RundownChangeSegmentDelete>({
 						type: RundownChangeType.SEGMENT_DELETE,
 						rundownExternalId: rundownId,
@@ -99,7 +98,7 @@ export class ParsedINewsIntoSegments {
 
 		movedSegments.forEach((segmentId) => {
 			if (!changedSegments.has(segmentId)) {
-				changes.push(
+				changes.segments.push(
 					literal<RundownChangeSegmentUpdate>({
 						type: RundownChangeType.SEGMENT_UPDATE,
 						rundownExternalId: rundownId,
@@ -112,7 +111,7 @@ export class ParsedINewsIntoSegments {
 
 		insertedSegments.forEach((segmentId) => {
 			if (!changedSegments.has(segmentId)) {
-				changes.push(
+				changes.segments.push(
 					literal<RundownChangeSegmentCreate>({
 						type: RundownChangeType.SEGMENT_CREATE,
 						rundownExternalId: rundownId,
@@ -129,7 +128,7 @@ export class ParsedINewsIntoSegments {
 
 			if (cachedSegment && newSegment) {
 				if (cachedSegment.locator !== newSegment.locator) {
-					changes.push(
+					changes.segments.push(
 						literal<RundownChangeSegmentUpdate>({
 							type: RundownChangeType.SEGMENT_UPDATE,
 							rundownExternalId: rundownId,
@@ -184,10 +183,10 @@ export class ParsedINewsIntoSegments {
 		return { segments: segments.sort((a, b) => (a.rank < b.rank ? -1 : 1)), changes, recalculatedAsIntegers: true }
 	}
 
-	static RecalcualteRanksAsIntegerValues(
+	static RecalculateRanksAsIntegerValues(
 		rundownId: string,
 		inewsRaw: ReducedSegment[],
-		changes: RundownChange[]
+		changes: RundownChangeMap
 	): UpdatesAndRanks {
 		const segments: ReducedSegment[] = []
 
@@ -201,7 +200,7 @@ export class ParsedINewsIntoSegments {
 					rank: BASE_RANK + PAD_RANK * position,
 				})
 			)
-			changes.push(
+			changes.segments.push(
 				literal<RundownChangeSegmentCreate>({
 					type: RundownChangeType.SEGMENT_CREATE,
 					rundownExternalId: rundownId,

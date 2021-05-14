@@ -15,11 +15,12 @@ import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
 import { mutateSegment, IngestSegmentToRundownSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
-import { IngestSegment, IngestRundown } from '@sofie-automation/blueprints-integration'
+import { IngestSegment, IngestRundown, IngestPlaylist } from '@sofie-automation/blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
 import { ReflectPromise } from './helpers'
 import { ReducedRundown } from './classes/RundownWatcher'
 import { VersionIsCompatible } from './version'
+import { RundownId, SegmentId } from './helpers/id'
 
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -377,10 +378,10 @@ export class CoreHandler {
 	/** Get snapshot of the gateway. */
 	getSnapshot(): any {
 		this.logger.info('getSnapshot')
-		if (this.iNewsHandler?.iNewsWatcher?.rundowns) {
+		if (this.iNewsHandler?.iNewsWatcher?.playlists) {
 			const ret: any = {}
-			Object.keys(this.iNewsHandler.iNewsWatcher.rundowns).forEach((key) => {
-				const rundown = this.iNewsHandler?.iNewsWatcher?.rundowns.get(key)
+			Object.keys(this.iNewsHandler.iNewsWatcher.playlists).forEach((key) => {
+				const rundown = this.iNewsHandler?.iNewsWatcher?.playlists.get(key)
 				if (rundown) {
 					ret[key] = rundown
 				}
@@ -413,7 +414,7 @@ export class CoreHandler {
 	async triggerReloadSegment(rundownId: string, segmentId: string): Promise<IngestSegment | null> {
 		this.logger.info(`Reloading segment ${segmentId} from rundown ${rundownId}`)
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			const rundown = this.iNewsHandler.iNewsWatcher.rundowns.get(rundownId)
+			const rundown = this.iNewsHandler.iNewsWatcher.playlists.get(rundownId)
 
 			if (rundown) {
 				const segmentIndex = rundown.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
@@ -440,7 +441,7 @@ export class CoreHandler {
 				)
 
 				rundown.segments[segmentIndex] = segment
-				this.iNewsHandler.iNewsWatcher.rundowns.set(rundownId, rundown)
+				this.iNewsHandler.iNewsWatcher.playlists.set(rundownId, rundown)
 
 				return mutateSegment(segment)
 			} else {
@@ -483,6 +484,28 @@ export class CoreHandler {
 		return versions
 	}
 
+	public async GetPlaylistCache(playlistExternalIds: string[]): Promise<Array<IngestPlaylist>> {
+		this.logger.debug(`Making a call to core (GetPlaylistCache)`)
+		const res: IngestPlaylist[] = []
+
+		const ps: Array<Promise<IngestPlaylist>> = []
+		for (let id of playlistExternalIds) {
+			this.logger.debug(`Getting cache for playlist ${id}`)
+			ps.push(this.core.callMethod(P.methods.dataPlaylistGet, [id]))
+		}
+
+		const results = await Promise.all(ps.map(ReflectPromise))
+
+		results.forEach((result) => {
+			if (result.status === 'fulfilled') {
+				this.logger.debug(`Found cached playlist ${result.value.externalId}`)
+				res.push(result.value)
+			}
+		})
+
+		return res
+	}
+
 	/**
 	 * Returns Sofie rundown orders state
 	 */
@@ -492,7 +515,7 @@ export class CoreHandler {
 
 		const ps: Array<Promise<IngestRundown>> = []
 		for (let id of rundownExternalIds) {
-			this.logger.debug(`Getting cach for rundown ${id}`)
+			this.logger.debug(`Getting cache for rundown ${id}`)
 			ps.push(this.core.callMethod(P.methods.dataRundownGet, [id]))
 		}
 
@@ -511,9 +534,9 @@ export class CoreHandler {
 	}
 
 	public async GetSegmentsCacheById(
-		rundownExternalId: string,
-		segmentExternalIds: string[]
-	): Promise<Map<string, RundownSegment>> {
+		rundownExternalId: RundownId,
+		segmentExternalIds: SegmentId[]
+	): Promise<Map<SegmentId, RundownSegment>> {
 		if (!segmentExternalIds.length) {
 			return new Map()
 		}
@@ -536,7 +559,7 @@ export class CoreHandler {
 			}
 		})
 
-		const rundownSegments: Map<string, RundownSegment> = new Map()
+		const rundownSegments: Map<SegmentId, RundownSegment> = new Map()
 		cachedSegments.forEach((segment) => {
 			const parsed = IngestSegmentToRundownSegment(segment)
 

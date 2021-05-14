@@ -26,7 +26,7 @@ declare module 'inews' {
 			audioTime: string // number
 			totalTime: string // number
 			cumeTime: string // number
-			backTime: string // number
+			backTime?: string // @number (seconds since midnight)
 		}
 
 		interface INewsMetaData {

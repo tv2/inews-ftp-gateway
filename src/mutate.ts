@@ -1,10 +1,19 @@
 import * as _ from 'underscore'
-import { IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
+import { IngestPlaylist, IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
 import { RundownSegment, ISegment } from './classes/datastructures/Segment'
-import { ReducedRundown } from './classes/RundownWatcher'
+import { ReducedPlaylist, ReducedRundown } from './classes/RundownWatcher'
 import { ParseDateFromInews } from './helpers'
 
 export const INGEST_RUNDOWN_TYPE = 'inews'
+
+export function mutatePlaylist(playlist: ReducedPlaylist, rundowns: IngestRundown[]): IngestPlaylist {
+	return {
+		externalId: playlist.externalId,
+		name: playlist.name,
+		loop: playlist.loop,
+		rundowns,
+	}
+}
 
 export function mutateRundown(rundown: ReducedRundown, segments: RundownSegment[]): IngestRundown {
 	return {

@@ -5,6 +5,7 @@ import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
 import { literal, ParseDateFromInews, ReflectPromise } from '../helpers'
 import { VERSION } from '../version'
+import { SegmentId } from '../helpers/id'
 
 function isFile(f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -64,9 +65,9 @@ export class RundownManager {
 
 	public async fetchINewsStoriesById(
 		queueName: string,
-		segmentExternalIds: string[]
-	): Promise<Map<string, UnrankedSegment>> {
-		const stories = new Map<string, UnrankedSegment>()
+		segmentExternalIds: SegmentId[]
+	): Promise<Map<SegmentId, UnrankedSegment>> {
+		const stories = new Map<SegmentId, UnrankedSegment>()
 		const dirList = await this._listStories(queueName)
 		const ps: Array<Promise<INewsStoryGW | undefined>> = []
 

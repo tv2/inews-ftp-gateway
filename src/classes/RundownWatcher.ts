@@ -11,8 +11,19 @@ import { CoreHandler } from '../coreHandler'
 import { PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
 import { ParsedINewsIntoSegments, SegmentRankings, SegmentRankingsInner } from './ParsedINewsToSegments'
 import { literal } from '../helpers'
-import { IngestRundown } from '@sofie-automation/blueprints-integration'
-import { mutateRundown } from '../mutate'
+import { IngestPlaylist, IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
+import { INGEST_RUNDOWN_TYPE, MutatedSegment } from '../mutate'
+import { ResolvedPlaylist, ResolveRundownIntoPlaylist } from '../helpers/ResolveRundownIntoPlaylist'
+import {
+	DiffPlaylist,
+	PlaylistChangeRundownCreated,
+	PlaylistChangeRundownDeleted,
+	PlaylistChangeSegmentCreated,
+	PlaylistChangeSegmentDeleted,
+	PlaylistChangeSegmentMoved,
+	PlaylistChangeType,
+} from '../helpers/DiffPlaylist'
+import { PlaylistId, RundownId, SegmentId } from '../helpers/id'
 
 dotenv.config()
 
@@ -111,33 +122,42 @@ export function IsRundownChangeSegmentRankUpdate(change: RundownChange): change 
 	return change.type === RundownChangeType.SEGMENT_RANK_UPDATE
 }
 
+export type ReducedPlaylist = Omit<IngestPlaylist, 'rundowns'> & { rundowns: ReducedRundown[] }
 export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gatewayVersion'> & {
 	segments: ReducedSegment[]
 }
 export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name' | 'locator'>
 export type UnrankedSegment = Omit<ISegment, 'rank' | 'float'>
 
-export type RundownMap = Map<string, ReducedRundown>
+export type PlaylistMap = Map<PlaylistId, ReducedPlaylist>
+export type RundownMap = Map<RundownId, ReducedRundown>
 
 const RECALCULATE_RANKS_CHANGE_THRESHOLD = 50
 const MAX_TIME_BEFORE_RECALCULATE_RANKS = 60 * 60 * 1000 // One hour
 const MINIMUM_ALLOWED_RANK = Math.pow(1 / 2, 30)
 
+export function IsReducedSegment(segment: any): segment is ReducedSegment {
+	return Object.keys(segment).includes('locator') && !Object.keys(segment).includes('iNewsStory')
+}
+
 export class RundownWatcher extends EventEmitter {
 	on!: ((event: 'info', listener: (message: string) => void) => this) &
 		((event: 'error', listener: (error: any, stack?: any) => void) => this) &
 		((event: 'warning', listener: (message: string) => void) => this) &
+		((event: 'playlist_delete', listener: (playlistId: string) => void) => this) &
+		((event: 'playlist_create', listener: (playlistId: string, playlist: IngestPlaylist) => void) => this) &
+		((event: 'playlist_update', listener: (playlistId: string, playlist: IngestPlaylist) => void) => this) &
 		((event: 'rundown_delete', listener: (rundownId: string) => void) => this) &
 		((event: 'rundown_create', listener: (rundownId: string, rundown: IngestRundown) => void) => this) &
 		((event: 'rundown_update', listener: (rundownId: string, rundown: IngestRundown) => void) => this) &
 		((event: 'segment_delete', listener: (rundownId: string, segmentId: string) => void) => this) &
 		((
 			event: 'segment_create',
-			listener: (rundownId: string, segmentId: string, newSegment: RundownSegment) => void
+			listener: (rundownId: string, segmentId: string, newSegment: IngestSegment) => void
 		) => this) &
 		((
 			event: 'segment_update',
-			listener: (rundownId: string, segmentId: string, newSegment: RundownSegment) => void
+			listener: (rundownId: string, segmentId: string, newSegment: IngestSegment) => void
 		) => this) &
 		((
 			event: 'segment_ranks_update',
@@ -147,12 +167,15 @@ export class RundownWatcher extends EventEmitter {
 	emit!: ((event: 'info', message: string) => boolean) &
 		((event: 'error', message: string) => boolean) &
 		((event: 'warning', message: string) => boolean) &
+		((event: 'playlist_delete', playlistId: string) => boolean) &
+		((event: 'playlist_create', playlistId: string, playlist: IngestPlaylist) => boolean) &
+		((event: 'playlist_update', playlistId: string, playlist: IngestPlaylist) => boolean) &
 		((event: 'rundown_delete', rundownId: string) => boolean) &
 		((event: 'rundown_create', rundownId: string, rundown: IngestRundown) => boolean) &
 		((event: 'rundown_update', rundownId: string, rundown: IngestRundown) => boolean) &
 		((event: 'segment_delete', rundownId: string, segmentId: string) => boolean) &
-		((event: 'segment_create', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean) &
-		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: RundownSegment) => boolean) &
+		((event: 'segment_create', rundownId: string, segmentId: string, newSegment: IngestSegment) => boolean) &
+		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: IngestSegment) => boolean) &
 		((event: 'segment_ranks_update', rundownId: string, newRanks: { [segmentExternalId: string]: number }) => boolean)
 
 	public pollInterval: number = 2000
@@ -162,6 +185,11 @@ export class RundownWatcher extends EventEmitter {
 	private _logger: Winston.LoggerInstance
 	private previousRanks: SegmentRankings = new Map()
 	private lastForcedRankRecalculation: number
+
+	private cachedINewsData: Map<SegmentId, UnrankedSegment> = new Map()
+	private cachedPlaylistAssignments: Map<PlaylistId, ResolvedPlaylist> = new Map()
+
+	public playlists: RundownMap = new Map()
 
 	/**
 	 * A Rundown watcher which will poll iNews FTP server for changes and emit events
@@ -177,18 +205,12 @@ export class RundownWatcher extends EventEmitter {
 		private coreHandler: CoreHandler,
 		private iNewsQueue: Array<INewsQueue>,
 		private gatewayVersion: string,
-		/** Map of rundown Ids to iNews Rundowns, may be undefined if rundown has not been previously downloaded. */
-		public rundowns: RundownMap,
 		private handler: InewsFTPHandler,
 		delayStart?: boolean
 	) {
 		super()
 		this._logger = this.logger
 		this.lastForcedRankRecalculation = Date.now()
-
-		for (let rundown of rundowns.entries()) {
-			this.updatePreviousRanks(rundown[0], rundown[1].segments)
-		}
 
 		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
 
@@ -259,14 +281,19 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	public ResyncRundown(rundownExternalId: string) {
-		const rundown = this.rundowns.get(rundownExternalId)
+		const playlist = this.playlists.get(rundownExternalId)
 
-		if (!rundown) {
+		if (!playlist) {
 			return
 		}
 
-		this.rundowns.delete(rundownExternalId)
+		this.playlists.delete(rundownExternalId)
 		this.previousRanks.delete(rundownExternalId)
+		this.cachedPlaylistAssignments.delete(rundownExternalId)
+
+		playlist.segments.forEach((segment) => {
+			this.cachedINewsData.delete(segment.externalId)
+		})
 	}
 
 	async checkINewsRundowns(): Promise<void> {
@@ -288,252 +315,411 @@ export class RundownWatcher extends EventEmitter {
 		return val.toString().split('.')[1].length || 0
 	}
 
-	private async processUpdatedRundown(rundownId: string, rundown: ReducedRundown) {
-		let { segments, changes, recalculatedAsIntegers } = ParsedINewsIntoSegments.GetUpdatesAndRanks(
-			rundownId,
-			rundown,
-			rundown.segments,
-			this.previousRanks,
-			this.rundowns.get(rundownId),
-			this._logger
-		)
-
-		// Check if we should recalculate ranks to integer values from scratch.
-		let prevRank: number | undefined = undefined
-		let minRank = Number.POSITIVE_INFINITY
-		if (!recalculatedAsIntegers) {
-			for (const segment of segments) {
-				if (prevRank !== undefined) {
-					const diffRank = segment.rank - prevRank
-					minRank = Math.min(minRank, diffRank)
-				}
-				prevRank = segment.rank
+	private async processUpdatedRundown(playlistId: string, playlist: ReducedRundown) {
+		const uncachedINewsData: Set<SegmentId> = new Set()
+		playlist.segments.forEach((s) => {
+			if (!this.cachedINewsData.has(s.externalId)) {
+				uncachedINewsData.add(s.externalId)
 			}
-		}
-
-		if (
-			!recalculatedAsIntegers &&
-			(minRank < MINIMUM_ALLOWED_RANK ||
-				changes.segments.length >= RECALCULATE_RANKS_CHANGE_THRESHOLD ||
-				Date.now() - this.lastForcedRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
-				segments.some((segment) => RundownWatcher.numberOfDecimals(segment.rank) > 3))
-		) {
-			segments = ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundownId, rundown.segments, {
-				rundown: {},
-				segments: [],
-			}).segments
-
-			const previousRanks = this.previousRanks.get(rundownId)
-
-			if (previousRanks) {
-				for (let segment of segments) {
-					const previousRank = previousRanks.get(segment.externalId)
-
-					if (!previousRank) {
-						continue
-					}
-
-					const alreadyUpdating = changes.segments.some(
-						(change) =>
-							change.type === RundownChangeType.SEGMENT_UPDATE && change.segmentExternalId === segment.externalId
-					)
-
-					if (!alreadyUpdating && previousRank.rank !== segment.rank) {
-						changes.segments.push(
-							literal<RundownChangeSegmentRankUpdate>({
-								type: RundownChangeType.SEGMENT_RANK_UPDATE,
-								rundownExternalId: rundownId,
-								segmentExternalId: segment.externalId,
-								rank: segment.rank,
-							})
-						)
-					}
-				}
-			}
-
-			this.lastForcedRankRecalculation = Date.now()
-		}
-
-		// Store ranks
-		const ranksMap = this.updatePreviousRanks(rundownId, segments)
-		rundown.segments = segments
-		this.rundowns.set(rundownId, rundown)
-
-		const rundownCreated = changes.rundown.change && IsRundownChangeRundownCreate(changes.rundown.change)
-
-		const segmentChangesCreated = changes.segments.filter(IsRundownChangeSegmentCreate)
-		const segmentChangesUpdated = changes.segments.filter(IsRundownChangeSegmentUpdate)
-		const segmentChangesDeleted = changes.segments.filter(IsRundownChangeSegmentDelete)
-		const segmentChangesCreatedUpdated = [...segmentChangesCreated, ...segmentChangesUpdated]
-		const segmentsToGetCachedData = rundownCreated ? [] : segmentChangesCreated.filter((s) => !s.skipCache)
-
-		const iNewsDataPs: Promise<Map<string, UnrankedSegment>> = this.rundownManager.fetchINewsStoriesById(
-			rundownId,
-			segmentChangesCreatedUpdated.map((c) => c.segmentExternalId)
-		)
-
-		const ingestCacheDataPs: Promise<Map<string, RundownSegment>> = this.coreHandler.GetSegmentsCacheById(
-			rundownId,
-			segmentsToGetCachedData.map((s) => s.segmentExternalId)
-		)
-
-		const [iNewsData, ingestCacheData] = await Promise.all([iNewsDataPs, ingestCacheDataPs])
-
-		const rundownSegments = await this.reducedSegmentsToRundownSegments(
-			rundownId,
-			segmentChangesCreatedUpdated.map((s) => s.segmentExternalId),
-			ranksMap,
-			iNewsData,
-			ingestCacheData
-		)
-
-		if (changes.rundown.change) {
-			await this.processAndEmitRundownChanges(rundown, changes.rundown.change, rundownSegments)
-		}
-
-		if (!rundownCreated) {
-			await this.processAndEmitSegmentsDeleted(segmentChangesDeleted)
-			await this.processAndEmitSegmentRankChanges(rundownId, changes.segments.filter(IsRundownChangeSegmentRankUpdate))
-			await this.processAndEmitSegmentUpdates(rundownId, rundownSegments, ingestCacheData)
-		}
-	}
-
-	private updatePreviousRanks(rundownId: string, segments: ReducedSegment[]): Map<string, SegmentRankingsInner> {
-		const ranksMap: Map<string, SegmentRankingsInner> = new Map()
-		segments.forEach((segment) => {
-			ranksMap.set(segment.externalId, {
-				rank: segment.rank,
-			})
 		})
-		this.previousRanks.set(rundownId, ranksMap)
-		return ranksMap
-	}
 
-	private async processAndEmitRundownChanges(
-		rundown: ReducedRundown,
-		change: RundownChangeRundown,
-		segments: RundownSegment[]
-	) {
-		if (IsRundownChangeRundownDelete(change)) {
-			this.emitRundownDeleted(change)
-		} else if (IsRundownChangeRundownUpdate(change)) {
-			this.emitRundownUpdated(rundown, change)
-		} else if (IsRundownChangeRundownCreate(change)) {
-			this.emitRundownCreated(rundown, change, segments)
+		let cachedPlaylist = this.playlists.get(playlistId)
+		let changedSegments: Set<SegmentId> = new Set()
+
+		// Fetch any segments that may have changed
+		if (cachedPlaylist) {
+			for (const segment of cachedPlaylist.segments) {
+				if (uncachedINewsData.has(segment.externalId)) {
+					continue
+				}
+
+				const cachedSegment = cachedPlaylist.segments.find((s) => s.externalId === segment.externalId)
+
+				if (!cachedSegment) {
+					continue
+				}
+
+				if (cachedSegment.locator !== segment.locator) {
+					uncachedINewsData.add(segment.externalId)
+					changedSegments.add(segment.externalId)
+				}
+			}
 		}
-	}
 
-	private async emitRundownDeleted(change: RundownChangeRundownDelete) {
-		this.emit('rundown_delete', change.rundownExternalId)
-	}
+		const iNewsDataPs: Promise<Map<SegmentId, UnrankedSegment>> = this.rundownManager.fetchINewsStoriesById(
+			playlistId,
+			Array.from(uncachedINewsData)
+		)
 
-	private async emitRundownUpdated(rundown: ReducedRundown, change: RundownChangeRundownUpdate) {
-		this.emit('rundown_update', change.rundownExternalId, mutateRundown(rundown, []))
-	}
+		const iNewsData = await iNewsDataPs
 
-	private async emitRundownCreated(
-		rundown: ReducedRundown,
-		change: RundownChangeRundownCreate,
-		segments: RundownSegment[]
-	) {
-		this.emit('rundown_create', change.rundownExternalId, mutateRundown(rundown, segments))
-	}
+		for (let [externalId, data] of iNewsData.entries()) {
+			this.logger.debug(externalId)
+			this.cachedINewsData.set(externalId, data)
+		}
 
-	private async processAndEmitSegmentUpdates(
-		rundownId: string,
-		rundownSegments: RundownSegment[],
-		ingestCacheData: Map<string, RundownSegment>
-	) {
-		if (!rundownSegments.length) {
+		const segmentsToResolve: Array<UnrankedSegment> = []
+
+		playlist.segments.forEach((s) => {
+			const cachedData = this.cachedINewsData.get(s.externalId)
+
+			if (!cachedData) {
+				// Shouldn't be possible.
+				this.logger.error(
+					`Could not find iNews data for segment ${s.externalId} in rundown ${playlistId}. Segment will appear out of order.`
+				)
+			} else {
+				segmentsToResolve.push(cachedData)
+			}
+		})
+
+		const playlistAssignments = ResolveRundownIntoPlaylist(playlistId, segmentsToResolve)
+		const { changes, segmentChanges } = DiffPlaylist(
+			playlistAssignments,
+			this.cachedPlaylistAssignments.get(playlistId) ?? []
+		)
+
+		this.cachedPlaylistAssignments.set(playlistId, playlistAssignments)
+		let segmentRanks: Map<SegmentId, number> = new Map()
+
+		for (let rundown of playlistAssignments) {
+			const changesToSegments = segmentChanges.get(rundown.rundownId)
+
+			if (!changesToSegments) {
+				// Shouldn't be possible.
+				this.logger.error(`Could not find segment changes for rundown ${rundown.rundownId}.`)
+				continue
+			}
+
+			let { segmentRanks, recalculatedAsIntegers } = ParsedINewsIntoSegments.GetRanks(
+				rundown.rundownId,
+				rundown.segments,
+				this.previousRanks,
+				changesToSegments.movedSegments,
+				changesToSegments.notMovedSegments,
+				changesToSegments.insertedSegments,
+				changesToSegments.deletedSegments,
+				this._logger
+			)
+
+			// Check if we should recalculate ranks to integer values from scratch.
+			let prevRank: number | undefined = undefined
+			let minRank = Number.POSITIVE_INFINITY
+			if (!recalculatedAsIntegers) {
+				for (const [_, rank] of segmentRanks) {
+					if (prevRank !== undefined) {
+						const diffRank = rank - prevRank
+						minRank = Math.min(minRank, diffRank)
+					}
+					prevRank = rank
+				}
+			}
+
+			if (
+				!recalculatedAsIntegers &&
+				(minRank < MINIMUM_ALLOWED_RANK ||
+					changes.length >= RECALCULATE_RANKS_CHANGE_THRESHOLD ||
+					Date.now() - this.lastForcedRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
+					Array.from(segmentRanks.values()).some((segment) => RundownWatcher.numberOfDecimals(segment) > 3))
+			) {
+				segmentRanks = ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundown.segments).segmentRanks
+
+				const previousRanks = this.previousRanks.get(rundown.rundownId)
+
+				if (previousRanks) {
+					for (let [segmentId, rank] of segmentRanks) {
+						const previousRank = previousRanks.get(segmentId)
+
+						if (!previousRank) {
+							continue
+						}
+
+						const alreadyUpdating = changes.some(
+							(change) =>
+								change.type ===
+									(PlaylistChangeType.PlaylistChangeSegmentCreated || PlaylistChangeType.PlaylistChangeSegmentMoved) &&
+								change.segmentExternalId === segmentId
+						)
+
+						if (!alreadyUpdating && previousRank.rank !== rank) {
+							changedSegments.add(segmentId)
+							changes.push(
+								literal<PlaylistChangeSegmentMoved>({
+									type: PlaylistChangeType.PlaylistChangeSegmentMoved,
+									rundownExternalId: rundown.rundownId,
+									segmentExternalId: segmentId,
+								})
+							)
+						}
+					}
+				}
+
+				this.lastForcedRankRecalculation = Date.now()
+			}
+
+			// Store ranks
+			for (let [segmentId, rank] of segmentRanks) {
+				segmentRanks.set(segmentId, rank)
+			}
+
+			this.updatePreviousRanks(rundown.rundownId, segmentRanks)
+		}
+
+		this.playlists.set(playlistId, playlist)
+
+		if (!cachedPlaylist) {
+			const ingestPlaylist = literal<IngestPlaylist>({
+				externalId: playlistId,
+				name: playlistId,
+				rundowns: playlistAssignments.map((rundown) =>
+					this.playlistRundownToIngestRundown(rundown.rundownId, rundown.segments, this.cachedINewsData, segmentRanks)
+				),
+				loop: false,
+			})
+			this.emitPlaylistCreated(ingestPlaylist)
 			return
 		}
 
-		for (const segment of rundownSegments) {
-			const cache = ingestCacheData.get(segment.externalId)
+		const playlistDeletedRundowns: PlaylistChangeRundownDeleted[] = changes.filter(
+			(f) => f.type === PlaylistChangeType.PlaylistChangeRundownDeleted
+		) as PlaylistChangeRundownDeleted[]
+		let playlistCreatedRundowns: PlaylistChangeRundownCreated[] = changes.filter(
+			(f) => f.type === PlaylistChangeType.PlaylistChangeRundownCreated
+		) as PlaylistChangeRundownCreated[]
+		let playlistChangedSegments: Array<PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated> = changes.filter(
+			(f) =>
+				f.type === PlaylistChangeType.PlaylistChangeSegmentCreated ||
+				f.type === PlaylistChangeType.PlaylistChangeSegmentMoved
+		) as Array<PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated>
+		let playlistDeletedSegment: PlaylistChangeSegmentDeleted[] = changes.filter(
+			(f) => f.type === PlaylistChangeType.PlaylistChangeSegmentDeleted
+		) as PlaylistChangeSegmentDeleted[]
 
-			this.diffSegment(rundownId, segment, cache)
+		for (let rundown of playlistDeletedRundowns) {
+			this.emitRundownDeleted(rundown.rundownExternalId)
+
+			playlistChangedSegments = playlistChangedSegments.filter((s) => s.rundownExternalId !== rundown.rundownExternalId)
+			playlistDeletedSegment = playlistDeletedSegment.filter((s) => s.rundownExternalId !== rundown.rundownExternalId)
 		}
-	}
 
-	private async processAndEmitSegmentRankChanges(rundownId: string, updatedRanks: RundownChangeSegmentRankUpdate[]) {
-		const newRanks: { [segmentExternalId: string]: number } = {}
-		for (const updatedRank of updatedRanks) {
-			newRanks[updatedRank.segmentExternalId] = updatedRank.rank
+		for (let segment of playlistDeletedSegment) {
+			this.emitSegmentDeleted(segment.rundownExternalId, segment.segmentExternalId)
 		}
-		this.emit('segment_ranks_update', rundownId, newRanks)
-	}
 
-	private async processAndEmitSegmentsDeleted(deletedSegments: RundownChangeSegmentDelete[]) {
-		for (const segment of deletedSegments) {
-			this.emit('segment_delete', segment.rundownExternalId, segment.segmentExternalId)
-		}
-	}
+		// Second round of fetching iNews data for anything that may have changed but has not been fetched from iNews.
+		let uncachedINewsData2: Set<SegmentId> = new Set()
+		let changedSegmentsByRundownId: Map<
+			RundownId,
+			Array<PlaylistChangeSegmentCreated | PlaylistChangeSegmentMoved>
+		> = new Map()
+		for (let change of playlistChangedSegments) {
+			if (!uncachedINewsData.has(change.segmentExternalId)) {
+				uncachedINewsData2.add(change.segmentExternalId)
+			}
 
-	/**
-	 * Compares the cached version of a segment to updates from iNews. Emits updates if changes have occured
-	 * @param rundownId Rundown to send updates to
-	 * @param segmentId Segment external Id
-	 * @param iNewsData Data fetched from iNews
-	 * @param cachedData Data fetched from ingestDataCache
-	 */
-	private diffSegment(rundownId: string, segment: RundownSegment, cachedData: RundownSegment | undefined) {
-		if (cachedData === undefined) {
-			// Not previously existing, it has been created
-			this.logger.debug(`Creating segment: ${segment.externalId}`)
-			this.emit('segment_create', rundownId, segment.externalId, segment)
-		} else {
-			// Previously existed, diff for changes
+			changedSegments.add(change.segmentExternalId)
 
-			if (!_.isEqual(segment.serialize(), cachedData.serialize())) {
-				this.emit('segment_update', rundownId, segment.externalId, segment)
+			const rundown = changedSegmentsByRundownId.get(change.rundownExternalId)
+
+			if (!rundown) {
+				changedSegmentsByRundownId.set(change.rundownExternalId, [change])
+			} else {
+				rundown.push(change)
+				changedSegmentsByRundownId.set(change.rundownExternalId, rundown)
 			}
 		}
-	}
 
-	private reducedSegmentsToRundownSegments(
-		rundownId: string,
-		segmentExternalIds: string[],
-		segmentRanks: Map<string, SegmentRankingsInner>,
-		iNewsData: Map<string, UnrankedSegment>,
-		ingestCacheData: Map<string, RundownSegment>
-	): RundownSegment[] {
-		const segments: RundownSegment[] = []
+		const iNewsDataPs2: Promise<Map<SegmentId, UnrankedSegment>> = this.rundownManager.fetchINewsStoriesById(
+			playlistId,
+			Array.from(uncachedINewsData2)
+		)
 
-		for (const segmentExternalId of segmentExternalIds) {
-			const cache = ingestCacheData.get(segmentExternalId)
-			const inews = iNewsData.get(segmentExternalId)
+		const ingestDataPromises: Array<Promise<Map<SegmentId, RundownSegment>>> = []
 
-			const newSegmentRankAssignement = segmentRanks.get(segmentExternalId)?.rank || cache?.rank
+		for (let [rundownId, segmentList] of changedSegmentsByRundownId) {
+			ingestDataPromises.push(
+				this.coreHandler.GetSegmentsCacheById(
+					rundownId,
+					segmentList.map((s) => s.segmentExternalId)
+				)
+			)
+		}
 
-			this._logger.debug(`Rundown ${rundownId} Segment ${segmentExternalId} Rank ${newSegmentRankAssignement}`)
+		const iNewsData2 = await iNewsDataPs2
 
-			if (!inews) {
+		for (let [segmentId, data] of iNewsData2) {
+			this.cachedINewsData.set(segmentId, data)
+		}
+
+		const ingestCacheList = await Promise.all(ingestDataPromises)
+
+		const ingestCacheData: Map<SegmentId, RundownSegment> = new Map()
+
+		for (let cache of ingestCacheList) {
+			for (let [segmentId, data] of cache) {
+				ingestCacheData.set(segmentId, data)
+			}
+		}
+
+		for (let createdRundown of playlistCreatedRundowns) {
+			const assignedRundown = playlistAssignments.find((r) => r.rundownId === createdRundown.rundownExternalId)
+
+			if (!assignedRundown) {
 				this.logger.error(
-					`Orphaned segment: ${segmentExternalId}. Gateway expected segment to exist but it has been removed from iNews.`
+					`Tried to create rundown ${createdRundown} but could not find the segments associated with this rundown.`
 				)
 				continue
 			}
 
-			// If no rank is assigned, update is not safe
-			if (newSegmentRankAssignement !== undefined) {
-				segments.push(this.rundownSegmentFromINewsData(inews, newSegmentRankAssignement))
-			} else {
-				this.logger.error(`Segment ${segmentExternalId} has not been assigned a rank`)
+			const rundown = this.playlistRundownToIngestRundown(
+				assignedRundown.rundownId,
+				assignedRundown.segments,
+				this.cachedINewsData,
+				segmentRanks
+			)
+			this.emitRundownCreated(rundown)
+
+			playlistChangedSegments = playlistChangedSegments.filter(
+				(s) => s.rundownExternalId !== createdRundown.rundownExternalId
+			)
+		}
+
+		const updatedRanks: Map<RundownId, { [segmentId: string]: number }> = new Map()
+
+		for (let changedSegment of playlistChangedSegments) {
+			const segmentId = changedSegment.segmentExternalId
+			const rundownId = changedSegment.rundownExternalId
+			const inews = this.cachedINewsData.get(changedSegment.segmentExternalId)
+			let rank = segmentRanks.get(segmentId)
+			const cachedData = ingestCacheData.get(segmentId)
+
+			if (!inews) {
+				this.logger.error(`Could not process segment change ${segmentId}, iNews data could not be found`)
+				continue
+			}
+
+			if (rank === undefined) {
+				this.logger.error(`Could not assign rank to ${segmentId}, it will appear out of order`)
+				// Try to keep old position, otherwise send to top
+				rank = cachedData?.rank ?? 0
+			}
+
+			const segment = this.inewsToIngestSegment(rundownId, segmentId, inews, rank)
+
+			if (!cachedData) {
+				this.emitSegmentCreated(rundownId, segment)
+				continue
+			}
+
+			const rundownSegment = new RundownSegment(
+				rundownId,
+				inews.iNewsStory,
+				inews.modified,
+				inews.locator,
+				segmentId,
+				rank,
+				inews.name
+			)
+
+			// TODO: `rundownSegment` could be replaced with `segment` if cachedData is not transformed when returned from core.
+			if (!_.isEqual(_.omit(rundownSegment.serialize(), 'rank'), _.omit(cachedData.serialize(), 'rank'))) {
+				this.emitSegmentUpdated(rundownId, segment)
+			} else if (rundownSegment.rank !== cachedData.rank) {
+				const updatedRundownRanks = updatedRanks.get(rundownId) ?? {}
+				updatedRundownRanks[segmentId] = rundownSegment.rank
+				updatedRanks.set(rundownId, updatedRundownRanks)
 			}
 		}
 
-		return segments
+		for (let [rundownId, ranks] of updatedRanks) {
+			this.emitUpdatedSegmentRanks(rundownId, ranks)
+		}
 	}
 
-	private rundownSegmentFromINewsData(iNewsData: UnrankedSegment, newRank: number): RundownSegment {
-		return new RundownSegment(
-			iNewsData.rundownId,
-			iNewsData.iNewsStory,
-			iNewsData.modified,
-			iNewsData.locator,
-			iNewsData.externalId,
-			newRank,
-			iNewsData.name
-		)
+	private playlistRundownToIngestRundown(
+		rundownId: string,
+		segments: string[],
+		inewsCache: Map<SegmentId, UnrankedSegment>,
+		ranks: Map<SegmentId, number>
+	): IngestRundown {
+		let ingestSegments: IngestSegment[] = []
+
+		for (let segmentId of segments) {
+			const inews = inewsCache.get(segmentId)
+			const rank = ranks.get(segmentId)
+
+			if (inews === undefined || rank === undefined) {
+				this.logger.error(`Dropping segment ${segmentId} from rundown ${rundownId}`)
+				continue
+			}
+
+			ingestSegments.push(this.inewsToIngestSegment(rundownId, segmentId, inews, rank))
+		}
+
+		return literal<IngestRundown>({
+			externalId: rundownId,
+			name: rundownId,
+			type: INGEST_RUNDOWN_TYPE,
+			segments: ingestSegments,
+		})
+	}
+
+	private inewsToIngestSegment(
+		rundownId: RundownId,
+		segmentId: SegmentId,
+		inews: UnrankedSegment,
+		rank: number
+	): IngestSegment {
+		return literal<IngestSegment>({
+			externalId: segmentId,
+			name: inews.name,
+			rank,
+			parts: [],
+			payload: literal<MutatedSegment>({
+				modified: inews.modified,
+				locator: inews.locator,
+				rundownId,
+				iNewsStory: inews.iNewsStory,
+				float: !!inews.iNewsStory.meta.float,
+			}),
+		})
+	}
+
+	private updatePreviousRanks(rundownId: RundownId, segments: Map<SegmentId, number>) {
+		const ranksMap: Map<SegmentId, SegmentRankingsInner> = new Map()
+		for (let [segmentId, rank] of segments) {
+			ranksMap.set(segmentId, {
+				rank,
+			})
+		}
+		this.previousRanks.set(rundownId, ranksMap)
+	}
+
+	private emitPlaylistCreated(playlist: IngestPlaylist) {
+		this.emit('playlist_create', playlist.externalId, playlist)
+	}
+
+	private emitRundownDeleted(rundownExternalId: string) {
+		this.emit('rundown_delete', rundownExternalId)
+	}
+
+	private emitRundownCreated(rundown: IngestRundown) {
+		this.emit('rundown_create', rundown.externalId, rundown)
+	}
+
+	private emitSegmentCreated(rundownId: RundownId, segment: IngestSegment) {
+		this.emit('segment_create', rundownId, segment.externalId, segment)
+	}
+
+	private emitSegmentUpdated(rundownId: RundownId, segment: IngestSegment) {
+		this.emit('segment_update', rundownId, segment.externalId, segment)
+	}
+
+	private emitSegmentDeleted(rundownId: RundownId, segmentId: SegmentId) {
+		this.emit('segment_delete', rundownId, segmentId)
+	}
+
+	private emitUpdatedSegmentRanks(rundownId: RundownId, ranks: { [segmentId: string]: number }) {
+		this.emit('segment_ranks_update', rundownId, ranks)
 	}
 }

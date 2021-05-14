@@ -3,7 +3,6 @@ import * as Winston from 'winston'
 import { CollectionObj, PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
-import { mutateSegment } from './mutate'
 import * as inews from 'inews'
 import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
@@ -128,14 +127,12 @@ export class InewsFTPHandler {
 			if (peripheralDevice) {
 				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
 				const queues = (this._settings.queues ?? []).filter((q) => !!q && !!q.queues).map((q) => q.queues)
-				const ingestCache = await this.ingestDataToRundowns(VERSION, queues)
 				this.iNewsWatcher = new RundownWatcher(
 					this._logger,
 					this.iNewsConnection,
 					this._coreHandler,
 					this._settings.queues,
 					VERSION,
-					ingestCache,
 					this
 				)
 
@@ -213,12 +210,12 @@ export class InewsFTPHandler {
 			})
 			.on('segment_create', (rundownExternalId, _segmentId, newSegment) => {
 				this._coreHandler.core
-					.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, mutateSegment(newSegment)])
+					.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, newSegment])
 					.catch(this._logger.error)
 			})
 			.on('segment_update', (rundownExternalId, _segmentId, newSegment) => {
 				this._coreHandler.core
-					.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, mutateSegment(newSegment)])
+					.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, newSegment])
 					.catch(this._logger.error)
 			})
 			.on('segment_ranks_update', (rundownExteralId, newRanks) => {

@@ -354,7 +354,6 @@ export class RundownWatcher extends EventEmitter {
 		const iNewsData = await iNewsDataPs
 
 		for (let [externalId, data] of iNewsData.entries()) {
-			this.logger.debug(externalId)
 			this.cachedINewsData.set(externalId, data)
 		}
 
@@ -380,7 +379,7 @@ export class RundownWatcher extends EventEmitter {
 		)
 
 		this.cachedPlaylistAssignments.set(playlistId, playlistAssignments)
-		let segmentRanks: Map<SegmentId, number> = new Map()
+		let assignedRanks: Map<SegmentId, number> = new Map()
 
 		for (let rundown of playlistAssignments) {
 			const changesToSegments = segmentChanges.get(rundown.rundownId)
@@ -459,10 +458,10 @@ export class RundownWatcher extends EventEmitter {
 
 			// Store ranks
 			for (let [segmentId, rank] of segmentRanks) {
-				segmentRanks.set(segmentId, rank)
+				assignedRanks.set(segmentId, rank)
 			}
 
-			this.updatePreviousRanks(rundown.rundownId, segmentRanks)
+			this.updatePreviousRanks(rundown.rundownId, assignedRanks)
 		}
 
 		this.playlists.set(playlistId, playlist)
@@ -472,7 +471,13 @@ export class RundownWatcher extends EventEmitter {
 				externalId: playlistId,
 				name: playlistId,
 				rundowns: playlistAssignments.map((rundown) =>
-					this.playlistRundownToIngestRundown(rundown.rundownId, rundown.segments, this.cachedINewsData, segmentRanks)
+					this.playlistRundownToIngestRundown(
+						playlistId,
+						rundown.rundownId,
+						rundown.segments,
+						this.cachedINewsData,
+						assignedRanks
+					)
 				),
 				loop: false,
 			})
@@ -572,10 +577,11 @@ export class RundownWatcher extends EventEmitter {
 			}
 
 			const rundown = this.playlistRundownToIngestRundown(
+				playlistId,
 				assignedRundown.rundownId,
 				assignedRundown.segments,
 				this.cachedINewsData,
-				segmentRanks
+				assignedRanks
 			)
 			this.emitRundownCreated(rundown)
 
@@ -590,7 +596,7 @@ export class RundownWatcher extends EventEmitter {
 			const segmentId = changedSegment.segmentExternalId
 			const rundownId = changedSegment.rundownExternalId
 			const inews = this.cachedINewsData.get(changedSegment.segmentExternalId)
-			let rank = segmentRanks.get(segmentId)
+			let rank = assignedRanks.get(segmentId)
 			const cachedData = ingestCacheData.get(segmentId)
 
 			if (!inews) {
@@ -637,7 +643,8 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	private playlistRundownToIngestRundown(
-		rundownId: string,
+		playlistId: PlaylistId,
+		rundownId: RundownId,
 		segments: string[],
 		inewsCache: Map<SegmentId, UnrankedSegment>,
 		ranks: Map<SegmentId, number>
@@ -658,7 +665,7 @@ export class RundownWatcher extends EventEmitter {
 
 		return literal<IngestRundown>({
 			externalId: rundownId,
-			name: rundownId,
+			name: playlistId,
 			type: INGEST_RUNDOWN_TYPE,
 			segments: ingestSegments,
 		})

@@ -480,7 +480,7 @@ describe('ParsedINewsIntoSegments', () => {
 		for (let [segmentId, rank] of result.segmentRanks) {
 			segments.push({ externalId: segmentId, rank })
 		}
-		expect(result).toEqual([
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -546,7 +546,7 @@ describe('ParsedINewsIntoSegments', () => {
 		for (let [segmentId, rank] of result.segmentRanks) {
 			segments.push({ externalId: segmentId, rank })
 		}
-		expect(result).toEqual([
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -622,7 +622,7 @@ describe('ParsedINewsIntoSegments', () => {
 		for (let [segmentId, rank] of result.segmentRanks) {
 			segments.push({ externalId: segmentId, rank })
 		}
-		expect(result).toEqual([
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -698,7 +698,7 @@ describe('ParsedINewsIntoSegments', () => {
 		for (let [segmentId, rank] of result.segmentRanks) {
 			segments.push({ externalId: segmentId, rank })
 		}
-		expect(result).toEqual([
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -777,7 +777,7 @@ describe('ParsedINewsIntoSegments', () => {
 		for (let [segmentId, rank] of result.segmentRanks) {
 			segments.push({ externalId: segmentId, rank })
 		}
-		expect(result).toEqual([
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -847,7 +847,7 @@ describe('ParsedINewsIntoSegments', () => {
 		for (let [segmentId, rank] of result.segmentRanks) {
 			segments.push({ externalId: segmentId, rank })
 		}
-		expect(result).toEqual([
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -911,7 +911,7 @@ describe('ParsedINewsIntoSegments', () => {
 		for (let [segmentId, rank] of result.segmentRanks) {
 			segments.push({ externalId: segmentId, rank })
 		}
-		expect(result).toEqual([
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-01',
@@ -943,16 +943,16 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			movedSegments2,
+			notMovedSegments2,
+			insertedSegments2,
+			deletedSegments2
 		)
 		segments = []
 		for (let [segmentId, rank] of result.segmentRanks) {
 			segments.push({ externalId: segmentId, rank })
 		}
-		expect(result).toEqual([
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-01',

@@ -87,6 +87,12 @@ export function DiffPlaylist(
 					rundownExternalId: rundown.rundownId,
 				})
 			)
+			segmentChanges.set(rundown.rundownId, {
+				movedSegments: [],
+				notMovedSegments: [],
+				insertedSegments: [],
+				deletedSegments: [],
+			})
 			continue
 		}
 	}
@@ -100,6 +106,12 @@ export function DiffPlaylist(
 					rundownExternalId: rundown.rundownId,
 				})
 			)
+			segmentChanges.set(rundown.rundownId, {
+				movedSegments: [],
+				notMovedSegments: [],
+				insertedSegments: [],
+				deletedSegments: [],
+			})
 			continue
 		}
 

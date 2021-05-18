@@ -481,6 +481,16 @@ export class RundownWatcher extends EventEmitter {
 				),
 				loop: false,
 			})
+			if (!ingestPlaylist.rundowns.length) {
+				ingestPlaylist.rundowns.push(
+					literal<IngestRundown>({
+						externalId: `${playlistId}_1`,
+						name: playlistId,
+						type: INGEST_RUNDOWN_TYPE,
+						segments: [],
+					})
+				)
+			}
 			this.emitPlaylistCreated(ingestPlaylist)
 			return
 		}

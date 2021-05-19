@@ -390,6 +390,13 @@ export class RundownWatcher extends EventEmitter {
 		})
 
 		const playlistAssignments = ResolveRundownIntoPlaylist(playlistId, segmentsToResolve)
+		if (!playlistAssignments.length) {
+			playlistAssignments.push({
+				rundownId: `${playlistId}_1`,
+				segments: [],
+			})
+		}
+
 		const { changes, segmentChanges } = DiffPlaylist(
 			playlistAssignments,
 			this.cachedPlaylistAssignments.get(playlistId) ?? []
@@ -499,17 +506,6 @@ export class RundownWatcher extends EventEmitter {
 				),
 				loop: false,
 			})
-			if (!ingestPlaylist.rundowns.length) {
-				ingestPlaylist.rundowns.push(
-					literal<IngestRundown>({
-						externalId: `${playlistId}_1`,
-						name: playlistId,
-						type: INGEST_RUNDOWN_TYPE,
-						segments: [],
-					})
-				)
-			}
-			this.playlists.set(playlistId, playlist)
 			this.logger.info(`EMITTING PLAYLIST CREATE`)
 			this.emitPlaylistCreated(ingestPlaylist)
 			return

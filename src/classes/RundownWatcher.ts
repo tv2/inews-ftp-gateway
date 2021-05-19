@@ -24,6 +24,7 @@ import {
 	PlaylistChangeType,
 } from '../helpers/DiffPlaylist'
 import { PlaylistId, RundownId, SegmentId } from '../helpers/id'
+import { Mutex } from 'async-mutex'
 
 dotenv.config()
 
@@ -184,12 +185,14 @@ export class RundownWatcher extends EventEmitter {
 	public rundownManager: RundownManager
 	private _logger: Winston.LoggerInstance
 	private previousRanks: SegmentRankings = new Map()
-	private lastForcedRankRecalculation: number
+	private lastForcedRankRecalculation: Map<PlaylistId, number> = new Map()
 
 	private cachedINewsData: Map<SegmentId, UnrankedSegment> = new Map()
 	private cachedPlaylistAssignments: Map<PlaylistId, ResolvedPlaylist> = new Map()
 
 	public playlists: RundownMap = new Map()
+
+	private processingRundown: Mutex = new Mutex()
 
 	/**
 	 * A Rundown watcher which will poll iNews FTP server for changes and emit events
@@ -210,7 +213,6 @@ export class RundownWatcher extends EventEmitter {
 	) {
 		super()
 		this._logger = this.logger
-		this.lastForcedRankRecalculation = Date.now()
 
 		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
 
@@ -280,20 +282,29 @@ export class RundownWatcher extends EventEmitter {
 		this.stopWatcher()
 	}
 
-	public ResyncRundown(rundownExternalId: string) {
-		const playlist = this.playlists.get(rundownExternalId)
+	public async ResyncRundown(rundownExternalId: string) {
+		const release = await this.processingRundown.acquire()
+		const playlistExternalId = rundownExternalId.replace(/_\d+$/, '')
+		const playlist = this.playlists.get(playlistExternalId)
 
 		if (!playlist) {
 			return
 		}
 
-		this.playlists.delete(rundownExternalId)
-		this.previousRanks.delete(rundownExternalId)
-		this.cachedPlaylistAssignments.delete(rundownExternalId)
+		for (let key of this.previousRanks.keys()) {
+			if (key.includes(playlistExternalId)) {
+				this.previousRanks.delete(key)
+			}
+		}
+
+		this.playlists.delete(playlistExternalId)
+		this.cachedPlaylistAssignments.delete(playlistExternalId)
+		this.lastForcedRankRecalculation.delete(playlistExternalId)
 
 		playlist.segments.forEach((segment) => {
 			this.cachedINewsData.delete(segment.externalId)
 		})
+		release()
 	}
 
 	async checkINewsRundowns(): Promise<void> {
@@ -305,7 +316,13 @@ export class RundownWatcher extends EventEmitter {
 	async checkINewsRundownById(rundownId: string): Promise<ReducedRundown> {
 		const rundown = await this.rundownManager.downloadRundown(rundownId)
 		if (rundown.gatewayVersion === this.gatewayVersion) {
-			await this.processUpdatedRundown(rundown.externalId, rundown)
+			const release = await this.processingRundown.acquire()
+			try {
+				await this.processUpdatedRundown(rundown.externalId, rundown)
+			} catch (e) {
+				this.logger.error(e)
+			}
+			release()
 		}
 		return rundown
 	}
@@ -414,11 +431,12 @@ export class RundownWatcher extends EventEmitter {
 				}
 			}
 
+			let lastRankRecalculation = this.lastForcedRankRecalculation.get(playlistId) ?? 0
 			if (
 				!recalculatedAsIntegers &&
 				(minRank < MINIMUM_ALLOWED_RANK ||
 					changes.length >= RECALCULATE_RANKS_CHANGE_THRESHOLD ||
-					Date.now() - this.lastForcedRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
+					Date.now() - lastRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
 					Array.from(segmentRanks.values()).some((segment) => RundownWatcher.numberOfDecimals(segment) > 3))
 			) {
 				segmentRanks = ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundown.segments).segmentRanks
@@ -453,7 +471,7 @@ export class RundownWatcher extends EventEmitter {
 					}
 				}
 
-				this.lastForcedRankRecalculation = Date.now()
+				this.lastForcedRankRecalculation.set(playlistId, Date.now())
 			}
 
 			// Store ranks

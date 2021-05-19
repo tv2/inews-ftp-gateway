@@ -509,6 +509,7 @@ export class RundownWatcher extends EventEmitter {
 					})
 				)
 			}
+			this.playlists.set(playlistId, playlist)
 			this.logger.info(`EMITTING PLAYLIST CREATE`)
 			this.emitPlaylistCreated(ingestPlaylist)
 			return

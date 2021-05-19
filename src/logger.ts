@@ -2,7 +2,7 @@ import * as Winston from 'winston'
 
 const transports: { console?: typeof Winston.transports.Console; file?: typeof Winston.transports.File } = {}
 
-const DEFAULT_LEVEL = 'info'
+const DEFAULT_LEVEL = 'debug'
 
 export let logger = new Winston.Logger({})
 

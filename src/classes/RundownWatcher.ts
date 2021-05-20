@@ -531,10 +531,13 @@ export class RundownWatcher extends EventEmitter {
 				let prev = prevINewsCache.get(segmentId)
 
 				if (!now || !prev) {
+					this.logger.debug(`Could not find now ${!!now} or prev ${!!prev}`)
 					continue
 				}
 
+				this.logger.debug(`Comparing locators ${now.locator}, ${prev.locator}`)
 				if (now.locator !== prev.locator) {
+					this.logger.debug(`Locators differ`)
 					playlistChangedSegments.push(
 						literal<PlaylistChangeSegmentChanged>({
 							type: PlaylistChangeType.PlaylistChangeSegmentChanged,
@@ -673,6 +676,7 @@ export class RundownWatcher extends EventEmitter {
 
 			// TODO: `rundownSegment` could be replaced with `segment` if cachedData is not transformed when returned from core.
 			if (!_.isEqual(_.omit(rundownSegment.serialize(), 'rank'), _.omit(cachedData.serialize(), 'rank'))) {
+				this.logger.debug(`Segment updated: ${segment.externalId}`)
 				this.emitSegmentUpdated(rundownId, segment)
 			} else if (rundownSegment.rank !== cachedData.rank) {
 				const updatedRundownRanks = updatedRanks.get(rundownId) ?? {}

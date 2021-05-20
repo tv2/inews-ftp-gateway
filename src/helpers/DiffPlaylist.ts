@@ -6,6 +6,7 @@ import { ResolvedPlaylist } from './ResolveRundownIntoPlaylist'
 export enum PlaylistChangeType {
 	PlaylistChangeSegmentDeleted,
 	PlaylistChangeSegmentCreated,
+	PlaylistChangeSegmentChanged,
 	PlaylistChangeSegmentMoved,
 	PlaylistChangeRundownDeleted,
 	PlaylistChangeRundownCreated,
@@ -23,6 +24,12 @@ export interface PlaylistChangeSegmentDeleted extends PlaylistChangeBase {
 
 export interface PlaylistChangeSegmentCreated extends PlaylistChangeBase {
 	type: PlaylistChangeType.PlaylistChangeSegmentCreated
+	rundownExternalId: string
+	segmentExternalId: string
+}
+
+export interface PlaylistChangeSegmentChanged extends PlaylistChangeBase {
+	type: PlaylistChangeType.PlaylistChangeSegmentChanged
 	rundownExternalId: string
 	segmentExternalId: string
 }
@@ -46,6 +53,7 @@ export interface PlaylistChangeRundownCreated extends PlaylistChangeBase {
 export type PlaylistChange =
 	| PlaylistChangeSegmentCreated
 	| PlaylistChangeSegmentDeleted
+	| PlaylistChangeSegmentChanged
 	| PlaylistChangeSegmentMoved
 	| PlaylistChangeRundownCreated
 	| PlaylistChangeRundownDeleted

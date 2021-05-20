@@ -18,6 +18,7 @@ import {
 	DiffPlaylist,
 	PlaylistChangeRundownCreated,
 	PlaylistChangeRundownDeleted,
+	PlaylistChangeSegmentChanged,
 	PlaylistChangeSegmentCreated,
 	PlaylistChangeSegmentDeleted,
 	PlaylistChangeSegmentMoved,
@@ -25,6 +26,7 @@ import {
 } from '../helpers/DiffPlaylist'
 import { PlaylistId, RundownId, SegmentId } from '../helpers/id'
 import { Mutex } from 'async-mutex'
+import deepCloneMap from 'deep-clone-map'
 
 dotenv.config()
 
@@ -333,6 +335,7 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	private async processUpdatedRundown(playlistId: string, playlist: ReducedRundown) {
+		const prevINewsCache = deepCloneMap(this.cachedINewsData)
 		const uncachedINewsData: Set<SegmentId> = new Set()
 		playlist.segments.forEach((s) => {
 			if (!this.cachedINewsData.has(s.externalId)) {
@@ -341,15 +344,10 @@ export class RundownWatcher extends EventEmitter {
 		})
 
 		let cachedPlaylist = this.playlists.get(playlistId)
-		let changedSegments: Set<SegmentId> = new Set()
 
 		// Fetch any segments that may have changed
 		if (cachedPlaylist) {
 			for (const segment of cachedPlaylist.segments) {
-				if (uncachedINewsData.has(segment.externalId)) {
-					continue
-				}
-
 				const cachedSegment = cachedPlaylist.segments.find((s) => s.externalId === segment.externalId)
 
 				if (!cachedSegment) {
@@ -358,7 +356,6 @@ export class RundownWatcher extends EventEmitter {
 
 				if (cachedSegment.locator !== segment.locator) {
 					uncachedINewsData.add(segment.externalId)
-					changedSegments.add(segment.externalId)
 				}
 			}
 		}
@@ -466,7 +463,6 @@ export class RundownWatcher extends EventEmitter {
 						)
 
 						if (!alreadyUpdating && previousRank.rank !== rank) {
-							changedSegments.add(segmentId)
 							changes.push(
 								literal<PlaylistChangeSegmentMoved>({
 									type: PlaylistChangeType.PlaylistChangeSegmentMoved,
@@ -517,14 +513,38 @@ export class RundownWatcher extends EventEmitter {
 		let playlistCreatedRundowns: PlaylistChangeRundownCreated[] = changes.filter(
 			(f) => f.type === PlaylistChangeType.PlaylistChangeRundownCreated
 		) as PlaylistChangeRundownCreated[]
-		let playlistChangedSegments: Array<PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated> = changes.filter(
+		let playlistChangedSegments: Array<
+			PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated | PlaylistChangeSegmentChanged
+		> = changes.filter(
 			(f) =>
 				f.type === PlaylistChangeType.PlaylistChangeSegmentCreated ||
-				f.type === PlaylistChangeType.PlaylistChangeSegmentMoved
-		) as Array<PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated>
+				f.type === PlaylistChangeType.PlaylistChangeSegmentMoved ||
+				f.type === PlaylistChangeType.PlaylistChangeSegmentChanged
+		) as Array<PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated | PlaylistChangeSegmentChanged>
 		let playlistDeletedSegment: PlaylistChangeSegmentDeleted[] = changes.filter(
 			(f) => f.type === PlaylistChangeType.PlaylistChangeSegmentDeleted
 		) as PlaylistChangeSegmentDeleted[]
+
+		for (let rundown of playlistAssignments) {
+			for (let segmentId of rundown.segments) {
+				let now = this.cachedINewsData.get(segmentId)
+				let prev = prevINewsCache.get(segmentId)
+
+				if (!now || !prev) {
+					continue
+				}
+
+				if (now.locator !== prev.locator) {
+					playlistChangedSegments.push(
+						literal<PlaylistChangeSegmentChanged>({
+							type: PlaylistChangeType.PlaylistChangeSegmentChanged,
+							rundownExternalId: rundown.rundownId,
+							segmentExternalId: segmentId,
+						})
+					)
+				}
+			}
+		}
 
 		for (let rundown of playlistDeletedRundowns) {
 			this.emitRundownDeleted(rundown.rundownExternalId)
@@ -541,14 +561,12 @@ export class RundownWatcher extends EventEmitter {
 		let uncachedINewsData2: Set<SegmentId> = new Set()
 		let changedSegmentsByRundownId: Map<
 			RundownId,
-			Array<PlaylistChangeSegmentCreated | PlaylistChangeSegmentMoved>
+			Array<PlaylistChangeSegmentCreated | PlaylistChangeSegmentMoved | PlaylistChangeSegmentChanged>
 		> = new Map()
 		for (let change of playlistChangedSegments) {
 			if (!uncachedINewsData.has(change.segmentExternalId)) {
 				uncachedINewsData2.add(change.segmentExternalId)
 			}
-
-			changedSegments.add(change.segmentExternalId)
 
 			const rundown = changedSegmentsByRundownId.get(change.rundownExternalId)
 

@@ -70,6 +70,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/xml2js": "^0.4.4",
     "async-mutex": "^0.3.1",
+    "deep-clone-map": "^1.4.1",
     "dotenv": "^8.0.0",
     "inews": "https://github.com/SuperFlyTV/node-inews.git#20200917_2",
     "jobs-queue": "git+https://github.com/sparkpunkd/node-jobs-queue.git#master",

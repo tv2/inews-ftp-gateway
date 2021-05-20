@@ -26,7 +26,6 @@ import {
 } from '../helpers/DiffPlaylist'
 import { PlaylistId, RundownId, SegmentId } from '../helpers/id'
 import { Mutex } from 'async-mutex'
-import clonedeep = require('lodash.clonedeep')
 
 dotenv.config()
 
@@ -335,7 +334,6 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	private async processUpdatedRundown(playlistId: string, playlist: ReducedRundown) {
-		const prevINewsCache = clonedeep(this.cachedINewsData)
 		const uncachedINewsData: Set<SegmentId> = new Set()
 		playlist.segments.forEach((s) => {
 			if (!this.cachedINewsData.has(s.externalId)) {
@@ -528,7 +526,7 @@ export class RundownWatcher extends EventEmitter {
 		for (let rundown of playlistAssignments) {
 			for (let segmentId of rundown.segments) {
 				let now = this.cachedINewsData.get(segmentId)
-				let prev = prevINewsCache.get(segmentId)
+				let prev = cachedPlaylist.segments.find((s) => s.externalId === segmentId)
 
 				if (!now || !prev) {
 					this.logger.debug(`Could not find now ${!!now} or prev ${!!prev}`)

@@ -414,13 +414,14 @@ export class CoreHandler {
 	async triggerReloadSegment(rundownId: string, segmentId: string): Promise<IngestSegment | null> {
 		this.logger.info(`Reloading segment ${segmentId} from rundown ${rundownId}`)
 		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			const rundown = this.iNewsHandler.iNewsWatcher.playlists.get(rundownId)
+			const playlistId = rundownId.replace(/_\d+$/, '')
+			const playlist = this.iNewsHandler.iNewsWatcher.playlists.get(playlistId)
 
-			if (rundown) {
-				const segmentIndex = rundown.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
+			if (playlist) {
+				const segmentIndex = playlist.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
 				if (segmentIndex === -1) return Promise.reject(`iNews gateway: segment does not exist ${segmentId}`)
 
-				const prevSegment = rundown.segments[segmentIndex]
+				const prevSegment = playlist.segments[segmentIndex]
 				const rawSegments = await this.iNewsHandler.iNewsWatcher.rundownManager.fetchINewsStoriesById(rundownId, [
 					segmentId,
 				])
@@ -440,8 +441,8 @@ export class CoreHandler {
 					rawSegment.name
 				)
 
-				rundown.segments[segmentIndex] = segment
-				this.iNewsHandler.iNewsWatcher.playlists.set(rundownId, rundown)
+				playlist.segments[segmentIndex] = segment
+				this.iNewsHandler.iNewsWatcher.playlists.set(playlistId, playlist)
 
 				return mutateSegment(segment)
 			} else {

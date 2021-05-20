@@ -12,6 +12,7 @@ function createUnrankedSegment(num: number, backTime?: string): UnrankedSegment 
 		locator: '',
 		rundownId: 'test-rundown',
 		iNewsStory: literal<INewsStory>({
+			id,
 			identifier: id,
 			locator: '',
 			fields: literal<INewsFields>({

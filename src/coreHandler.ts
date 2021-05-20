@@ -419,7 +419,10 @@ export class CoreHandler {
 
 			if (playlist) {
 				const segmentIndex = playlist.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
-				if (segmentIndex === -1) return Promise.reject(`iNews gateway: segment does not exist ${segmentId}`)
+				if (segmentIndex === -1) {
+					this.iNewsHandler.iNewsWatcher.emitSegmentDeleted(rundownId, segmentId)
+					return Promise.reject(`iNews gateway: segment does not exist ${segmentId}`)
+				}
 
 				const prevSegment = playlist.segments[segmentIndex]
 				const rawSegments = await this.iNewsHandler.iNewsWatcher.rundownManager.fetchINewsStoriesById(rundownId, [
@@ -428,6 +431,7 @@ export class CoreHandler {
 				const rawSegment = rawSegments.get(segmentId)
 
 				if (!rawSegment) {
+					this.iNewsHandler.iNewsWatcher.emitSegmentDeleted(rundownId, segmentId)
 					return null
 				}
 

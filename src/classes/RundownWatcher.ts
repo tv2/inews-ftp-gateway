@@ -768,7 +768,7 @@ export class RundownWatcher extends EventEmitter {
 		this.emit('segment_update', rundownId, segment.externalId, segment)
 	}
 
-	private emitSegmentDeleted(rundownId: RundownId, segmentId: SegmentId) {
+	public emitSegmentDeleted(rundownId: RundownId, segmentId: SegmentId) {
 		this.emit('segment_delete', rundownId, segmentId)
 	}
 

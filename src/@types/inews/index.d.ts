@@ -44,6 +44,7 @@ declare module 'inews' {
 
 		interface INewsStory {
 			/** Same identifier as the file the story came from */
+			id: string
 			identifier: string
 			locator: string
 			fields: INewsFields

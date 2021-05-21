@@ -673,7 +673,7 @@ export class RundownWatcher extends EventEmitter {
 			)
 
 			// TODO: `rundownSegment` could be replaced with `segment` if cachedData is not transformed when returned from core.
-			if (!_.isEqual(rundownSegment.serialize(), cachedData.serialize())) {
+			if (!_.isEqual(JSON.stringify(rundownSegment.serialize()), JSON.stringify(cachedData.serialize()))) {
 				this.logger.debug(`Segment updated: ${segment.externalId}`)
 				this.logger.debug(JSON.stringify(rundownSegment.serialize()))
 				this.logger.debug(JSON.stringify(cachedData.serialize()))

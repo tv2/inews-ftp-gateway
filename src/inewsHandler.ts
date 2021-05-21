@@ -223,6 +223,7 @@ export class InewsFTPHandler {
 					.catch(this._logger.error)
 			})
 			.on('segment_ranks_update', (rundownExteralId, newRanks) => {
+				this._logger.info(`~~~~~ Emit Segment ranks update ${rundownExteralId}: ${Object.keys(newRanks).join(',')}`)
 				this._coreHandler.core.callMethod(P.methods.dataSegmentRanksUpdate, [rundownExteralId, newRanks])
 			})
 	}

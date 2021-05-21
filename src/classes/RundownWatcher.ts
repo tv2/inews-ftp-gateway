@@ -534,7 +534,6 @@ export class RundownWatcher extends EventEmitter {
 					continue
 				}
 
-				this.logger.debug(`Comparing locators ${now.locator}, ${prev.locator}`)
 				if (now.locator !== prev.locator) {
 					this.logger.debug(`Locators differ`)
 					playlistChangedSegments.push(

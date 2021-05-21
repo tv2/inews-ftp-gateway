@@ -2,7 +2,6 @@ import { EventEmitter } from 'events'
 import * as dotenv from 'dotenv'
 import { INewsRundown } from './datastructures/Rundown'
 import { RundownManager } from './RundownManager'
-import * as _ from 'underscore'
 import { RundownSegment, ISegment } from './datastructures/Segment'
 import * as Winston from 'winston'
 import { INewsQueue, InewsFTPHandler } from '../inewsHandler'
@@ -408,6 +407,8 @@ export class RundownWatcher extends EventEmitter {
 				this.logger.error(`Could not find segment changes for rundown ${rundown.rundownId}.`)
 				continue
 			}
+
+			this.logger.debug(`Moved Segments: ${changesToSegments.movedSegments.join(',')}`)
 
 			let { segmentRanks, recalculatedAsIntegers } = ParsedINewsIntoSegments.GetRanks(
 				rundown.rundownId,

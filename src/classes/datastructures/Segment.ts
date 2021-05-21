@@ -29,7 +29,7 @@ export class RundownSegment implements ISegment {
 		this.float = iNewsStory.meta.float === 'float'
 	}
 
-	serialize(): Omit<ISegment, 'modified' | 'locator'> {
+	serialize(): Omit<ISegment, 'modified' | 'locator' | 'rank'> {
 		return {
 			rundownId: this.rundownId,
 			iNewsStory: {
@@ -40,7 +40,6 @@ export class RundownSegment implements ISegment {
 				locator: '',
 			},
 			externalId: this.externalId,
-			rank: this.rank,
 			name: this.name,
 			float: this.float,
 		}

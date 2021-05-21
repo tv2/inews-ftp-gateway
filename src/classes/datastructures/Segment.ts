@@ -32,7 +32,13 @@ export class RundownSegment implements ISegment {
 	serialize(): Omit<ISegment, 'modified' | 'locator'> {
 		return {
 			rundownId: this.rundownId,
-			iNewsStory: { ...this.iNewsStory, fields: { ...this.iNewsStory.fields, modifyDate: '' }, identifier: '', id: '' },
+			iNewsStory: {
+				...this.iNewsStory,
+				fields: { ...this.iNewsStory.fields, modifyDate: '' },
+				identifier: '',
+				id: '',
+				locator: '',
+			},
 			externalId: this.externalId,
 			rank: this.rank,
 			name: this.name,

@@ -180,7 +180,7 @@ export class ParsedINewsIntoSegments {
 			}
 		})
 
-		return { segments: segments.sort((a, b) => (a.rank < b.rank ? -1 : 1)), changes, recalculatedAsIntegers: true }
+		return { segments: segments.sort((a, b) => (a.rank < b.rank ? -1 : 1)), changes, recalculatedAsIntegers: false }
 	}
 
 	static RecalculateRanksAsIntegerValues(

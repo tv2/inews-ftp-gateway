@@ -318,6 +318,8 @@ export class RundownWatcher extends EventEmitter {
 				Date.now() - this.lastForcedRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
 				segments.some((segment) => RundownWatcher.numberOfDecimals(segment.rank) > 3))
 		) {
+			this.logger.info('Recalculate ranks')
+
 			segments = ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundownId, rundown.segments, {
 				rundown: {},
 				segments: [],

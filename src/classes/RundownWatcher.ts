@@ -456,6 +456,7 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	private async processAndEmitSegmentRankChanges(rundownId: string, updatedRanks: RundownChangeSegmentRankUpdate[]) {
+		if (updatedRanks.length < 1) return
 		const newRanks: { [segmentExternalId: string]: number } = {}
 		for (const updatedRank of updatedRanks) {
 			newRanks[updatedRank.segmentExternalId] = updatedRank.rank

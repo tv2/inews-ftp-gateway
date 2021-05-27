@@ -68,7 +68,7 @@ export class ParsedINewsIntoSegments {
 			}
 		}
 
-		// Initial startup of gateway
+		// Initial startup of gateway or after reloading the rundown
 		if (!rundownPreviousRanks || rundownPreviousRanks.size === 0) {
 			return ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundownId, inewsRaw, changes)
 		}

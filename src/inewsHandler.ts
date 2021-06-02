@@ -7,7 +7,6 @@ import * as inews from 'inews'
 import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { VERSION } from './version'
-import { IngestPlaylist } from '@sofie-automation/blueprints-integration'
 
 type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions
@@ -194,9 +193,6 @@ export class InewsFTPHandler {
 			})
 			.on('warning', (warning: any) => {
 				this._logger.error(warning)
-			})
-			.on('playlist_create', (_playlistId: string, playlist: IngestPlaylist) => {
-				this._coreHandler.core.callMethod(P.methods.dataPlaylistCreate, [playlist]).catch(this._logger.error)
 			})
 			.on('rundown_delete', (rundownExternalId) => {
 				this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)

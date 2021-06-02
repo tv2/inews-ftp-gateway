@@ -40,6 +40,7 @@ export interface CoreConfig {
 	port: number
 	watchdog: boolean
 }
+
 /**
  * Represents a connection between mos-integration and Core
  */

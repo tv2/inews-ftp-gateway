@@ -145,9 +145,6 @@ export class RundownWatcher extends EventEmitter {
 	on!: ((event: 'info', listener: (message: string) => void) => this) &
 		((event: 'error', listener: (error: any, stack?: any) => void) => this) &
 		((event: 'warning', listener: (message: string) => void) => this) &
-		((event: 'playlist_delete', listener: (playlistId: string) => void) => this) &
-		((event: 'playlist_create', listener: (playlistId: string, playlist: IngestPlaylist) => void) => this) &
-		((event: 'playlist_update', listener: (playlistId: string, playlist: IngestPlaylist) => void) => this) &
 		((event: 'rundown_delete', listener: (rundownId: string) => void) => this) &
 		((event: 'rundown_create', listener: (rundownId: string, rundown: IngestRundown) => void) => this) &
 		((event: 'rundown_update', listener: (rundownId: string, rundown: IngestRundown) => void) => this) &
@@ -168,9 +165,6 @@ export class RundownWatcher extends EventEmitter {
 	emit!: ((event: 'info', message: string) => boolean) &
 		((event: 'error', message: string) => boolean) &
 		((event: 'warning', message: string) => boolean) &
-		((event: 'playlist_delete', playlistId: string) => boolean) &
-		((event: 'playlist_create', playlistId: string, playlist: IngestPlaylist) => boolean) &
-		((event: 'playlist_update', playlistId: string, playlist: IngestPlaylist) => boolean) &
 		((event: 'rundown_delete', rundownId: string) => boolean) &
 		((event: 'rundown_create', rundownId: string, rundown: IngestRundown) => boolean) &
 		((event: 'rundown_update', rundownId: string, rundown: IngestRundown) => boolean) &
@@ -502,7 +496,9 @@ export class RundownWatcher extends EventEmitter {
 				loop: false,
 			})
 			this.logger.info(`EMITTING PLAYLIST CREATE`)
-			this.emitPlaylistCreated(ingestPlaylist)
+			for (const rundown of ingestPlaylist.rundowns) {
+				this.emitRundownCreated(rundown)
+			}
 			return
 		}
 
@@ -714,6 +710,9 @@ export class RundownWatcher extends EventEmitter {
 			name: playlistId,
 			type: INGEST_RUNDOWN_TYPE,
 			segments: ingestSegments,
+			payload: {
+				playlistExternalId: playlistId,
+			},
 		})
 	}
 
@@ -746,10 +745,6 @@ export class RundownWatcher extends EventEmitter {
 			})
 		}
 		this.previousRanks.set(rundownId, ranksMap)
-	}
-
-	private emitPlaylistCreated(playlist: IngestPlaylist) {
-		this.emit('playlist_create', playlist.externalId, playlist)
 	}
 
 	private emitRundownDeleted(rundownExternalId: string) {

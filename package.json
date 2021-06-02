@@ -65,8 +65,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@sofie-automation/blueprints-integration": "https://github.com/olzzon/tv-automation-server-core.git#dist_blueprints_integration_playlists20210517_1",
-    "@sofie-automation/server-core-integration": "https://github.com/olzzon/tv-automation-server-core.git#dist_server_core_integration_playlists20210517_1",
+    "@sofie-automation/blueprints-integration": "https://github.com/olzzon/tv-automation-server-core.git#dist_blueprints_integration_playlists20210602_1",
+    "@sofie-automation/server-core-integration": "https://github.com/olzzon/tv-automation-server-core.git#dist_server_core_integration_playlists20210602_2",
     "@types/dotenv": "^6.1.1",
     "@types/xml2js": "^0.4.4",
     "async-mutex": "^0.3.1",

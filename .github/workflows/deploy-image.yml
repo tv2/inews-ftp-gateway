@@ -15,9 +15,6 @@ jobs:
       - name: yarn install
         run: yarn install --check-files --frozen-lockfile
 
-      # - name: yarn validate:dependencies
-      #   run: yarn validate:dependencies
-
       - name: yarn build
         run: yarn build
 
@@ -58,4 +55,3 @@ jobs:
           tags: |
             tv2media/${{ github.event.repository.name }}:${{ steps.version.outputs.tag }}
             tv2media/${{ github.event.repository.name }}:latest
-

@@ -15,8 +15,8 @@ jobs:
       - name: yarn install
         run: yarn install --check-files --frozen-lockfile
 
-      - name: yarn validate:dependencies
-        run: yarn validate:dependencies
+      # - name: yarn validate:dependencies
+      #   run: yarn validate:dependencies
 
       - name: yarn build
         run: yarn build

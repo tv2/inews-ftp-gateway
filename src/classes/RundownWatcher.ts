@@ -483,7 +483,6 @@ export class RundownWatcher extends EventEmitter {
 		if (!cachedPlaylist) {
 			const ingestPlaylist = literal<IngestPlaylist>({
 				externalId: playlistId,
-				name: playlistId,
 				rundowns: playlistAssignments.map((rundown) =>
 					this.playlistRundownToIngestRundown(
 						playlistId,
@@ -493,7 +492,6 @@ export class RundownWatcher extends EventEmitter {
 						assignedRanks
 					)
 				),
-				loop: false,
 			})
 			this.logger.info(`EMITTING PLAYLIST CREATE`)
 			for (const rundown of ingestPlaylist.rundowns) {

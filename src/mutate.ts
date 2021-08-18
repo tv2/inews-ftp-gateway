@@ -9,8 +9,6 @@ export const INGEST_RUNDOWN_TYPE = 'inews'
 export function mutatePlaylist(playlist: ReducedPlaylist, rundowns: IngestRundown[]): IngestPlaylist {
 	return {
 		externalId: playlist.externalId,
-		name: playlist.name,
-		loop: playlist.loop,
 		rundowns,
 	}
 }

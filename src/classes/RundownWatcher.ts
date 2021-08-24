@@ -279,9 +279,10 @@ export class RundownWatcher extends EventEmitter {
 	public async ResyncRundown(rundownExternalId: string) {
 		const release = await this.processingRundown.acquire()
 		const playlistExternalId = rundownExternalId.replace(/_\d+$/, '')
-		const playlist = this.playlists.get(playlistExternalId)
+		const playlist = this.playlists.get(playlistExternalId.replace(/\./, '_'))
 
 		if (!playlist) {
+			this.logger.error(`Playlist ${playlistExternalId} does not exist`)
 			return
 		}
 
@@ -480,7 +481,7 @@ export class RundownWatcher extends EventEmitter {
 			this.updatePreviousRanks(rundown.rundownId, assignedRanks)
 		}
 
-		this.playlists.set(playlistId, playlist)
+		this.playlists.set(playlistId.replace(/\./, '_'), playlist)
 
 		if (!cachedPlaylist) {
 			const ingestPlaylist = literal<IngestPlaylist>({

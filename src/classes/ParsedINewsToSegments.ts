@@ -35,7 +35,7 @@ export class ParsedINewsIntoSegments {
 		notMovedSegments: SegmentId[],
 		insertedSegments: SegmentId[],
 		_deletedSegments: SegmentId[],
-		_logger?: Winston.LoggerInstance
+		logger?: Winston.LoggerInstance
 	): UpdatesAndRanks {
 		const segmentRanks: Map<SegmentId, number> = new Map()
 
@@ -43,6 +43,7 @@ export class ParsedINewsIntoSegments {
 
 		// Initial startup of gateway
 		if (!rundownPreviousRanks || rundownPreviousRanks.size === 0) {
+			logger?.debug(`Recalculate ranks for ${rundownId}`)
 			return ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(segmentOrder)
 		}
 
@@ -68,6 +69,9 @@ export class ParsedINewsIntoSegments {
 				const newRank = nextAvaliableRank
 				segmentRanks.set(segmentId, newRank)
 				assignedRanks.push(newRank)
+			} else {
+				logger?.debug(`Don't know what to do with ranks for ${segmentId}`)
+				console.log(insertedSegments.join(','))
 			}
 		})
 

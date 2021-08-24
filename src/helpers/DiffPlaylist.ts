@@ -1,15 +1,16 @@
+import winston = require('winston')
 import { literal } from '../helpers'
 import { GetMovedSegments } from './GetMovedSegments'
 import { RundownId, SegmentId } from './id'
 import { ResolvedPlaylist } from './ResolveRundownIntoPlaylist'
 
 export enum PlaylistChangeType {
-	PlaylistChangeSegmentDeleted,
-	PlaylistChangeSegmentCreated,
-	PlaylistChangeSegmentChanged,
-	PlaylistChangeSegmentMoved,
-	PlaylistChangeRundownDeleted,
-	PlaylistChangeRundownCreated,
+	PlaylistChangeSegmentDeleted = 'segment_deleted',
+	PlaylistChangeSegmentCreated = 'segment_created',
+	PlaylistChangeSegmentChanged = 'segment_changed',
+	PlaylistChangeSegmentMoved = 'segment_moved',
+	PlaylistChangeRundownDeleted = 'rundown_deleted',
+	PlaylistChangeRundownCreated = 'rundown_created',
 }
 
 export interface PlaylistChangeBase {

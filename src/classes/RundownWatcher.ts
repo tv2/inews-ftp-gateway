@@ -404,6 +404,7 @@ export class RundownWatcher extends EventEmitter {
 
 			this.logger.debug(`Moved Segments: ${changesToSegments.movedSegments.join(',')}`)
 
+			this.logger.debug(`Getting ranks for ${rundown.rundownId}`)
 			let { segmentRanks, recalculatedAsIntegers } = ParsedINewsIntoSegments.GetRanks(
 				rundown.rundownId,
 				rundown.segments,
@@ -436,6 +437,7 @@ export class RundownWatcher extends EventEmitter {
 					Date.now() - lastRankRecalculation >= MAX_TIME_BEFORE_RECALCULATE_RANKS ||
 					Array.from(segmentRanks.values()).some((segment) => RundownWatcher.numberOfDecimals(segment) > 3))
 			) {
+				this.logger.debug(`Recalculating ranks as integers for ${rundown.rundownId}`)
 				segmentRanks = ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundown.segments).segmentRanks
 
 				const previousRanks = this.previousRanks.get(rundown.rundownId)
@@ -493,7 +495,7 @@ export class RundownWatcher extends EventEmitter {
 					)
 				),
 			})
-			this.logger.info(`EMITTING PLAYLIST CREATE`)
+			this.logger.info(`Emitting playlist create ${ingestPlaylist.externalId}`)
 			for (const rundown of ingestPlaylist.rundowns) {
 				this.emitRundownCreated(rundown)
 			}
@@ -523,8 +525,20 @@ export class RundownWatcher extends EventEmitter {
 				let now = this.cachedINewsData.get(segmentId)
 				let prev = cachedPlaylist.segments.find((s) => s.externalId === segmentId)
 
-				if (!now || !prev) {
-					this.logger.debug(`Could not find now ${!!now} or prev ${!!prev}`)
+				if (!prev) {
+					this.logger.debug(`New segment ${segmentId}`)
+					playlistChangedSegments.push(
+						literal<PlaylistChangeSegmentCreated>({
+							type: PlaylistChangeType.PlaylistChangeSegmentCreated,
+							rundownExternalId: rundown.rundownId,
+							segmentExternalId: segmentId,
+						})
+					)
+					continue
+				}
+
+				if (!now) {
+					this.logger.debug(`Lost track of current segment state: ${segmentId}`)
 					continue
 				}
 
@@ -559,6 +573,7 @@ export class RundownWatcher extends EventEmitter {
 			Array<PlaylistChangeSegmentCreated | PlaylistChangeSegmentMoved | PlaylistChangeSegmentChanged>
 		> = new Map()
 		for (let change of playlistChangedSegments) {
+			this.logger.debug(`Changed segment: ${change.segmentExternalId}, change type: ${change.type}`)
 			if (!uncachedINewsData.has(change.segmentExternalId)) {
 				uncachedINewsData2.add(change.segmentExternalId)
 			}
@@ -606,6 +621,7 @@ export class RundownWatcher extends EventEmitter {
 		}
 
 		for (let createdRundown of playlistCreatedRundowns) {
+			this.logger.debug(`Creating rundown: ${createdRundown.rundownExternalId}`)
 			const assignedRundown = playlistAssignments.find((r) => r.rundownId === createdRundown.rundownExternalId)
 
 			if (!assignedRundown) {
@@ -694,6 +710,14 @@ export class RundownWatcher extends EventEmitter {
 		for (let segmentId of segments) {
 			const inews = inewsCache.get(segmentId)
 			const rank = ranks.get(segmentId)
+
+			if (!inews) {
+				this.logger.error(`No iNews data for ${segmentId}`)
+			}
+
+			if (!rank) {
+				this.logger.error(`No rank data for ${segmentId}`)
+			}
 
 			if (inews === undefined || rank === undefined) {
 				this.logger.error(`Dropping segment ${segmentId} from rundown ${rundownId}`)

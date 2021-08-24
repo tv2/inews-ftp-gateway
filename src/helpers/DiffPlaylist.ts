@@ -99,7 +99,7 @@ export function DiffPlaylist(
 				movedSegments: [],
 				notMovedSegments: [],
 				insertedSegments: [],
-				deletedSegments: [],
+				deletedSegments: rundown.segments,
 			})
 			continue
 		}
@@ -117,7 +117,7 @@ export function DiffPlaylist(
 			segmentChanges.set(rundown.rundownId, {
 				movedSegments: [],
 				notMovedSegments: [],
-				insertedSegments: [],
+				insertedSegments: rundown.segments,
 				deletedSegments: [],
 			})
 			continue

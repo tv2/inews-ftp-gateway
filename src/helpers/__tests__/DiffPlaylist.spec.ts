@@ -122,7 +122,7 @@ describe('DiffPlaylist', () => {
 			movedSegments: [],
 			notMovedSegments: [],
 			insertedSegments: [],
-			deletedSegments: [],
+			deletedSegments: ['segment-01', 'segment-02', 'segment-03'],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
 			movedSegments: [],
@@ -162,7 +162,7 @@ describe('DiffPlaylist', () => {
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
 			movedSegments: [],
 			notMovedSegments: [],
-			insertedSegments: [],
+			insertedSegments: ['segment-01', 'segment-02', 'segment-03'],
 			deletedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
@@ -305,7 +305,7 @@ describe('DiffPlaylist', () => {
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
 			movedSegments: [],
 			notMovedSegments: [],
-			insertedSegments: [],
+			insertedSegments: ['segment-01', 'segment-02', 'segment-03'],
 			deletedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({

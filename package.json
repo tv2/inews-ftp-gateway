@@ -18,8 +18,9 @@
   "scripts": {
     "info": "npm-scripts-info",
     "build": "trash dist && yarn test && yarn build:main",
+    "build:dev": "trash dist && yarn build:main",
     "buildstart": "yarn build && yarn start",
-    "buildstart:dev": "yarn build && DEV=true yarn start",
+    "buildstart:dev": "yarn build:dev && DEV=true yarn start",
     "buildinspect": "yarn build && yarn inspect",
     "buildinspect:dev": "yarn build && DEV=true yarn inspect",
     "build:main": "tsc -p tsconfig.json",

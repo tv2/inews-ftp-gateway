@@ -1,4 +1,3 @@
-import winston = require('winston')
 import { literal } from '../helpers'
 import { GetMovedSegments } from './GetMovedSegments'
 import { RundownId, SegmentId } from './id'

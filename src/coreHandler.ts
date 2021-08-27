@@ -13,7 +13,7 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateSegment, IngestSegmentToRundownSegment } from './mutate'
+import { IngestSegmentToRundownSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { IngestSegment, IngestRundown, IngestPlaylist } from '@sofie-automation/blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
@@ -223,11 +223,6 @@ export class CoreHandler {
 						success = true
 						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadRundownResult])
 						break
-					case 'triggerReloadSegment':
-						const reloadSegmentResult = await Promise.resolve(this.triggerReloadSegment(cmd.args[0], cmd.args[1]))
-						success = true
-						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadSegmentResult])
-						break
 					case 'pingResponse':
 						let pingResponseResult = await Promise.resolve(this.pingResponse(cmd.args[0]))
 						success = true
@@ -404,58 +399,6 @@ export class CoreHandler {
 			await this.iNewsHandler.iNewsWatcher.ResyncRundown(rundownId)
 		}
 		return null
-	}
-
-	/**
-	 * Called by core to reload a segment. Returns the requested segment.
-	 * Promise is rejected if the rundown or segment cannot be found, or if the gateway is initialising.
-	 * @param rundownId Rundown to fetch from.
-	 * @param segmentId Segment to reload.
-	 */
-	async triggerReloadSegment(rundownId: string, segmentId: string): Promise<IngestSegment | null> {
-		this.logger.info(`Reloading segment ${segmentId} from rundown ${rundownId}`)
-		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			const playlistId = rundownId.replace(/_\d+$/, '')
-			const playlist = this.iNewsHandler.iNewsWatcher.playlists.get(playlistId)
-
-			if (playlist) {
-				const segmentIndex = playlist.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
-				if (segmentIndex === -1) {
-					this.iNewsHandler.iNewsWatcher.emitSegmentDeleted(rundownId, segmentId)
-					return Promise.reject(`iNews gateway: segment does not exist ${segmentId}`)
-				}
-
-				const prevSegment = playlist.segments[segmentIndex]
-				const rawSegments = await this.iNewsHandler.iNewsWatcher.rundownManager.fetchINewsStoriesById(rundownId, [
-					segmentId,
-				])
-				const rawSegment = rawSegments.get(segmentId)
-
-				if (!rawSegment) {
-					this.iNewsHandler.iNewsWatcher.emitSegmentDeleted(rundownId, segmentId)
-					return null
-				}
-
-				const segment = new RundownSegment(
-					rundownId,
-					rawSegment.iNewsStory,
-					rawSegment.modified,
-					rawSegment.locator,
-					`${rawSegment.externalId}`,
-					prevSegment.rank,
-					rawSegment.name
-				)
-
-				playlist.segments[segmentIndex] = segment
-				this.iNewsHandler.iNewsWatcher.playlists.set(playlistId, playlist)
-
-				return mutateSegment(segment)
-			} else {
-				return Promise.reject(`iNews gateway can't find rundown with Id ${rundownId}`)
-			}
-		} else {
-			return Promise.reject(`iNews gateway is still connecting to iNews`)
-		}
 	}
 
 	/**

@@ -130,8 +130,12 @@ export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gateway
 export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name' | 'locator'>
 export type UnrankedSegment = Omit<ISegment, 'rank' | 'float'>
 
-export type PlaylistMap = Map<PlaylistId, ReducedPlaylist>
+export type PlaylistMap = Map<PlaylistId, { externalId: string; rundowns: RundownId[] }>
 export type RundownMap = Map<RundownId, ReducedRundown>
+
+export type PlaylistCache = Map<PlaylistId, RundownId[]>
+export type RundownCache = Map<RundownId, SegmentId[]>
+export type SegmentCache = Map<SegmentId, ReducedSegment>
 
 const RECALCULATE_RANKS_CHANGE_THRESHOLD = 50
 const MAX_TIME_BEFORE_RECALCULATE_RANKS = 60 * 60 * 1000 // One hour
@@ -179,12 +183,15 @@ export class RundownWatcher extends EventEmitter {
 	public rundownManager: RundownManager
 	private _logger: Winston.LoggerInstance
 	private previousRanks: SegmentRankings = new Map()
-	private lastForcedRankRecalculation: Map<PlaylistId, number> = new Map()
+	private lastForcedRankRecalculation: Map<RundownId, number> = new Map()
 
 	private cachedINewsData: Map<SegmentId, UnrankedSegment> = new Map()
 	private cachedPlaylistAssignments: Map<PlaylistId, ResolvedPlaylist> = new Map()
+	private skipCacheForRundown: Set<RundownId> = new Set()
 
-	public playlists: RundownMap = new Map()
+	public playlists: PlaylistCache = new Map()
+	public rundowns: RundownCache = new Map()
+	public segments: SegmentCache = new Map()
 
 	private processingRundown: Mutex = new Mutex()
 
@@ -279,26 +286,35 @@ export class RundownWatcher extends EventEmitter {
 	public async ResyncRundown(rundownExternalId: string) {
 		const release = await this.processingRundown.acquire()
 		const playlistExternalId = rundownExternalId.replace(/_\d+$/, '')
-		const playlist = this.playlists.get(playlistExternalId.replace(/\./, '_'))
+		const playlist = this.playlists.get(playlistExternalId)
+		const rundown = this.rundowns.get(rundownExternalId)
 
-		if (!playlist) {
-			this.logger.error(`Playlist ${playlistExternalId} does not exist`)
+		if (!playlist || !rundown) {
+			this.logger.error(`Rundown ${rundownExternalId} does not exist in playlist ${playlistExternalId}`)
+			release()
 			return
 		}
 
-		for (let key of this.previousRanks.keys()) {
-			if (key.includes(playlistExternalId)) {
-				this.previousRanks.delete(key)
-			}
+		// Delete cached data for this rundown
+		for (const segmentId of rundown) {
+			this.segments.delete(segmentId)
+			this.cachedINewsData.delete(segmentId)
 		}
+		this.rundowns.delete(rundownExternalId)
+		this.playlists.set(
+			playlistExternalId,
+			playlist.filter((r) => r !== rundownExternalId)
+		)
 
-		this.playlists.delete(playlistExternalId)
-		this.cachedPlaylistAssignments.delete(playlistExternalId)
-		this.lastForcedRankRecalculation.delete(playlistExternalId)
-
-		playlist.segments.forEach((segment) => {
-			this.cachedINewsData.delete(segment.externalId)
-		})
+		const cachedPlaylist = this.cachedPlaylistAssignments.get(playlistExternalId)
+		if (cachedPlaylist) {
+			this.cachedPlaylistAssignments.set(
+				playlistExternalId,
+				cachedPlaylist.filter((p) => p.rundownId !== rundownExternalId)
+			)
+		}
+		this.lastForcedRankRecalculation.delete(rundownExternalId)
+		this.skipCacheForRundown.add(rundownExternalId)
 		release()
 	}
 
@@ -335,12 +351,19 @@ export class RundownWatcher extends EventEmitter {
 			}
 		})
 
-		let cachedPlaylist = this.playlists.get(playlistId)
+		const cachedPlaylist = this.playlists.get(playlistId)
 
-		// Fetch any segments that may have changed
 		if (cachedPlaylist) {
-			for (const segment of cachedPlaylist.segments) {
-				const cachedSegment = cachedPlaylist.segments.find((s) => s.externalId === segment.externalId)
+			const cachedRundowns: Array<{ externalId: RundownId; segmentIds: SegmentId[] }> = []
+			for (const rundownId of cachedPlaylist) {
+				let cachedRundown = this.rundowns.get(rundownId)
+				if (!cachedRundown) continue
+				cachedRundowns.push({ externalId: rundownId, segmentIds: cachedRundown })
+			}
+
+			// Fetch any segments that may have changed
+			for (const segment of playlist.segments) {
+				const cachedSegment = this.segments.get(segment.externalId)
 
 				if (!cachedSegment) {
 					continue
@@ -430,7 +453,7 @@ export class RundownWatcher extends EventEmitter {
 				}
 			}
 
-			let lastRankRecalculation = this.lastForcedRankRecalculation.get(playlistId) ?? 0
+			let lastRankRecalculation = this.lastForcedRankRecalculation.get(rundown.rundownId) ?? 0
 			if (
 				!recalculatedAsIntegers &&
 				(minRank < MINIMUM_ALLOWED_RANK ||
@@ -470,7 +493,7 @@ export class RundownWatcher extends EventEmitter {
 					}
 				}
 
-				this.lastForcedRankRecalculation.set(playlistId, Date.now())
+				this.lastForcedRankRecalculation.set(rundown.rundownId, Date.now())
 			}
 
 			// Store ranks
@@ -480,8 +503,6 @@ export class RundownWatcher extends EventEmitter {
 
 			this.updatePreviousRanks(rundown.rundownId, assignedRanks)
 		}
-
-		this.playlists.set(playlistId.replace(/\./, '_'), playlist)
 
 		if (!cachedPlaylist) {
 			const ingestPlaylist = literal<IngestPlaylist>({
@@ -496,6 +517,16 @@ export class RundownWatcher extends EventEmitter {
 					)
 				),
 			})
+			for (const segment of playlist.segments) {
+				this.segments.set(segment.externalId, segment)
+			}
+			for (const rundown of playlistAssignments) {
+				this.rundowns.set(rundown.rundownId, rundown.segments)
+			}
+			this.playlists.set(
+				playlistId,
+				playlistAssignments.map((r) => r.rundownId)
+			)
 			this.logger.info(`Emitting playlist create ${ingestPlaylist.externalId}`)
 			for (const rundown of ingestPlaylist.rundowns) {
 				this.emitRundownCreated(rundown)
@@ -524,7 +555,7 @@ export class RundownWatcher extends EventEmitter {
 		for (let rundown of playlistAssignments) {
 			for (let segmentId of rundown.segments) {
 				let now = this.cachedINewsData.get(segmentId)
-				let prev = cachedPlaylist.segments.find((s) => s.externalId === segmentId)
+				let prev = this.segments.get(segmentId)
 
 				if (!prev) {
 					this.logger.debug(`New segment ${segmentId}`)
@@ -555,6 +586,17 @@ export class RundownWatcher extends EventEmitter {
 				}
 			}
 		}
+
+		for (const segment of playlist.segments) {
+			this.segments.set(segment.externalId, segment)
+		}
+		for (const rundown of playlistAssignments) {
+			this.rundowns.set(rundown.rundownId, rundown.segments)
+		}
+		this.playlists.set(
+			playlistId,
+			playlistAssignments.map((r) => r.rundownId)
+		)
 
 		for (let rundown of playlistDeletedRundowns) {
 			this.emitRundownDeleted(rundown.rundownExternalId)
@@ -597,6 +639,11 @@ export class RundownWatcher extends EventEmitter {
 		const ingestDataPromises: Array<Promise<Map<SegmentId, RundownSegment>>> = []
 
 		for (let [rundownId, segmentList] of changedSegmentsByRundownId) {
+			if (this.skipCacheForRundown.has(rundownId)) {
+				this.skipCacheForRundown.delete(rundownId)
+				continue
+			}
+
 			ingestDataPromises.push(
 				this.coreHandler.GetSegmentsCacheById(
 					rundownId,

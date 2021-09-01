@@ -3,3 +3,4 @@ package*.json
 *.xml
 dist
 **/**/__mocks_/*.json
+*.yml

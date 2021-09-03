@@ -12,4 +12,3 @@ src
 jest.config.js
 tsconfig.jest.json
 tslint.json
-yarn.lock

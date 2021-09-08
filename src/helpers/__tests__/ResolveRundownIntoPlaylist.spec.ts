@@ -65,6 +65,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02'],
+					break: '@1234',
 				},
 				{
 					rundownId: 'test-playlist_2',
@@ -88,14 +89,17 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					break: '@1234',
 				},
 				{
 					rundownId: 'test-playlist_2',
 					segments: ['segment-02'],
+					break: '@1234',
 				},
 				{
 					rundownId: 'test-playlist_3',
 					segments: ['segment-03'],
+					break: '@1234',
 				},
 			])
 		)
@@ -118,6 +122,7 @@ describe('Resolve Rundown Into Playlist', () => {
 						...Array.from({ length: 100 }, (_, i) => `segment-${i.toString().padStart(2, '0')}`),
 						'segment-100',
 					],
+					break: '@1234',
 				},
 				{
 					rundownId: 'test-playlist_2',
@@ -149,6 +154,7 @@ describe('Resolve Rundown Into Playlist', () => {
 						...Array.from({ length: numPer }, (_, i) => `segment-${i.toString().padStart(2, '0')}`),
 						`segment-${numPer}`,
 					],
+					break: '@1234',
 				},
 				{
 					rundownId: 'test-playlist_2',
@@ -156,6 +162,7 @@ describe('Resolve Rundown Into Playlist', () => {
 						...Array.from({ length: numPer }, (_, i) => `segment-${(numPer + i).toString().padStart(2, '0')}`),
 						`segment-${2 * numPer}`,
 					],
+					break: '@1234',
 				},
 				{
 					rundownId: 'test-playlist_3',
@@ -163,6 +170,7 @@ describe('Resolve Rundown Into Playlist', () => {
 						...Array.from({ length: numPer }, (_, i) => `segment-${(2 * numPer + i).toString().padStart(2, '0')}`),
 						`segment-${3 * numPer}`,
 					],
+					break: '@1234',
 				},
 				{
 					rundownId: 'test-playlist_4',

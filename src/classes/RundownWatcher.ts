@@ -331,7 +331,7 @@ export class RundownWatcher extends EventEmitter {
 			try {
 				await this.processUpdatedRundown(rundown.externalId, rundown)
 			} catch (e) {
-				this.logger.error(e)
+				this.logger.error(e as any)
 			}
 			release()
 		}

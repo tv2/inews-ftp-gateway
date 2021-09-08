@@ -103,6 +103,28 @@ export function DiffPlaylist(
 			})
 			continue
 		}
+
+		if (newRundown.break !== rundown.break) {
+			changes.push(
+				literal<PlaylistChangeRundownDeleted>({
+					type: PlaylistChangeType.PlaylistChangeRundownDeleted,
+					rundownExternalId: rundown.rundownId,
+				})
+			)
+			changes.push(
+				literal<PlaylistChangeRundownCreated>({
+					type: PlaylistChangeType.PlaylistChangeRundownCreated,
+					rundownExternalId: rundown.rundownId,
+				})
+			)
+			segmentChanges.set(rundown.rundownId, {
+				movedSegments: [],
+				notMovedSegments: [],
+				insertedSegments: [],
+				deletedSegments: rundown.segments,
+			})
+			continue
+		}
 	}
 
 	for (let rundown of playlist) {

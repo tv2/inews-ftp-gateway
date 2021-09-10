@@ -10,6 +10,7 @@ export enum PlaylistChangeType {
 	PlaylistChangeSegmentMoved = 'segment_moved',
 	PlaylistChangeRundownDeleted = 'rundown_deleted',
 	PlaylistChangeRundownCreated = 'rundown_created',
+	PlaylistChangeRundownUpdated = 'rundown_updated',
 }
 
 export interface PlaylistChangeBase {
@@ -50,6 +51,11 @@ export interface PlaylistChangeRundownCreated extends PlaylistChangeBase {
 	rundownExternalId: string
 }
 
+export interface PlaylistChangeRundownUpdated extends PlaylistChangeBase {
+	type: PlaylistChangeType.PlaylistChangeRundownUpdated
+	rundownExternalId: string
+}
+
 export type PlaylistChange =
 	| PlaylistChangeSegmentCreated
 	| PlaylistChangeSegmentDeleted
@@ -57,6 +63,7 @@ export type PlaylistChange =
 	| PlaylistChangeSegmentMoved
 	| PlaylistChangeRundownCreated
 	| PlaylistChangeRundownDeleted
+	| PlaylistChangeRundownUpdated
 
 export function DiffPlaylist(
 	playlist: ResolvedPlaylist,
@@ -103,28 +110,6 @@ export function DiffPlaylist(
 			})
 			continue
 		}
-
-		if (newRundown.break !== rundown.break) {
-			changes.push(
-				literal<PlaylistChangeRundownDeleted>({
-					type: PlaylistChangeType.PlaylistChangeRundownDeleted,
-					rundownExternalId: rundown.rundownId,
-				})
-			)
-			changes.push(
-				literal<PlaylistChangeRundownCreated>({
-					type: PlaylistChangeType.PlaylistChangeRundownCreated,
-					rundownExternalId: rundown.rundownId,
-				})
-			)
-			segmentChanges.set(rundown.rundownId, {
-				movedSegments: [],
-				notMovedSegments: [],
-				insertedSegments: [],
-				deletedSegments: rundown.segments,
-			})
-			continue
-		}
 	}
 
 	for (let rundown of playlist) {
@@ -136,6 +121,23 @@ export function DiffPlaylist(
 					rundownExternalId: rundown.rundownId,
 				})
 			)
+			segmentChanges.set(rundown.rundownId, {
+				movedSegments: [],
+				notMovedSegments: [],
+				insertedSegments: rundown.segments,
+				deletedSegments: [],
+			})
+			continue
+		}
+
+		if (prevRundown.break !== rundown.break) {
+			changes.push(
+				literal<PlaylistChangeRundownUpdated>({
+					type: PlaylistChangeType.PlaylistChangeRundownUpdated,
+					rundownExternalId: rundown.rundownId,
+				})
+			)
+
 			segmentChanges.set(rundown.rundownId, {
 				movedSegments: [],
 				notMovedSegments: [],

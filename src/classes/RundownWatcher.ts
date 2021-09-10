@@ -17,6 +17,7 @@ import {
 	DiffPlaylist,
 	PlaylistChangeRundownCreated,
 	PlaylistChangeRundownDeleted,
+	PlaylistChangeRundownUpdated,
 	PlaylistChangeSegmentChanged,
 	PlaylistChangeSegmentCreated,
 	PlaylistChangeSegmentDeleted,
@@ -540,6 +541,9 @@ export class RundownWatcher extends EventEmitter {
 		let playlistCreatedRundowns: PlaylistChangeRundownCreated[] = changes.filter(
 			(f) => f.type === PlaylistChangeType.PlaylistChangeRundownCreated
 		) as PlaylistChangeRundownCreated[]
+		const playlistUpdatedRundowns: PlaylistChangeRundownUpdated[] = changes.filter(
+			(f) => f.type === PlaylistChangeType.PlaylistChangeRundownUpdated
+		) as PlaylistChangeRundownUpdated[]
 		let playlistChangedSegments: Array<
 			PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated | PlaylistChangeSegmentChanged
 		> = changes.filter(
@@ -674,7 +678,7 @@ export class RundownWatcher extends EventEmitter {
 
 			if (!assignedRundown) {
 				this.logger.error(
-					`Tried to create rundown ${createdRundown} but could not find the segments associated with this rundown.`
+					`Tried to create rundown ${createdRundown.rundownExternalId} but could not find the segments associated with this rundown.`
 				)
 				continue
 			}
@@ -739,6 +743,26 @@ export class RundownWatcher extends EventEmitter {
 				updatedRundownRanks[segmentId] = rundownSegment.rank
 				updatedRanks.set(rundownId, updatedRundownRanks)
 			}
+		}
+
+		for (let updatedRundown of playlistUpdatedRundowns) {
+			const assignedRundown = playlistAssignments.find((r) => r.rundownId === updatedRundown.rundownExternalId)
+
+			if (!assignedRundown) {
+				this.logger.error(
+					`Tried to create rundown ${updatedRundown.rundownExternalId} but could not find the segments associated with this rundown.`
+				)
+				continue
+			}
+
+			const rundown = this.playlistRundownToIngestRundown(
+				playlistId,
+				assignedRundown.rundownId,
+				assignedRundown.segments,
+				this.cachedINewsData,
+				assignedRanks
+			)
+			this.emitRundownUpdated(rundown)
 		}
 
 		for (let [rundownId, ranks] of updatedRanks) {
@@ -823,6 +847,10 @@ export class RundownWatcher extends EventEmitter {
 
 	private emitRundownCreated(rundown: IngestRundown) {
 		this.emit('rundown_create', rundown.externalId, rundown)
+	}
+
+	private emitRundownUpdated(rundown: IngestRundown) {
+		this.emit('rundown_update', rundown.externalId, rundown)
 	}
 
 	private emitSegmentCreated(rundownId: RundownId, segment: IngestSegment) {

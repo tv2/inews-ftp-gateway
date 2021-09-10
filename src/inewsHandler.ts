@@ -61,7 +61,7 @@ export class InewsFTPHandler {
 		try {
 			await this._setupDevices()
 		} catch (err) {
-			this._logger.error('Error during setup devices', err, err.stack)
+			this._logger.error('Error during setup devices', err, (err as any).stack)
 		}
 	}
 

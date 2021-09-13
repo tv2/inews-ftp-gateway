@@ -738,7 +738,6 @@ export class RundownWatcher extends EventEmitter {
 			if (JSON.stringify(rundownSegment.serialize()) !== JSON.stringify(cachedData.serialize())) {
 				this.emitSegmentUpdated(rundownId, segment)
 			} else if (rundownSegment.rank !== cachedData.rank) {
-				this.logger.info(`~~~~~~~~~ SEGMENT ${segmentId} moved`)
 				const updatedRundownRanks = updatedRanks.get(rundownId) ?? {}
 				updatedRundownRanks[segmentId] = rundownSegment.rank
 				updatedRanks.set(rundownId, updatedRundownRanks)

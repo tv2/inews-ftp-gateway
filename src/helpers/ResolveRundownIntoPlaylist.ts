@@ -1,7 +1,7 @@
 import { UnrankedSegment } from '../classes/RundownWatcher'
 
 export type ResolvedPlaylist = Array<ResolvedPlaylistRundown>
-export type ResolvedPlaylistRundown = { rundownId: string; segments: string[]; break?: string }
+export type ResolvedPlaylistRundown = { rundownId: string; segments: string[]; backTime?: string }
 
 export function ResolveRundownIntoPlaylist(
 	playlistExternalId: string,
@@ -15,10 +15,19 @@ export function ResolveRundownIntoPlaylist(
 		segments: [],
 	}
 
+	let continuityStoryFound = false
+
 	for (const segment of segments) {
 		currentRundown.segments.push(segment.externalId)
+		if (segment.name.match(/^continuity$/i) && !continuityStoryFound) {
+			continuityStoryFound = true
+			if (segment.iNewsStory.fields.backTime?.match(/^@\d+$/)) {
+				currentRundown.backTime = segment.iNewsStory.fields.backTime
+			}
+		}
 
-		if (segment.iNewsStory.fields.backTime?.match(/^@\d+$/)) {
+		// TODO: Breaks, future work
+		/*if (segment.iNewsStory.fields.backTime?.match(/^@\d+$/)) {
 			currentRundown.break = segment.iNewsStory.fields.backTime
 			result.push(currentRundown)
 			rundownIndex++
@@ -26,7 +35,7 @@ export function ResolveRundownIntoPlaylist(
 				rundownId: `${playlistExternalId}_${rundownIndex + 1}`,
 				segments: [],
 			}
-		}
+		}*/
 	}
 
 	if (currentRundown.segments.length) {

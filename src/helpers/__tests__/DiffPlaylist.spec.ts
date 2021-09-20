@@ -1,5 +1,3 @@
-import { literal } from '../../helpers'
-import { ResolvedPlaylist, ResolvedPlaylistRundown } from '../ResolveRundownIntoPlaylist'
 import {
 	DiffPlaylist,
 	PlaylistChangeRundownCreated,
@@ -9,18 +7,80 @@ import {
 	PlaylistChangeSegmentMoved,
 	PlaylistChangeType,
 } from '../DiffPlaylist'
+import { INewsRundown } from '../../classes/datastructures/Rundown'
+import { SegmentId } from '../id'
+import { RundownSegment } from '../../classes/datastructures/Segment'
+import { literal } from '../../helpers'
+import { INewsStory, INewsFields } from 'inews'
+
+function makeINewsRundown(
+	rundownId: string,
+	segmentIds: Array<{ _id: SegmentId; backTime?: string }>,
+	backTime?: string
+): INewsRundown {
+	const segments = segmentIds.map(
+		(segment, i) =>
+			new RundownSegment(
+				rundownId,
+				makeINewsStory(segment._id, segment.backTime),
+				new Date(0),
+				'',
+				segment._id,
+				i,
+				segment._id
+			)
+	)
+
+	const rundown = new INewsRundown(rundownId, rundownId, 'v0.0', segments, backTime)
+
+	return rundown
+}
+
+function makeINewsStory(id: string, backTime?: string) {
+	return literal<INewsStory>({
+		id,
+		identifier: id,
+		locator: '',
+		fields: literal<INewsFields>({
+			title: '',
+			modifyDate: '',
+			tapeTime: '',
+			audioTime: '',
+			totalTime: '',
+			cumeTime: '',
+			backTime,
+		}),
+		meta: {},
+		cues: [],
+		body: '',
+	})
+}
 
 describe('DiffPlaylist', () => {
 	it('Reports no change', () => {
-		let newPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-02', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let newPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
 		let result = DiffPlaylist(newPlaylist, newPlaylist)
@@ -31,36 +91,66 @@ describe('DiffPlaylist', () => {
 			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
 			insertedSegments: [],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-04', 'segment-05', 'segment-06'],
 			insertedSegments: [],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 	})
 
 	it('Reports segments moved within rundown', () => {
-		let newPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-02', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let newPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
-		let prevPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-02', 'segment-01', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-06', 'segment-05'],
-			}),
+		let prevPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-06',
+				},
+				{
+					_id: 'segment-05',
+				},
+			]),
 		]
 
 		let result = DiffPlaylist(newPlaylist, prevPlaylist)
@@ -82,32 +172,55 @@ describe('DiffPlaylist', () => {
 			notMovedSegments: ['segment-02', 'segment-03'],
 			insertedSegments: [],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
 			movedSegments: ['segment-06'],
 			notMovedSegments: ['segment-04', 'segment-05'],
 			insertedSegments: [],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 	})
 
 	it('Reports deleted rundown', () => {
-		let prevPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-02', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let prevPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
-		let newPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let newPlaylist = [
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
 		let result = DiffPlaylist(newPlaylist, prevPlaylist)
@@ -123,32 +236,55 @@ describe('DiffPlaylist', () => {
 			notMovedSegments: [],
 			insertedSegments: [],
 			deletedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			changedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-04', 'segment-05', 'segment-06'],
 			insertedSegments: [],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 	})
 
 	it('Reports created rundown', () => {
-		let prevPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let prevPlaylist = [
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
-		let newPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-02', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let newPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
 		let result = DiffPlaylist(newPlaylist, prevPlaylist)
@@ -164,36 +300,60 @@ describe('DiffPlaylist', () => {
 			notMovedSegments: [],
 			insertedSegments: ['segment-01', 'segment-02', 'segment-03'],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-04', 'segment-05', 'segment-06'],
 			insertedSegments: [],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 	})
 
 	it('Reports created segment', () => {
-		let prevPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-05', 'segment-06'],
-			}),
+		let prevPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
-		let newPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-02', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let newPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
 		let result = DiffPlaylist(newPlaylist, prevPlaylist)
@@ -215,36 +375,60 @@ describe('DiffPlaylist', () => {
 			notMovedSegments: ['segment-01', 'segment-03'],
 			insertedSegments: ['segment-02'],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-05', 'segment-06'],
 			insertedSegments: ['segment-04'],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 	})
 
 	it('Reports deleted segment', () => {
-		let prevPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-02', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let prevPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
-		let newPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-05', 'segment-06'],
-			}),
+		let newPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
 		let result = DiffPlaylist(newPlaylist, prevPlaylist)
@@ -266,32 +450,55 @@ describe('DiffPlaylist', () => {
 			notMovedSegments: ['segment-01', 'segment-03'],
 			insertedSegments: [],
 			deletedSegments: ['segment-02'],
+			changedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-05', 'segment-06'],
 			insertedSegments: [],
 			deletedSegments: ['segment-04'],
+			changedSegments: [],
 		})
 	})
 
 	it('Emits rundown create over segment create', () => {
-		let prevPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let prevPlaylist = [
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
-		let newPlaylist: ResolvedPlaylist = [
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_1',
-				segments: ['segment-01', 'segment-02', 'segment-03'],
-			}),
-			literal<ResolvedPlaylistRundown>({
-				rundownId: 'test-rundown_2',
-				segments: ['segment-04', 'segment-05', 'segment-06'],
-			}),
+		let newPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+			makeINewsRundown('test-rundown_2', [
+				{
+					_id: 'segment-04',
+				},
+				{
+					_id: 'segment-05',
+				},
+				{
+					_id: 'segment-06',
+				},
+			]),
 		]
 
 		let result = DiffPlaylist(newPlaylist, prevPlaylist)
@@ -307,12 +514,14 @@ describe('DiffPlaylist', () => {
 			notMovedSegments: [],
 			insertedSegments: ['segment-01', 'segment-02', 'segment-03'],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 		expect(result.segmentChanges.get('test-rundown_2')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-04', 'segment-05', 'segment-06'],
 			insertedSegments: [],
 			deletedSegments: [],
+			changedSegments: [],
 		})
 	})
 })

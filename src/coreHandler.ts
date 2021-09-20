@@ -119,7 +119,7 @@ export class CoreHandler {
 			this.logger.warn(`Error when setting status: + ${e}`)
 			return {
 				statusCode: P.StatusCode.WARNING_MAJOR,
-				messages: ['Error when setting status', e],
+				messages: ['Error when setting status', e as string],
 			}
 		}
 	}
@@ -247,10 +247,10 @@ export class CoreHandler {
 						throw Error('Function "' + cmd.functionName + '" not found!')
 				}
 			} catch (err) {
-				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, err.stack)
+				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, (err as any).stack)
 				if (!success) {
 					await this.core
-						.callMethod(P.methods.functionReply, [cmd._id, err.toString(), null])
+						.callMethod(P.methods.functionReply, [cmd._id, (err as any).toString(), null])
 						.catch((e) => this.logger.error('executeFunction reply error after execution failure', e, e.stack))
 				}
 			}
@@ -424,11 +424,11 @@ export class CoreHandler {
 						versions[dir] = json.version || 'N/A'
 					}
 				} catch (e) {
-					this.logger.error(e)
+					this.logger.error(e as string)
 				}
 			})
 		} catch (e) {
-			this.logger.error(e)
+			this.logger.error(e as string)
 		}
 		return versions
 	}

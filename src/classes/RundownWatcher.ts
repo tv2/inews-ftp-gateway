@@ -301,6 +301,13 @@ export class RundownWatcher extends EventEmitter {
 				cachedPlaylist.filter((p) => p.rundownId !== rundownExternalId)
 			)
 		}
+		const cachedAssignedRundown = this.cachedAssignedRundowns.get(playlistExternalId)
+		if (cachedAssignedRundown) {
+			this.cachedAssignedRundowns.set(
+				playlistExternalId,
+				cachedAssignedRundown.filter((p) => p.externalId !== rundownExternalId)
+			)
+		}
 		this.lastForcedRankRecalculation.delete(rundownExternalId)
 		this.skipCacheForRundown.add(rundownExternalId)
 		release()
@@ -545,30 +552,37 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	private emitRundownDeleted(rundownExternalId: string) {
+		this.logger.info(`Emitting rundown delete ${rundownExternalId}`)
 		this.emit('rundown_delete', rundownExternalId)
 	}
 
 	private emitRundownCreated(rundown: IngestRundown) {
+		this.logger.info(`Emitting rundown create ${rundown.externalId}`)
 		this.emit('rundown_create', rundown.externalId, rundown)
 	}
 
 	private emitRundownUpdated(rundown: IngestRundown) {
+		this.logger.info(`Emitting rundown update ${rundown.externalId}`)
 		this.emit('rundown_update', rundown.externalId, rundown)
 	}
 
 	private emitSegmentCreated(rundownId: RundownId, segment: IngestSegment) {
+		this.logger.info(`Emitting segment create ${segment.externalId} in ${rundownId}`)
 		this.emit('segment_create', rundownId, segment.externalId, segment)
 	}
 
 	private emitSegmentUpdated(rundownId: RundownId, segment: IngestSegment) {
+		this.logger.info(`Emitting segment update ${segment.externalId} in ${rundownId}`)
 		this.emit('segment_update', rundownId, segment.externalId, segment)
 	}
 
 	public emitSegmentDeleted(rundownId: RundownId, segmentId: SegmentId) {
+		this.logger.info(`Emitting segment delete ${segmentId} in ${rundownId}`)
 		this.emit('segment_delete', rundownId, segmentId)
 	}
 
 	private emitUpdatedSegmentRanks(rundownId: RundownId, ranks: { [segmentId: string]: number }) {
+		this.logger.info(`Emitting segment ranks update ${rundownId}`)
 		this.emit('segment_ranks_update', rundownId, ranks)
 	}
 }

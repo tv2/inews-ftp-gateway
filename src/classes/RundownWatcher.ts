@@ -532,7 +532,7 @@ export class RundownWatcher extends EventEmitter {
 					this.emitSegmentDeleted(call.rundownExternalId, call.segmentExternalId)
 					break
 				case CoreCallType.dataSegmentUpdate:
-					this.emitSegmentUpdated(call.segmentExternalId, call.segment)
+					this.emitSegmentUpdated(call.rundownExternalId, call.segment)
 					break
 				case CoreCallType.dataSegmentRanksUpdate:
 					this.emitUpdatedSegmentRanks(call.rundownExternalId, call.ranks)

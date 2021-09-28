@@ -16,6 +16,7 @@ import { PlaylistId, RundownId, SegmentId } from '../helpers/id'
 import { Mutex } from 'async-mutex'
 import { AssignRanksToSegments } from '../helpers/AssignRanksToSegments'
 import { CoreCallType, GenerateCoreCalls } from '../helpers/GenerateCoreCalls'
+import { assertUnreachable } from '../helpers'
 
 dotenv.config()
 
@@ -139,6 +140,7 @@ export class RundownWatcher extends EventEmitter {
 		((event: 'rundown_delete', listener: (rundownId: string) => void) => this) &
 		((event: 'rundown_create', listener: (rundownId: string, rundown: IngestRundown) => void) => this) &
 		((event: 'rundown_update', listener: (rundownId: string, rundown: IngestRundown) => void) => this) &
+		((event: 'rundown_metadata_update', listener: (rundownId: string, rundown: IngestRundown) => void) => this) &
 		((event: 'segment_delete', listener: (rundownId: string, segmentId: string) => void) => this) &
 		((
 			event: 'segment_create',
@@ -159,6 +161,7 @@ export class RundownWatcher extends EventEmitter {
 		((event: 'rundown_delete', rundownId: string) => boolean) &
 		((event: 'rundown_create', rundownId: string, rundown: IngestRundown) => boolean) &
 		((event: 'rundown_update', rundownId: string, rundown: IngestRundown) => boolean) &
+		((event: 'rundown_metadata_update', rundownId: string, rundown: IngestRundown) => boolean) &
 		((event: 'segment_delete', rundownId: string, segmentId: string) => boolean) &
 		((event: 'segment_create', rundownId: string, segmentId: string, newSegment: IngestSegment) => boolean) &
 		((event: 'segment_update', rundownId: string, segmentId: string, newSegment: IngestSegment) => boolean) &
@@ -537,6 +540,11 @@ export class RundownWatcher extends EventEmitter {
 				case CoreCallType.dataSegmentRanksUpdate:
 					this.emitUpdatedSegmentRanks(call.rundownExternalId, call.ranks)
 					break
+				case CoreCallType.dataRundownMetaDataUpdate:
+					this.emitRundownMetaDataUpdated(call.rundown)
+					break
+				default:
+					assertUnreachable(call)
 			}
 		}
 	}
@@ -564,6 +572,11 @@ export class RundownWatcher extends EventEmitter {
 	private emitRundownUpdated(rundown: IngestRundown) {
 		this.logger.info(`Emitting rundown update ${rundown.externalId}`)
 		this.emit('rundown_update', rundown.externalId, rundown)
+	}
+
+	private emitRundownMetaDataUpdated(rundown: IngestRundown) {
+		this.logger.info(`Emitting rundown metadata update ${rundown.externalId}`)
+		this.emit('rundown_metadata_update', rundown.externalId, rundown)
 	}
 
 	private emitSegmentCreated(rundownId: RundownId, segment: IngestSegment) {

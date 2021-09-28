@@ -2,6 +2,7 @@ import {
 	DiffPlaylist,
 	PlaylistChangeRundownCreated,
 	PlaylistChangeRundownDeleted,
+	PlaylistChangeRundownMetaDataUpdated,
 	PlaylistChangeSegmentCreated,
 	PlaylistChangeSegmentDeleted,
 	PlaylistChangeSegmentMoved,
@@ -369,6 +370,14 @@ describe('DiffPlaylist', () => {
 				rundownExternalId: 'test-rundown_2',
 				segmentExternalId: 'segment-04',
 			}),
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			}),
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_2',
+			}),
 		])
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
 			movedSegments: [],
@@ -443,6 +452,14 @@ describe('DiffPlaylist', () => {
 				type: PlaylistChangeType.PlaylistChangeSegmentDeleted,
 				rundownExternalId: 'test-rundown_2',
 				segmentExternalId: 'segment-04',
+			}),
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			}),
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_2',
 			}),
 		])
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({

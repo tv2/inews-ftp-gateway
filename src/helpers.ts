@@ -2,6 +2,10 @@ export function literal<T>(o: T) {
 	return o
 }
 
+export function assertUnreachable(_never: never): never {
+	throw new Error('Switch validation failed, look for assertUnreachable(...)')
+}
+
 function isValidDate(d: unknown) {
 	return d instanceof Date
 }

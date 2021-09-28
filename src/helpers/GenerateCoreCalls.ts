@@ -7,7 +7,7 @@ import {
 	PlaylistChange,
 	PlaylistChangeRundownCreated,
 	PlaylistChangeRundownDeleted,
-	PlaylistChangeRundownUpdated,
+	PlaylistChangeRundownMetaDataUpdated,
 	PlaylistChangeSegmentChanged,
 	PlaylistChangeSegmentCreated,
 	PlaylistChangeSegmentDeleted,
@@ -25,6 +25,7 @@ export enum CoreCallType {
 	dataRundownCreate = 'dataRundownCreate',
 	dataRundownDelete = 'dataRundownDelete',
 	dataRundownUpdate = 'dataRundownUpdate',
+	dataRundownMetaDataUpdate = 'dataRundownMetaDataUpdate',
 	dataSegmentRanksUpdate = 'dataSegmentRanksUpdate',
 }
 
@@ -64,6 +65,11 @@ export interface CoreCallRundownUpdate extends CoreCallBase {
 	rundown: IngestRundown
 }
 
+export interface CoreCallRundownMetaDataUpdate extends CoreCallBase {
+	type: CoreCallType.dataRundownMetaDataUpdate
+	rundown: IngestRundown
+}
+
 export interface CoreCallSegmentRanksUpdate extends CoreCallBase {
 	type: CoreCallType.dataSegmentRanksUpdate
 	ranks: { [segmentId: string]: number }
@@ -76,6 +82,7 @@ export type CoreCall =
 	| CoreCallRundownCreate
 	| CoreCallRundownDelete
 	| CoreCallRundownUpdate
+	| CoreCallRundownMetaDataUpdate
 	| CoreCallSegmentRanksUpdate
 
 export function GenerateCoreCalls(
@@ -95,15 +102,15 @@ export function GenerateCoreCalls(
 	let playlistCreatedRundowns: PlaylistChangeRundownCreated[] = changes.filter(
 		(f) => f.type === PlaylistChangeType.PlaylistChangeRundownCreated
 	) as PlaylistChangeRundownCreated[]
-	const playlistUpdatedRundowns: PlaylistChangeRundownUpdated[] = changes.filter(
-		(f) => f.type === PlaylistChangeType.PlaylistChangeRundownUpdated
-	) as PlaylistChangeRundownUpdated[]
+	let playlistUpdatedRundownMetaData: PlaylistChangeRundownMetaDataUpdated[] = changes.filter(
+		(f) => f.type === PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated
+	) as PlaylistChangeRundownMetaDataUpdated[]
 	let playlistChangedSegments: Array<
 		PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated | PlaylistChangeSegmentChanged
 	> = changes.filter((f) => f.type === PlaylistChangeType.PlaylistChangeSegmentChanged) as Array<
 		PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated | PlaylistChangeSegmentChanged
 	>
-	let playlistDeletedSegment: PlaylistChangeSegmentDeleted[] = changes.filter(
+	let playlistDeletedSegments: PlaylistChangeSegmentDeleted[] = changes.filter(
 		(f) => f.type === PlaylistChangeType.PlaylistChangeSegmentDeleted
 	) as PlaylistChangeSegmentDeleted[]
 	let playlistCreatedSegments: PlaylistChangeSegmentCreated[] = changes.filter(
@@ -114,25 +121,22 @@ export function GenerateCoreCalls(
 	) as PlaylistChangeSegmentMoved[]
 
 	for (let rundown of playlistDeletedRundowns) {
+		logger.debug(`Adding core call: Rundown delete (${rundown.rundownExternalId})`)
 		calls.push(
 			literal<CoreCallRundownDelete>({
 				type: CoreCallType.dataRundownDelete,
 				rundownExternalId: rundown.rundownExternalId,
 			})
 		)
-
-		playlistChangedSegments = playlistChangedSegments.filter((s) => s.rundownExternalId !== rundown.rundownExternalId)
-		playlistDeletedSegment = playlistDeletedSegment.filter((s) => s.rundownExternalId !== rundown.rundownExternalId)
-		playlistCreatedSegments = playlistCreatedSegments.filter((s) => s.rundownExternalId !== rundown.rundownExternalId)
-		playlistMovedSegments = playlistMovedSegments.filter((s) => s.rundownExternalId !== rundown.rundownExternalId)
 	}
 
-	for (let segment of playlistDeletedSegment) {
+	for (let deletedSegment of playlistDeletedSegments) {
+		logger.debug(`Adding core call: Segment delete (${deletedSegment.segmentExternalId})`)
 		calls.push(
 			literal<CoreCallSegmentDelete>({
 				type: CoreCallType.dataSegmentDelete,
-				rundownExternalId: segment.rundownExternalId,
-				segmentExternalId: segment.segmentExternalId,
+				rundownExternalId: deletedSegment.rundownExternalId,
+				segmentExternalId: deletedSegment.segmentExternalId,
 			})
 		)
 	}
@@ -157,6 +161,7 @@ export function GenerateCoreCalls(
 			assignedRundown.backTime
 		)
 
+		logger.debug(`Adding core call: Rundown create (${rundown.externalId})`)
 		if (rundown.payload.backTime) {
 			logger.debug(`Create with backTime: ${rundown.payload.backTime}`)
 		}
@@ -166,57 +171,6 @@ export function GenerateCoreCalls(
 				rundownExternalId: rundown.externalId,
 				rundown,
 			})
-		)
-
-		playlistChangedSegments = playlistChangedSegments.filter(
-			(s) => s.rundownExternalId !== createdRundown.rundownExternalId
-		)
-		playlistCreatedSegments = playlistCreatedSegments.filter(
-			(s) => s.rundownExternalId !== createdRundown.rundownExternalId
-		)
-		playlistMovedSegments = playlistMovedSegments.filter(
-			(s) => s.rundownExternalId !== createdRundown.rundownExternalId
-		)
-	}
-
-	for (let updatedRundown of playlistUpdatedRundowns) {
-		const assignedRundown = playlistAssignments.find((r) => r.rundownId === updatedRundown.rundownExternalId)
-
-		if (!assignedRundown) {
-			logger.error(
-				`Tried to create rundown ${updatedRundown.rundownExternalId} but could not find the segments associated with this rundown.`
-			)
-			continue
-		}
-
-		const rundown = playlistRundownToIngestRundown(
-			playlistId,
-			assignedRundown.rundownId,
-			assignedRundown.segments,
-			iNewsDataCache,
-			assignedRanks,
-			assignedRundown.backTime
-		)
-		if (rundown.payload.backTime) {
-			logger.debug(`Update with backTime: ${rundown.payload.backTime}`)
-		}
-
-		calls.push(
-			literal<CoreCallRundownUpdate>({
-				type: CoreCallType.dataRundownUpdate,
-				rundownExternalId: rundown.externalId,
-				rundown,
-			})
-		)
-
-		playlistChangedSegments = playlistChangedSegments.filter(
-			(s) => s.rundownExternalId !== updatedRundown.rundownExternalId
-		)
-		playlistCreatedSegments = playlistCreatedSegments.filter(
-			(s) => s.rundownExternalId !== updatedRundown.rundownExternalId
-		)
-		playlistMovedSegments = playlistMovedSegments.filter(
-			(s) => s.rundownExternalId !== updatedRundown.rundownExternalId
 		)
 	}
 
@@ -238,6 +192,7 @@ export function GenerateCoreCalls(
 			rank = cachedData?.rank ?? 0
 		}
 
+		logger.debug(`Adding core call: Segment update (${segmentId})`)
 		const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank)
 		calls.push(
 			literal<CoreCallSegmentUpdate>({
@@ -267,6 +222,7 @@ export function GenerateCoreCalls(
 			rank = cachedData?.rank ?? 0
 		}
 
+		logger.debug(`Adding core call: Segment create (${segmentId})`)
 		const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank)
 		calls.push(
 			literal<CoreCallSegmentCreate>({
@@ -298,11 +254,41 @@ export function GenerateCoreCalls(
 	}
 
 	for (let [rundownId, ranks] of updatedRanks) {
+		logger.debug(`Adding core call: Segment ranks update (${rundownId})`)
 		calls.push(
 			literal<CoreCallSegmentRanksUpdate>({
 				type: CoreCallType.dataSegmentRanksUpdate,
 				rundownExternalId: rundownId,
 				ranks,
+			})
+		)
+	}
+
+	for (const updatedRundown of playlistUpdatedRundownMetaData) {
+		const assignedRundown = playlistAssignments.find((r) => r.rundownId === updatedRundown.rundownExternalId)
+
+		if (!assignedRundown) {
+			logger.error(
+				`Tried to create rundown ${updatedRundown.rundownExternalId} but could not find the segments associated with this rundown.`
+			)
+			continue
+		}
+
+		const rundown = playlistRundownToIngestRundown(
+			playlistId,
+			assignedRundown.rundownId,
+			assignedRundown.segments,
+			iNewsDataCache,
+			assignedRanks,
+			assignedRundown.backTime
+		)
+
+		logger.debug(`Adding core call: Rundown metadata update (${rundown.externalId})`)
+		calls.push(
+			literal<CoreCallRundownMetaDataUpdate>({
+				type: CoreCallType.dataRundownMetaDataUpdate,
+				rundownExternalId: rundown.externalId,
+				rundown,
 			})
 		)
 	}

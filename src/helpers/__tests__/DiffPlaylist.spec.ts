@@ -14,11 +14,7 @@ import { RundownSegment } from '../../classes/datastructures/Segment'
 import { literal } from '../../helpers'
 import { INewsStory, INewsFields } from 'inews'
 
-function makeINewsRundown(
-	rundownId: string,
-	segmentIds: Array<{ _id: SegmentId; backTime?: string }>,
-	backTime?: string
-): INewsRundown {
+function makeINewsRundown(rundownId: string, segmentIds: Array<{ _id: SegmentId; backTime?: string }>): INewsRundown {
 	const segments = segmentIds.map(
 		(segment, i) =>
 			new RundownSegment(
@@ -32,7 +28,7 @@ function makeINewsRundown(
 			)
 	)
 
-	const rundown = new INewsRundown(rundownId, rundownId, 'v0.0', segments, backTime)
+	const rundown = new INewsRundown(rundownId, rundownId, 'v0.0', segments)
 
 	return rundown
 }

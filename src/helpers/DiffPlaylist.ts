@@ -131,10 +131,6 @@ export function DiffPlaylist(
 			continue
 		}
 
-		if (prevRundown.backTime !== rundown.backTime) {
-			updatedRundownMetaData.add(rundown.externalId)
-		}
-
 		let { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
 			prevRundown.segments.map((s) => s.externalId),
 			rundown.segments.map((s) => s.externalId)

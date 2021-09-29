@@ -157,14 +157,10 @@ export function GenerateCoreCalls(
 			assignedRundown.rundownId,
 			assignedRundown.segments,
 			iNewsDataCache,
-			assignedRanks,
-			assignedRundown.backTime
+			assignedRanks
 		)
 
 		logger.debug(`Adding core call: Rundown create (${rundown.externalId})`)
-		if (rundown.payload.backTime) {
-			logger.debug(`Create with backTime: ${rundown.payload.backTime}`)
-		}
 		calls.push(
 			literal<CoreCallRundownCreate>({
 				type: CoreCallType.dataRundownCreate,
@@ -279,8 +275,7 @@ export function GenerateCoreCalls(
 			assignedRundown.rundownId,
 			assignedRundown.segments,
 			iNewsDataCache,
-			assignedRanks,
-			assignedRundown.backTime
+			assignedRanks
 		)
 
 		logger.debug(`Adding core call: Rundown metadata update (${rundown.externalId})`)
@@ -301,8 +296,7 @@ function playlistRundownToIngestRundown(
 	rundownId: RundownId,
 	segments: string[],
 	inewsCache: Map<SegmentId, UnrankedSegment>,
-	ranks: Map<SegmentId, number>,
-	backTime: string | undefined
+	ranks: Map<SegmentId, number>
 ): IngestRundown {
 	let ingestSegments: IngestSegment[] = []
 
@@ -333,7 +327,6 @@ function playlistRundownToIngestRundown(
 		segments: ingestSegments,
 		payload: {
 			playlistExternalId: playlistId,
-			backTime,
 		},
 	})
 }

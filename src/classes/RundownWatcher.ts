@@ -463,8 +463,7 @@ export class RundownWatcher extends EventEmitter {
 				playlistRundown.rundownId,
 				playlistRundown.rundownId,
 				this.gatewayVersion,
-				rundownSegments,
-				playlistRundown.backTime
+				rundownSegments
 			)
 
 			assignedRundowns.push(iNewsRundown)

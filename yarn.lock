@@ -407,20 +407,20 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-4.0.1.tgz#d26729db850fa327b7cacc5522252194404226f5"
   integrity sha512-Qm9hBEBu18wt1PO2flE7LPb30BHMQt1eQgbV76YntdNk73XZGpn3izvGTYxbGgzXKgbCjiia0uxTd3aTNQrY/g==
 
-"@sofie-automation/blueprints-integration@npm:@tv2media/blueprints-integration@1.37.0-in-development":
-  version "1.37.0-in-development"
-  resolved "https://registry.yarnpkg.com/@tv2media/blueprints-integration/-/blueprints-integration-1.37.0-in-development.tgz#5816b968d50fd7e12a339a8d55fe8905be5a1369"
-  integrity sha512-ydJ2o+rfNR576DIghq8Cr/fySAWnuTATK/AyyEfZPWEPUnI6LFjk6upwxyfDm96mKQG4UJJBmiN6XRrq073+1w==
+"@sofie-automation/blueprints-integration@npm:@tv2media/blueprints-integration@1.37.0-rc12":
+  version "1.37.0-rc12"
+  resolved "https://registry.yarnpkg.com/@tv2media/blueprints-integration/-/blueprints-integration-1.37.0-rc12.tgz#92dc136930c31394abb39cf39c3b1f836388d6db"
+  integrity sha512-EMqkMv26frSSFde55leS/sz8m0NgZfmQFU2eqVegblrUpM7kNEMIdtLys5aFjrKAoPz/fRJQxRo4biFGQr7BAA==
   dependencies:
     moment "2.29.1"
     timeline-state-resolver-types "npm:@tv2media/timeline-state-resolver-types@1.0.0-release37"
     tslib "^2.1.0"
     underscore "1.13.1"
 
-"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@1.37.0-in-development":
-  version "1.37.0-in-development"
-  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-1.37.0-in-development.tgz#fa03f8bf2a3d326b6fd6f84c62cb598418643df5"
-  integrity sha512-NGRqiPGCvKHrmJgk3QPsk8/W7NVpSKv+YwoZYrsexEdkyf9n3O6DpUpgBUK1P8E08RT4RNjm2tnKt8uJK7G9IA==
+"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@1.37.0-rc12":
+  version "1.37.0-rc12"
+  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-1.37.0-rc12.tgz#03a875ff798b51165dcb2bb73fd9b99defe0a53f"
+  integrity sha512-gZLkuDGHlmXXOaCLdsHEB991aO5bAhtsn8qEKZNARYBd4ODV61n25Cyj3UV7EImfDNsQEm/FL4jPnOS0fG+dMQ==
   dependencies:
     data-store "^4.0.3"
     ejson "^2.2.0"

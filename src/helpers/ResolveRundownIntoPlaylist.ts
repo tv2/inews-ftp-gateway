@@ -20,7 +20,7 @@ export function ResolveRundownIntoPlaylist(
 	for (const segment of segments) {
 		currentRundown.segments.push(segment.externalId)
 		// TODO: Not relevant for breaks
-		if (segment.name.match(/^continuity$/i) && !continuityStoryFound) {
+		if (segment.name.match(/^\s*continuity\s*$/i) && !continuityStoryFound) {
 			continuityStoryFound = true
 			if (segment.iNewsStory.fields.backTime?.match(/^@\d+$/)) {
 				currentRundown.backTime = segment.iNewsStory.fields.backTime

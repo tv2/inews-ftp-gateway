@@ -163,6 +163,14 @@ describe('DiffPlaylist', () => {
 				rundownExternalId: 'test-rundown_2',
 				segmentExternalId: 'segment-06',
 			}),
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			}),
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_2',
+			}),
 		])
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
 			movedSegments: ['segment-01'],

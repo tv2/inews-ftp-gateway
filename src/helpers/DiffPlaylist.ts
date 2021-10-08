@@ -146,6 +146,7 @@ export function DiffPlaylist(
 					segmentExternalId: s,
 				})
 			)
+			updatedRundownMetaData.add(rundown.externalId)
 		})
 
 		insertedSegments.forEach((s) => {

@@ -23,15 +23,13 @@ jobs:
 
       - name: yarn validate:dependencies
         run: yarn validate:dependencies
+        continue-on-error: true
+
+      - name: yarn unit test
+        run: yarn unit
 
       - name: yarn build
         run: yarn build
-
-      # - name: yarn unit test
-      #   run: yarn unit
-
-      # - name: yarn install production
-      #   run: yarn install --check-files --frozen-lockfile --production --force
 
       - uses: actions/upload-artifact@main
         with:

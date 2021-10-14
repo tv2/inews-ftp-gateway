@@ -49,7 +49,8 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 		locator,
 		ingestSegment.externalId,
 		ingestSegment.rank,
-		ingestSegment.name
+		ingestSegment.name,
+		ingestSegment.payload?.untimed
 	)
 }
 

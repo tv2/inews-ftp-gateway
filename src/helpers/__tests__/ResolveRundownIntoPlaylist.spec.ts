@@ -59,6 +59,34 @@ function createContinuitySegment(num: number, backTime?: string): UnrankedSegmen
 	})
 }
 
+function createKlarOnAirSegment(num: number, backTime?: string): UnrankedSegment {
+	let id = num.toString().padStart(2, '0')
+	return literal<UnrankedSegment>({
+		externalId: `segment-${id}`,
+		name: `Klar on air`,
+		modified: new Date(),
+		locator: '',
+		rundownId: 'test-rundown',
+		iNewsStory: literal<INewsStory>({
+			id,
+			identifier: id,
+			locator: '',
+			fields: literal<INewsFields>({
+				title: '',
+				modifyDate: '',
+				tapeTime: '',
+				audioTime: '',
+				totalTime: '',
+				cumeTime: '',
+				backTime,
+			}),
+			meta: {},
+			cues: [],
+			body: '',
+		}),
+	})
+}
+
 describe('Resolve Rundown Into Playlist', () => {
 	it('Creates a playlist with one rundown when no back-time is present', () => {
 		let segments: Array<UnrankedSegment> = [
@@ -69,14 +97,15 @@ describe('Resolve Rundown Into Playlist', () => {
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
 				},
-			])
-		)
+			]),
+			untimedSegments: new Set(),
+		})
 	})
 
 	it('Sets the back time when a continuity story with back time is present', () => {
@@ -89,15 +118,16 @@ describe('Resolve Rundown Into Playlist', () => {
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04'],
 					backTime: '@1234',
 				},
-			])
-		)
+			]),
+			untimedSegments: new Set(['segment-04']),
+		})
 	})
 
 	it('Sets the back time when continuity story is not last', () => {
@@ -111,15 +141,16 @@ describe('Resolve Rundown Into Playlist', () => {
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05'],
 					backTime: '@1234',
 				},
-			])
-		)
+			]),
+			untimedSegments: new Set(['segment-04', 'segment-05']),
+		})
 	})
 
 	it('Sets the back time to the first continuity story', () => {
@@ -134,15 +165,16 @@ describe('Resolve Rundown Into Playlist', () => {
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05', 'segment-06'],
 					backTime: '@1234',
 				},
-			])
-		)
+			]),
+			untimedSegments: new Set(['segment-04', 'segment-05', 'segment-06']),
+		})
 	})
 
 	it('Setsno back time if continuity story does not have back time', () => {
@@ -157,14 +189,37 @@ describe('Resolve Rundown Into Playlist', () => {
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05', 'segment-06'],
 				},
-			])
-		)
+			]),
+			untimedSegments: new Set(['segment-04', 'segment-05', 'segment-06']),
+		})
+	})
+
+	it('Untimes only the first Klar-on-air segment', () => {
+		let segments: Array<UnrankedSegment> = [
+			createUnrankedSegment(1),
+			createKlarOnAirSegment(2),
+			createUnrankedSegment(3),
+			createKlarOnAirSegment(4),
+			createUnrankedSegment(5),
+		]
+
+		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05'],
+				},
+			]),
+			untimedSegments: new Set(['segment-02']),
+		})
 	})
 
 	// TODO: Breaks, future work

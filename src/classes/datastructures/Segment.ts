@@ -12,6 +12,7 @@ export interface ISegment {
 	rank: number
 	name: string
 	float: boolean
+	untimed: boolean
 }
 
 export class RundownSegment implements ISegment {
@@ -24,7 +25,8 @@ export class RundownSegment implements ISegment {
 		public locator: string,
 		public externalId: string,
 		public rank: number,
-		public name: string
+		public name: string,
+		public untimed: boolean
 	) {
 		this.float = iNewsStory.meta.float === 'float'
 	}
@@ -42,6 +44,7 @@ export class RundownSegment implements ISegment {
 			externalId: this.externalId,
 			name: this.name,
 			float: this.float,
+			untimed: this.untimed,
 		}
 	}
 }

@@ -92,7 +92,8 @@ export function GenerateCoreCalls(
 	assignedRanks: Map<SegmentId, number>,
 	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
 	// TODO: This should probably just be a map of the previous known ranks
-	ingestCacheData: Map<SegmentId, RundownSegment>
+	ingestCacheData: Map<SegmentId, RundownSegment>,
+	untimedSegments: Set<SegmentId>
 ): CoreCall[] {
 	const calls: CoreCall[] = []
 
@@ -157,7 +158,8 @@ export function GenerateCoreCalls(
 			assignedRundown.rundownId,
 			assignedRundown.segments,
 			iNewsDataCache,
-			assignedRanks
+			assignedRanks,
+			untimedSegments
 		)
 
 		logger.debug(`Adding core call: Rundown create (${rundown.externalId})`)
@@ -176,6 +178,7 @@ export function GenerateCoreCalls(
 		const inews = iNewsDataCache.get(changedSegment.segmentExternalId)
 		let rank = assignedRanks.get(segmentId)
 		const cachedData = ingestCacheData.get(segmentId)
+		const untimed = untimedSegments.has(segmentId)
 
 		if (!inews) {
 			logger.error(`Could not process segment change ${segmentId}, iNews data could not be found`)
@@ -189,7 +192,7 @@ export function GenerateCoreCalls(
 		}
 
 		logger.debug(`Adding core call: Segment update (${segmentId})`)
-		const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank)
+		const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed)
 		calls.push(
 			literal<CoreCallSegmentUpdate>({
 				type: CoreCallType.dataSegmentUpdate,
@@ -206,6 +209,7 @@ export function GenerateCoreCalls(
 		const inews = iNewsDataCache.get(createdSegment.segmentExternalId)
 		let rank = assignedRanks.get(segmentId)
 		const cachedData = ingestCacheData.get(segmentId)
+		const untimed = untimedSegments.has(segmentId)
 
 		if (!inews) {
 			logger.error(`Could not process created segment ${segmentId}, iNews data could not be found`)
@@ -219,7 +223,7 @@ export function GenerateCoreCalls(
 		}
 
 		logger.debug(`Adding core call: Segment create (${segmentId})`)
-		const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank)
+		const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed)
 		calls.push(
 			literal<CoreCallSegmentCreate>({
 				type: CoreCallType.dataSegmentCreate,
@@ -275,7 +279,8 @@ export function GenerateCoreCalls(
 			assignedRundown.rundownId,
 			assignedRundown.segments,
 			iNewsDataCache,
-			assignedRanks
+			assignedRanks,
+			untimedSegments
 		)
 
 		logger.debug(`Adding core call: Rundown metadata update (${rundown.externalId})`)
@@ -296,13 +301,15 @@ function playlistRundownToIngestRundown(
 	rundownId: RundownId,
 	segments: string[],
 	inewsCache: Map<SegmentId, UnrankedSegment>,
-	ranks: Map<SegmentId, number>
+	ranks: Map<SegmentId, number>,
+	untimedSegments: Set<SegmentId>
 ): IngestRundown {
 	let ingestSegments: IngestSegment[] = []
 
 	for (let segmentId of segments) {
 		const inews = inewsCache.get(segmentId)
 		const rank = ranks.get(segmentId)
+		const untimed = untimedSegments.has(segmentId)
 
 		if (!inews) {
 			logger.error(`No iNews data for ${segmentId}`)
@@ -317,7 +324,7 @@ function playlistRundownToIngestRundown(
 			continue
 		}
 
-		ingestSegments.push(inewsToIngestSegment(rundownId, segmentId, inews, rank))
+		ingestSegments.push(inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed))
 	}
 
 	return literal<IngestRundown>({
@@ -335,7 +342,8 @@ function inewsToIngestSegment(
 	rundownId: RundownId,
 	segmentId: SegmentId,
 	inews: UnrankedSegment,
-	rank: number
+	rank: number,
+	untimed: boolean
 ): IngestSegment {
 	return literal<IngestSegment>({
 		externalId: segmentId,
@@ -348,6 +356,7 @@ function inewsToIngestSegment(
 			rundownId,
 			iNewsStory: inews.iNewsStory,
 			float: !!inews.iNewsStory.meta.float,
+			untimed: untimed,
 		}),
 	})
 }

@@ -24,7 +24,8 @@ function makeINewsRundown(rundownId: string, segmentIds: Array<{ _id: SegmentId;
 				'',
 				segment._id,
 				i,
-				segment._id
+				segment._id,
+				false
 			)
 	)
 

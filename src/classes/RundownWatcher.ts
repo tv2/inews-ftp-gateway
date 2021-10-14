@@ -120,7 +120,7 @@ export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gateway
 	segments: ReducedSegment[]
 }
 export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name' | 'locator'>
-export type UnrankedSegment = Omit<ISegment, 'rank' | 'float'>
+export type UnrankedSegment = Omit<ISegment, 'rank' | 'float' | 'untimed'>
 
 export type PlaylistMap = Map<PlaylistId, { externalId: string; rundowns: RundownId[] }>
 export type RundownMap = Map<RundownId, ReducedRundown>
@@ -395,7 +395,10 @@ export class RundownWatcher extends EventEmitter {
 			}
 		})
 
-		const playlistAssignments = ResolveRundownIntoPlaylist(playlistId, segmentsToResolve)
+		const { resolvedPlaylist: playlistAssignments, untimedSegments } = ResolveRundownIntoPlaylist(
+			playlistId,
+			segmentsToResolve
+		)
 		if (!playlistAssignments.length) {
 			playlistAssignments.push({
 				rundownId: `${playlistId}_1`,
@@ -454,7 +457,8 @@ export class RundownWatcher extends EventEmitter {
 					iNewsData.locator,
 					segmentId,
 					0,
-					iNewsData?.name
+					iNewsData?.name,
+					untimedSegments.has(segmentId)
 				)
 				rundownSegments.push(rundownSegment)
 			}
@@ -513,7 +517,8 @@ export class RundownWatcher extends EventEmitter {
 			playlistAssignments,
 			assignedRanks,
 			this.cachedINewsData,
-			ingestCacheData
+			ingestCacheData,
+			untimedSegments
 		)
 
 		for (const call of coreCalls) {

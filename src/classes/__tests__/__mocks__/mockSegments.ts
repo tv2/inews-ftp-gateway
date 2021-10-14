@@ -66,7 +66,11 @@ export const segmentGW08: ReducedSegment = {
 	locator: 'segment08',
 }
 
-export function RundownSegmentFromMockSegment(rundownId: string, segmentGW: INewsStoryGW): RundownSegment {
+export function RundownSegmentFromMockSegment(
+	rundownId: string,
+	segmentGW: INewsStoryGW,
+	untimed: boolean
+): RundownSegment {
 	return new RundownSegment(
 		rundownId,
 		_.clone(segmentGW),
@@ -74,6 +78,7 @@ export function RundownSegmentFromMockSegment(rundownId: string, segmentGW: INew
 		segmentGW.locator,
 		segmentGW.identifier,
 		0,
-		segmentGW.fields.title
+		segmentGW.fields.title,
+		untimed
 	)
 }

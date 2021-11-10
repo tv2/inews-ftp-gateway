@@ -85,6 +85,7 @@ export class RundownManager {
 						externalId: rawSegment.identifier,
 						name: rawSegment.fields.title,
 						modified: ParseDateFromInews(rawSegment.fields.modifyDate),
+						modified: ParseDateFromInews(rawSegment.fields.modifyDate || '') || new Date(),
 						locator: rawSegment.locator,
 						rundownId: queueName,
 						iNewsStory: rawSegment,

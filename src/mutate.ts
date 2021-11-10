@@ -45,7 +45,7 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 	return new RundownSegment(
 		rundownId,
 		inewsStory,
-		ParseDateFromInews(modified),
+		ParseDateFromInews(modified) || new Date(),
 		locator,
 		ingestSegment.externalId,
 		ingestSegment.rank,

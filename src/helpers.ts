@@ -6,14 +6,14 @@ export function assertUnreachable(_never: never): never {
 	throw new Error('Switch validation failed, look for assertUnreachable(...)')
 }
 
-function isValidDate(d: unknown) {
-	return d instanceof Date
+function isValidDate(d: Date) {
+	return !isNaN(d.getTime())
 }
 
 export function ParseDateFromInews(date: string) {
 	const modifyDate = new Date(date)
 
-	return isValidDate(modifyDate) ? modifyDate : new Date()
+	return isValidDate(modifyDate) ? modifyDate : undefined
 }
 
 export function ReflectPromise<T>(

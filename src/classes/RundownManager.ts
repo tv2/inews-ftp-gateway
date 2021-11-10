@@ -1,5 +1,5 @@
 import * as Winston from 'winston'
-import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
+import { INewsClient, INewsStory, INewsDirItem, INewsFile, INewsFields } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
@@ -83,8 +83,8 @@ export class RundownManager {
 				if (rawSegment) {
 					const segment: UnrankedSegment = {
 						externalId: rawSegment.identifier,
-						name: rawSegment.fields.title || '',
-						modified: ParseDateFromInews(rawSegment.fields.modifyDate),
+						name: rawSegment.fields.title ? rawSegment.fields.title : '',
+						modified: ParseDateFromInews(rawSegment.fields.modifyDate ? rawSegment.fields.modifyDate : ''),
 						locator: rawSegment.locator,
 						rundownId: queueName,
 						iNewsStory: rawSegment,
@@ -115,11 +115,24 @@ export class RundownManager {
 			return undefined
 		}
 
+		story.fields = this.getTypesafeInewsFields(story.fields, storyFile)
 		this._logger?.debug('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
-		/* Add fileId and update modifyDate to ftp reference in storyFile */
-		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
 		this._logger?.debug('Queue : ', queueName, ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
 		return story
+	}
+
+	private getTypesafeInewsFields(fields: INewsFields, storyFile: INewsDirItem): INewsFields {
+		const modifyDate: string = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
+		return literal<INewsFields>({
+			title: fields.title ? fields.title : '',
+			modifyDate: modifyDate,
+			pageNumber: fields.pageNumber ? fields.pageNumber : '',
+			tapeTime: fields.tapeTime ? fields.tapeTime : '',
+			audioTime: fields.audioTime ? fields.audioTime : '',
+			totalTime: fields.totalTime ? fields.totalTime : '',
+			cumeTime: fields.cumeTime ? fields.cumeTime : '',
+			backTime: fields.backTime ? fields.backTime : '',
+		})
 	}
 
 	/**

@@ -87,11 +87,11 @@ function createKlarOnAirSegment(num: number, backTime?: string): UnrankedSegment
 	})
 }
 
-function createUnnamedSegment(num: number): UnrankedSegment {
+function createUnnamedSegment(num: number, segmentName: any): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
-		name: '',
+		name: segmentName,
 		modified: new Date(),
 		locator: '',
 		rundownId: 'test-rundown',
@@ -250,7 +250,23 @@ describe('Resolve Rundown Into Playlist', () => {
 	})
 
 	it('tests that a segment with blank name does not break the parser', () => {
-		let segments: Array<UnrankedSegment> = [createUnnamedSegment(1)]
+		let segments: Array<UnrankedSegment> = [createUnnamedSegment(1, '')]
+
+		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01'],
+				},
+			]),
+			untimedSegments: new Set([]),
+		})
+	})
+
+	it('tests that a segment with undefined name does not break the parser', () => {
+		let segments: Array<UnrankedSegment> = [createUnnamedSegment(1, undefined)]
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
 

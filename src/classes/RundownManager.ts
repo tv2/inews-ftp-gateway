@@ -83,7 +83,7 @@ export class RundownManager {
 				if (rawSegment) {
 					const segment: UnrankedSegment = {
 						externalId: rawSegment.identifier,
-						name: rawSegment.fields.title,
+						name: rawSegment.fields.title || '',
 						modified: ParseDateFromInews(rawSegment.fields.modifyDate),
 						locator: rawSegment.locator,
 						rundownId: queueName,

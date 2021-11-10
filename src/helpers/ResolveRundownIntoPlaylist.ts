@@ -26,17 +26,18 @@ export function ResolveRundownIntoPlaylist(
 
 	for (const segment of segments) {
 		currentRundown.segments.push(segment.externalId)
-		if (!klarOnAirStoryFound && segment.name.match(/klar[\s-]*on[\s-]*air/im)) {
+		if (!klarOnAirStoryFound && isSegmentTitleReadyOnAir(segment)) {
 			klarOnAirStoryFound = true
 			untimedSegments.add(segment.externalId)
 		}
 		// TODO: Not relevant for breaks
-		if (!continuityStoryFound && segment.name.match(/^\s*continuity\s*$/i)) {
+		if (!continuityStoryFound && isSegmentTitleContinuity(segment)) {
 			continuityStoryFound = true
-			if (segment.iNewsStory.fields.backTime?.match(/^@\d+$/)) {
+			if (isSegmentBackTimeCorrectFormat(segment)) {
 				currentRundown.backTime = segment.iNewsStory.fields.backTime
 			}
 		}
+
 		if (continuityStoryFound) {
 			untimedSegments.add(segment.externalId)
 		}
@@ -58,4 +59,18 @@ export function ResolveRundownIntoPlaylist(
 	}
 
 	return { resolvedPlaylist, untimedSegments }
+}
+
+function isSegmentTitleReadyOnAir(segment: UnrankedSegment): boolean {
+	return /klar[\s-]*on[\s-]*air/im.test(segment.name)
+}
+
+function isSegmentTitleContinuity(segment: UnrankedSegment): boolean {
+	return /^\s*continuity\s*$/i.test(segment.name)
+}
+
+function isSegmentBackTimeCorrectFormat(segment: UnrankedSegment): boolean {
+	const backTime: string = segment.iNewsStory.fields.backTime ? segment.iNewsStory.fields.backTime : ''
+	const atSignWithNumbers: RegExp = /^@\d+$/
+	return atSignWithNumbers.test(backTime)
 }

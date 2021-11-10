@@ -19,13 +19,13 @@ declare module 'inews' {
 		 * 	but may be used in blueprints - installation / organisation dependent.
 		 */
 		interface INewsFields {
-			title: string
-			modifyDate: string // number
+			title?: string
+			modifyDate?: string // number
 			pageNumber?: string
-			tapeTime: string // number
-			audioTime: string // number
-			totalTime: string // number
-			cumeTime: string // number
+			tapeTime?: string // number
+			audioTime?: string // number
+			totalTime?: string // number
+			cumeTime?: string // number
 			backTime?: string // @number (seconds since midnight)
 		}
 

@@ -74,11 +74,11 @@ export function RundownSegmentFromMockSegment(
 	return new RundownSegment(
 		rundownId,
 		_.clone(segmentGW),
-		new Date(segmentGW.fields.modifyDate),
+		new Date(segmentGW.fields.modifyDate || ''),
 		segmentGW.locator,
 		segmentGW.identifier,
 		0,
-		segmentGW.fields.title,
+		segmentGW.fields.title || '',
 		untimed
 	)
 }

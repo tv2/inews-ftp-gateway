@@ -50,7 +50,7 @@ export class RundownManager {
 						literal<ReducedSegment>({
 							externalId: ftpFileName.identifier,
 							name: ftpFileName.storyName,
-							modified: ftpFileName.modified || new Date(0),
+							modified: ftpFileName.modified ?? new Date(0),
 							locator: ftpFileName.locator,
 							rank: index,
 						})

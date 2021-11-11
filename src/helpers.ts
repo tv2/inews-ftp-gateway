@@ -1,3 +1,6 @@
+import { INewsStory } from 'inews'
+import { IngestSegment } from '@sofie-automation/blueprints-integration'
+
 export function literal<T>(o: T) {
 	return o
 }
@@ -10,10 +13,28 @@ function isValidDate(d: Date) {
 	return !isNaN(d.getTime())
 }
 
-export function ParseDateFromInews(date: string) {
-	const modifyDate = new Date(date)
+export function ParseModifiedDateFromInewsStoryWithFallbackToNow(story: INewsStory) {
+	if (story?.fields?.modifyDate) {
+		const modifyDate = new Date(story?.fields?.modifyDate)
+		if (isValidDate(modifyDate)) {
+			return modifyDate
+		}
+	}
 
-	return isValidDate(modifyDate) ? modifyDate : undefined
+	// fall back to "now"
+	return new Date()
+}
+
+export function ParseModifiedDateFromIngestSegmentWithFallbackToNow(segment: IngestSegment) {
+	if (segment?.payload?.modified) {
+		const modifyDate = new Date(segment?.payload?.modified)
+		if (isValidDate(modifyDate)) {
+			return modifyDate
+		}
+	}
+
+	// fall back to "now"
+	return new Date()
 }
 
 export function ReflectPromise<T>(

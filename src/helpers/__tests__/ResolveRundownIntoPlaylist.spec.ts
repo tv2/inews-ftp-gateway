@@ -87,6 +87,33 @@ function createKlarOnAirSegment(num: number, backTime?: string): UnrankedSegment
 	})
 }
 
+function createUnnamedSegment(num: number, segmentName: any): UnrankedSegment {
+	let id = num.toString().padStart(2, '0')
+	return literal<UnrankedSegment>({
+		externalId: `segment-${id}`,
+		name: segmentName,
+		modified: new Date(),
+		locator: '',
+		rundownId: 'test-rundown',
+		iNewsStory: literal<INewsStory>({
+			id,
+			identifier: id,
+			locator: '',
+			fields: literal<INewsFields>({
+				title: '',
+				modifyDate: '',
+				tapeTime: '',
+				audioTime: '',
+				totalTime: '',
+				cumeTime: '',
+			}),
+			meta: {},
+			cues: [],
+			body: '',
+		}),
+	})
+}
+
 describe('Resolve Rundown Into Playlist', () => {
 	it('Creates a playlist with one rundown when no back-time is present', () => {
 		let segments: Array<UnrankedSegment> = [
@@ -221,6 +248,40 @@ describe('Resolve Rundown Into Playlist', () => {
 			untimedSegments: new Set(['segment-02']),
 		})
 	})
+
+	it('tests that a segment with blank name does not break the parser', () => {
+		let segments: Array<UnrankedSegment> = [createUnnamedSegment(1, '')]
+
+		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01'],
+				},
+			]),
+			untimedSegments: new Set([]),
+		})
+	})
+
+	it('tests that a segment with undefined name does not break the parser', () => {
+		let segments: Array<UnrankedSegment> = [createUnnamedSegment(1, undefined)]
+
+		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(result).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01'],
+				},
+			]),
+			untimedSegments: new Set([]),
+		})
+	})
+
+	// todo - create object with undefined Segment name
 
 	// TODO: Breaks, future work
 	/*it('Splits with one segment with back-time', () => {

@@ -26,12 +26,12 @@ export function ResolveRundownIntoPlaylist(
 
 	for (const segment of segments) {
 		currentRundown.segments.push(segment.externalId)
-		if (!klarOnAirStoryFound && segment.name.match(/klar[\s-]*on[\s-]*air/im)) {
+		if (!klarOnAirStoryFound && segment.name?.match(/klar[\s-]*on[\s-]*air/im)) {
 			klarOnAirStoryFound = true
 			untimedSegments.add(segment.externalId)
 		}
 		// TODO: Not relevant for breaks
-		if (!continuityStoryFound && segment.name.match(/^\s*continuity\s*$/i)) {
+		if (!continuityStoryFound && segment.name?.match(/^\s*continuity\s*$/i)) {
 			continuityStoryFound = true
 			if (segment.iNewsStory.fields.backTime?.match(/^@\d+$/)) {
 				currentRundown.backTime = segment.iNewsStory.fields.backTime

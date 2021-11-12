@@ -13,7 +13,7 @@ function isValidDate(d: Date) {
 	return !isNaN(d.getTime())
 }
 
-export function ParseModifiedDateFromInewsStoryWithFallbackToNow(story: INewsStory) {
+export function parseModifiedDateFromInewsStoryWithFallbackToNow(story: INewsStory) {
 	if (story?.fields?.modifyDate) {
 		const modifyDate = new Date(story?.fields?.modifyDate)
 		if (isValidDate(modifyDate)) {

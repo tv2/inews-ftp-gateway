@@ -3,7 +3,7 @@ import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
-import { literal, ParseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromise } from '../helpers'
+import { literal, parseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromise } from '../helpers'
 import { VERSION } from '../version'
 import { SegmentId } from '../helpers/id'
 
@@ -84,7 +84,7 @@ export class RundownManager {
 					const segment: UnrankedSegment = {
 						externalId: rawSegment.identifier,
 						name: rawSegment.fields.title ?? '',
-						modified: ParseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
+						modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
 						locator: rawSegment.locator,
 						rundownId: queueName,
 						iNewsStory: rawSegment,

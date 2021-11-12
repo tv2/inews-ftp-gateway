@@ -2,7 +2,7 @@ import * as _ from 'underscore'
 import { IngestPlaylist, IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
 import { RundownSegment, ISegment } from './classes/datastructures/Segment'
 import { ReducedPlaylist, ReducedRundown } from './classes/RundownWatcher'
-import { ParseModifiedDateFromIngestSegmentWithFallbackToNow } from './helpers'
+import { parseModifiedDateFromIngestSegmentWithFallbackToNow } from './helpers'
 
 export const INGEST_RUNDOWN_TYPE = 'inews'
 
@@ -45,7 +45,7 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 	return new RundownSegment(
 		rundownId,
 		inewsStory,
-		ParseModifiedDateFromIngestSegmentWithFallbackToNow(modified),
+		parseModifiedDateFromIngestSegmentWithFallbackToNow(modified),
 		locator,
 		ingestSegment.externalId,
 		ingestSegment.rank,

@@ -1,7 +1,7 @@
 import { INewsStoryGW, RundownSegment } from '../../datastructures/Segment'
 import * as _ from 'underscore'
 import { ReducedSegment } from '../../RundownWatcher'
-import { ParseModifiedDateFromInewsStoryWithFallbackToNow } from '../../../helpers'
+import { parseModifiedDateFromInewsStoryWithFallbackToNow } from '../../../helpers'
 
 export const segmentGW01: ReducedSegment = {
 	name: 'Segment 01',
@@ -72,7 +72,7 @@ export function RundownSegmentFromMockSegment(
 	segmentGW: INewsStoryGW,
 	untimed: boolean
 ): RundownSegment {
-	const modifiedDate = ParseModifiedDateFromInewsStoryWithFallbackToNow(segmentGW)
+	const modifiedDate = parseModifiedDateFromInewsStoryWithFallbackToNow(segmentGW)
 
 	return new RundownSegment(
 		rundownId,

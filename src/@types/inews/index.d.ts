@@ -74,10 +74,10 @@ declare module 'inews' {
 		type status = 'connecting' | 'connected' | 'error' | 'disconnected'
 
 		interface INewsClient extends EventEmitter {
-			/* _queue: { // Expose queue so if can be flsuhed after used
-				queuedJobList: { list: object },
+			_queue: {
+				queuedJobList: { list: object }
 				inprogressJobList: { list: object }
-			} */
+			}
 			list(queneName: string, cb: (error: Error | null, dirList: Array<INewsDirItem>) => void): void
 			story(queueName: string, file: string, cb: (error: Error | null, rawStory: INewsStory) => void): void
 			storyNsml(queueName: string, file: string, cb: (error: Error | null, nsml: string) => void): void

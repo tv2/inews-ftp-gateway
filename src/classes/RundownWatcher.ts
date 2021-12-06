@@ -241,6 +241,8 @@ export class RundownWatcher extends EventEmitter {
 					if (this.handler.isConnected) {
 						await this.coreHandler.setStatus(P.StatusCode.GOOD, [])
 					}
+
+					this.rundownManager.emptyInewsFtpBuffer()
 				},
 				async (error) => {
 					this.logger.error('Something went wrong during check', error, error.stack)

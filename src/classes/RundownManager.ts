@@ -143,4 +143,11 @@ export class RundownManager {
 			return Promise.reject(`Cannot find rundown with Id ${queueName}`)
 		}
 	}
+
+	emptyInewsFtpBuffer() {
+		if (this.inewsConnection) {
+			this.inewsConnection._queue.queuedJobList.list = {}
+			this.inewsConnection._queue.inprogressJobList.list = {}
+		}
+	}
 }

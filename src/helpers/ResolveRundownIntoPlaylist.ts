@@ -48,19 +48,13 @@ export function ResolveRundownIntoPlaylist(
 					...(currentRundown.payload ?? null),
 					graphicProfile,
 				}
-
-				// Warn that multiple graphic profiles are used.
-				if (graphicProfiles.length > 1) {
-					console.warn(
-						`Segment "${segment.name}" has multiple cues setting the graphic profile. Using the first profile "${graphicProfile}".`
-					)
-				}
 			}
 		}
 
 		currentRundown.segments.push(segment.externalId)
 
-		if (!klarOnAirStoryFound && segment.name?.match(/klar[\s-]*on[\s-]*air/im)) {
+		const isFloated = segment.iNewsStory.meta.float ?? false
+		if (!isFloated && !klarOnAirStoryFound && segment.name?.match(/klar[\s-]*on[\s-]*air/im)) {
 			klarOnAirStoryFound = true
 			untimedSegments.add(segment.externalId)
 		}
@@ -92,10 +86,6 @@ function shouldLookForGraphicProfile(segment: UnrankedSegment, rundown: Resolved
 }
 
 function extractGraphicProfiles(segment: UnrankedSegment): string[] {
-	if (segment.iNewsStory.meta.float) {
-		return []
-	}
-
 	const graphicProfiles = segment.iNewsStory.cues.reduce<string[]>((graphicProfiles: string[], cue: UnparsedCue) => {
 		const numberOfCueLines = cue !== null ? cue.length : -1
 

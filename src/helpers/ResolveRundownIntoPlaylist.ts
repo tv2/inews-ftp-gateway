@@ -89,14 +89,14 @@ function extractGraphicProfiles(segment: UnrankedSegment): string[] {
 	const graphicProfiles = segment.iNewsStory.cues.reduce<string[]>((graphicProfiles: string[], cue: UnparsedCue) => {
 		const numberOfCueLines = cue !== null ? cue.length : -1
 
-		// Kommando cue with optional timing
+		// Kommando cue (ignoring timing)
 		const kommandoPattern = /^\s*KOMMANDO\s*=\s*GRAPHICSPROFILE/i
 		if (numberOfCueLines >= 2 && kommandoPattern.test(cue![0])) {
 			const graphicProfile = cue![1].trim()
 			return [...graphicProfiles, graphicProfile]
 		}
 
-		// Accessories cue with optional timing
+		// Accessories cue (ignoring timing)
 		const accessoriesPattern = /^\s*ACCESSORIES\s*=\s*Graphics_Profile_/i
 		if (numberOfCueLines >= 1 && accessoriesPattern.test(cue![0])) {
 			const graphicProfile = cue![0].replace(accessoriesPattern, '').trim()

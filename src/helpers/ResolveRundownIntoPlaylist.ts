@@ -122,7 +122,7 @@ function extractGraphicProfiles(segment: UnrankedSegment): string[] {
 function getCueOrder(segment: UnrankedSegment): number[] {
 	const body = (segment.iNewsStory.body ?? '').split('\n')
 	const order = body
-		.map((line) => line.match(/<a\s+idref="(?<id>\d+)"\s+\/>/i)?.groups?.id)
+		.map((line) => line.match(/<a\s+idref="(?<id>\d+)"\s*\/?>/i)?.groups?.id)
 		.map((id) => parseInt(id ?? '', 10))
 		.filter((id) => !isNaN(id))
 	return order

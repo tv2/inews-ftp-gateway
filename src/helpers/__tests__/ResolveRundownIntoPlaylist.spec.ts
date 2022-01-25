@@ -7,9 +7,10 @@ type SegmentOptions = {
 	backTime?: string
 	cues?: (string[] | null)[]
 	meta?: object
+	body?: string
 }
 
-function createUnrankedSegment(num: number, { backTime, cues, meta }: SegmentOptions = {}): UnrankedSegment {
+function createUnrankedSegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
@@ -32,12 +33,12 @@ function createUnrankedSegment(num: number, { backTime, cues, meta }: SegmentOpt
 			}),
 			meta: meta ?? {},
 			cues: cues ?? [],
-			body: '',
+			body: body ?? '',
 		}),
 	})
 }
 
-function createContinuitySegment(num: number, { backTime, cues, meta }: SegmentOptions = {}): UnrankedSegment {
+function createContinuitySegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
@@ -60,12 +61,12 @@ function createContinuitySegment(num: number, { backTime, cues, meta }: SegmentO
 			}),
 			meta: meta ?? {},
 			cues: cues ?? [],
-			body: '',
+			body: body ?? '',
 		}),
 	})
 }
 
-function createKlarOnAirSegment(num: number, { backTime, cues, meta }: SegmentOptions = {}): UnrankedSegment {
+function createKlarOnAirSegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
@@ -88,12 +89,16 @@ function createKlarOnAirSegment(num: number, { backTime, cues, meta }: SegmentOp
 			}),
 			meta: meta ?? {},
 			cues: cues ?? [],
-			body: '',
+			body: body ?? '',
 		}),
 	})
 }
 
-function createUnnamedSegment(num: number, segmentName: any, { cues, meta }: SegmentOptions = {}): UnrankedSegment {
+function createUnnamedSegment(
+	num: number,
+	segmentName: any,
+	{ cues, meta, body }: SegmentOptions = {}
+): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
@@ -115,7 +120,7 @@ function createUnnamedSegment(num: number, segmentName: any, { cues, meta }: Seg
 			}),
 			meta: meta ?? {},
 			cues: cues ?? [],
-			body: '',
+			body: body ?? '',
 		}),
 	})
 }
@@ -290,7 +295,10 @@ describe('Resolve Rundown Into Playlist', () => {
 	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile (kommando)', () => {
 		const segments = [
 			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, { cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')] }),
+			createKlarOnAirSegment(2, {
+				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
 		]
 		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
@@ -309,9 +317,15 @@ describe('Resolve Rundown Into Playlist', () => {
 	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile (kommando)', () => {
 		const segments = [
 			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, { cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n'), null] }),
+			createKlarOnAirSegment(2, {
+				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n'), null],
+				body: '<p><a idref="0" /></p>\n<p><a idref="1" /></p>',
+			}),
 			createUnrankedSegment(3),
-			createKlarOnAirSegment(4, { cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')] }),
+			createKlarOnAirSegment(4, {
+				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
 		]
 		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
@@ -330,8 +344,14 @@ describe('Resolve Rundown Into Playlist', () => {
 	it('tests that we can only set graphicProfile from KLAR ON AIR (kommando)', () => {
 		const segments = [
 			createUnrankedSegment(1),
-			createUnrankedSegment(2, { cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')] }),
-			createUnnamedSegment(3, '', { cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')] }),
+			createUnrankedSegment(2, {
+				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
+			createUnnamedSegment(3, '', {
+				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
 		]
 		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
@@ -356,8 +376,12 @@ describe('Resolve Rundown Into Playlist', () => {
 					'KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n'),
 					'KOMMANDO=GRAPHICSPROFILE\nTV2 News\n;0.00'.split('\n'),
 				],
+				body: '<p><a idref="0" /></p>\n<p><a idref="2" /></p>\n<p><a idref="3" /></p>\n<p><a idref="4" /></p>\n',
 			}),
-			createUnnamedSegment(3, '', { cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')] }),
+			createUnnamedSegment(3, '', {
+				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
 		]
 		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
@@ -378,9 +402,13 @@ describe('Resolve Rundown Into Playlist', () => {
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
 				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
 				meta: { float: true },
 			}),
-			createKlarOnAirSegment(3, { cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')] }),
+			createKlarOnAirSegment(3, {
+				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
 		]
 		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
@@ -393,91 +421,6 @@ describe('Resolve Rundown Into Playlist', () => {
 				},
 			]),
 			untimedSegments: new Set(['segment-03']),
-		})
-	})
-
-	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile (accessories)', () => {
-		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, { cues: ['ACCESSORIES=Graphics_Profile_TV2 Nyhederne\n;0.00'.split('\n')] }),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
-
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
-				},
-			]),
-			untimedSegments: new Set(['segment-02']),
-		})
-	})
-
-	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile (accessories)', () => {
-		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, { cues: ['ACCESSORIES=Graphics_Profile_TV2 Nyhederne\n;0.00'.split('\n'), null] }),
-			createUnrankedSegment(3),
-			createKlarOnAirSegment(4, { cues: ['ACCESSORIES=Graphics_Profile_TV2 Sporten\n;0.00'.split('\n')] }),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
-
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
-				},
-			]),
-			untimedSegments: new Set(['segment-02']),
-		})
-	})
-
-	it('tests that we can only set graphicProfile from KLAR ON AIR (accessories)', () => {
-		const segments = [
-			createUnrankedSegment(1),
-			createUnrankedSegment(2, { cues: ['ACCESSORIES=Graphics_Profile_TV2 Nyhederne\n;0.00'.split('\n')] }),
-			createUnnamedSegment(3, '', { cues: ['ACCESSORIES=Graphics_Profile_TV2 Sporten\n;0.00'.split('\n')] }),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
-
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
-				},
-			]),
-			untimedSegments: new Set([]),
-		})
-	})
-
-	it('tests that we only care about the first cue (accessories)', () => {
-		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, {
-				cues: [
-					'ACCESSORIES=Graphics_Profile_TV2 Nyhederne\n;0.00'.split('\n'),
-					'ACCESSORIES=Graphics_Profile_TV2 Sporten\n;0.00'.split('\n'),
-					'ACCESSORIES=Graphics_Profile_TV2 News\n;0.00'.split('\n'),
-				],
-			}),
-			createUnnamedSegment(3, '', { cues: ['ACCESSORIES=Graphics_Profile_TV2 Sporten\n;0.00'.split('\n')] }),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
-
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
-				},
-			]),
-			untimedSegments: new Set(['segment-02']),
 		})
 	})
 

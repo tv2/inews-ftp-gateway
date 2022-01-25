@@ -86,27 +86,40 @@ function shouldLookForGraphicProfile(segment: UnrankedSegment, rundown: Resolved
 	const hasGraphicProfile = rundown?.payload?.graphicProfile !== undefined
 	return !isFloated && isKlarOnAirSegment && !hasGraphicProfile
 }
-
+/**
+ * 
+ * @param segment Segment of which graphic profile cues are to be extracted.
+ * @returns A sorted list of graphic profiles for the given segment.
+ */
 function extractGraphicProfiles(segment: UnrankedSegment): string[] {
-	const graphicProfiles = segment.iNewsStory.cues.reduce<string[]>((graphicProfiles: string[], cue: UnparsedCue) => {
+
+	// Extract Graphic Profiles
+	const graphicProfiles = segment.iNewsStory.cues.reduce<{ cueIndex: number, graphicProfile: string }[]>((graphicProfiles: { cueIndex: number, graphicProfile: string }[], cue: UnparsedCue, cueIndex: number) => {
 		const numberOfCueLines = cue !== null ? cue.length : -1
 
 		// Kommando cue (ignoring timing)
 		const kommandoPattern = /^\s*KOMMANDO\s*=\s*GRAPHICSPROFILE/i
 		if (numberOfCueLines >= 2 && kommandoPattern.test(cue![0])) {
 			const graphicProfile = cue![1].trim()
-			return [...graphicProfiles, graphicProfile]
+			return [...graphicProfiles, { cueIndex, graphicProfile }]
 		}
-
-		// Accessories cue (ignoring timing)
-		const accessoriesPattern = /^\s*ACCESSORIES\s*=\s*Graphics_Profile_/i
-		if (numberOfCueLines >= 1 && accessoriesPattern.test(cue![0])) {
-			const graphicProfile = cue![0].replace(accessoriesPattern, '').trim()
-			return [...graphicProfiles, graphicProfile]
-		}
-
 		return graphicProfiles
 	}, [])
 
-	return graphicProfiles
+	// Sort by cue order
+	const cueOrder = getCueOrder(segment)
+	const orderedGraphicProfiles = cueOrder.reduce<string[]>((orderedGraphicsProfiles, cueId) => {
+		const graphicProfile = graphicProfiles.find(({ cueIndex }) => cueIndex === cueId)?.graphicProfile
+		return graphicProfile ? [...orderedGraphicsProfiles, graphicProfile] : orderedGraphicsProfiles
+	}, [])
+
+	return orderedGraphicProfiles
+}
+
+function getCueOrder(segment: UnrankedSegment): number[] {
+	const body = (segment.iNewsStory.body ?? '').split('\n')
+	const order = body.map(line => line.match(/<a\s+idref="(?<id>\d+)"\s+\/>/i)?.groups?.id)
+		.map(id => parseInt(id ?? '', 10))
+		.filter(id => !isNaN(id))
+	return order
 }

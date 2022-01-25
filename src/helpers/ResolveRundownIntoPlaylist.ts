@@ -40,8 +40,8 @@ export function ResolveRundownIntoPlaylist(
 		// Check for graphic profile changes (KLAR ON AIR only).
 		if (shouldLookForGraphicProfile(segment, currentRundown)) {
 			const graphicProfiles = extractGraphicProfiles(segment)
-			console.log("Resolve ${segment.name} cues:", JSON.stringify(segment.iNewsStory.cues))
-			console.log("Resolve ${segment.name} graphic profiles:", graphicProfiles)
+			console.log('Resolve ${segment.name} cues:', JSON.stringify(segment.iNewsStory.cues))
+			console.log('Resolve ${segment.name} graphic profiles:', graphicProfiles)
 
 			if (graphicProfiles.length > 0) {
 				// Extract and set graphic profile for rundown

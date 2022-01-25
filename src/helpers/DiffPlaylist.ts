@@ -132,7 +132,8 @@ export function DiffPlaylist(
 		}
 
 		// Check for graphics profile change
-		if (prevRundown?.payload?.graphicProfile !== rundown?.payload?.graphicProfile) {
+		if (prevRundown.payload?.graphicProfile !== rundown.payload?.graphicProfile) {
+			console.log(`graphicProfile changed from "${prevRundown.payload?.graphicProfile}" to "${rundown.payload?.graphicProfile}" for rundown "${rundown.name}".`)
 			updatedRundownMetaData.add(rundown.externalId)
 		}
 

@@ -41,6 +41,7 @@ export function ResolveRundownIntoPlaylist(
 		if (shouldLookForGraphicProfile(segment, currentRundown)) {
 			const graphicProfiles = extractGraphicProfiles(segment)
 			console.log('Resolve ${segment.name} cues:', JSON.stringify(segment.iNewsStory.cues))
+			console.log('Resolve ${segment.name} body:', JSON.stringify(segment.iNewsStory.body))
 			console.log('Resolve ${segment.name} graphic profiles:', graphicProfiles)
 
 			if (graphicProfiles.length > 0) {

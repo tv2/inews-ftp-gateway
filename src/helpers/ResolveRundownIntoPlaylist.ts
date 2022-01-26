@@ -39,7 +39,7 @@ export function ResolveRundownIntoPlaylist(
 	for (const segment of segments) {
 		// Check for graphic profile changes (KLAR ON AIR only).
 		if (shouldLookForGraphicProfile(segment, currentRundown)) {
-			const graphicProfiles = extractGraphicProfiles(segment)
+			const graphicProfiles = getGraphicProfiles(segment)
 
 			if (graphicProfiles.length > 0) {
 				// Extract and set graphic profile for rundown
@@ -84,15 +84,43 @@ function shouldLookForGraphicProfile(segment: UnrankedSegment, rundown: Resolved
 	const hasGraphicProfile = rundown?.payload?.graphicProfile !== undefined
 	return !isFloated && isKlarOnAirSegment && !hasGraphicProfile
 }
+
+type UnsortedGraphicProfile = { cueIndex: number; graphicProfile: string }
+
 /**
  *
  * @param segment Segment of which graphic profile cues are to be extracted.
  * @returns A sorted list of graphic profiles for the given segment.
  */
-function extractGraphicProfiles(segment: UnrankedSegment): string[] {
-	// Extract Graphic Profiles
-	const graphicProfiles = segment.iNewsStory.cues.reduce<{ cueIndex: number; graphicProfile: string }[]>(
-		(graphicProfiles: { cueIndex: number; graphicProfile: string }[], cue: UnparsedCue, cueIndex: number) => {
+function getGraphicProfiles(segment: UnrankedSegment): string[] {
+	const graphicProfiles = getUnsortedGraphicProfiles(segment)
+
+	const cueOrder = getCueOrder(segment)
+	const orderedGraphicProfiles = sortGraphicProfiles(graphicProfiles, cueOrder)
+
+	return orderedGraphicProfiles
+}
+/**
+ *
+ * @param graphicProfiles Graphic Profiles to sort.
+ * @param cueOrder The sort order
+ * @returns A sorted list of graphicProfiles
+ */
+function sortGraphicProfiles(graphicProfiles: UnsortedGraphicProfile[], cueOrder: number[]): string[] {
+	return cueOrder.reduce<string[]>((orderedGraphicsProfiles, cueId) => {
+		const graphicProfile = graphicProfiles.find(({ cueIndex }) => cueIndex === cueId)?.graphicProfile
+		return graphicProfile ? [...orderedGraphicsProfiles, graphicProfile] : orderedGraphicsProfiles
+	}, [])
+}
+
+/**
+ *
+ * @param segment Segment to extract graphic profiles from.
+ * @returns The list of graphic profiles along with their cue index.
+ */
+function getUnsortedGraphicProfiles(segment: UnrankedSegment): UnsortedGraphicProfile[] {
+	return segment.iNewsStory.cues.reduce<UnsortedGraphicProfile[]>(
+		(graphicProfiles: UnsortedGraphicProfile[], cue: UnparsedCue, cueIndex: number) => {
 			const numberOfCueLines = cue !== null ? cue.length : -1
 
 			// Kommando cue (ignoring timing)
@@ -105,17 +133,13 @@ function extractGraphicProfiles(segment: UnrankedSegment): string[] {
 		},
 		[]
 	)
-
-	// Sort by cue order
-	const cueOrder = getCueOrder(segment)
-	const orderedGraphicProfiles = cueOrder.reduce<string[]>((orderedGraphicsProfiles, cueId) => {
-		const graphicProfile = graphicProfiles.find(({ cueIndex }) => cueIndex === cueId)?.graphicProfile
-		return graphicProfile ? [...orderedGraphicsProfiles, graphicProfile] : orderedGraphicsProfiles
-	}, [])
-
-	return orderedGraphicProfiles
 }
 
+/**
+ *
+ * @param segment The segment for which the cue order should be retrieved
+ * @returns A list of indicies representing the cue order.
+ */
 function getCueOrder(segment: UnrankedSegment): number[] {
 	const body = (segment.iNewsStory.body ?? '').split('\n')
 	const order = body

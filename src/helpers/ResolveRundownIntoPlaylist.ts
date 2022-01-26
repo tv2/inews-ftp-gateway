@@ -39,7 +39,7 @@ export function ResolveRundownIntoPlaylist(
 	for (const segment of segments) {
 		// Check for graphic profile changes (KLAR ON AIR only).
 		if (shouldLookForGraphicProfile(segment, currentRundown)) {
-			const graphicProfiles = getGraphicProfiles(segment)
+			const graphicProfiles = getOrderedGraphicProfiles(segment)
 
 			if (graphicProfiles.length > 0) {
 				// Extract and set graphic profile for rundown
@@ -92,8 +92,8 @@ type UnsortedGraphicProfile = { cueIndex: number; graphicProfile: string }
  * @param segment Segment of which graphic profile cues are to be extracted.
  * @returns A sorted list of graphic profiles for the given segment.
  */
-function getGraphicProfiles(segment: UnrankedSegment): string[] {
-	const graphicProfiles = getUnsortedGraphicProfiles(segment)
+function getOrderedGraphicProfiles(segment: UnrankedSegment): string[] {
+	const graphicProfiles = getGraphicProfiles(segment)
 
 	const cueOrder = getCueOrder(segment)
 	const orderedGraphicProfiles = sortGraphicProfiles(graphicProfiles, cueOrder)
@@ -118,7 +118,7 @@ function sortGraphicProfiles(graphicProfiles: UnsortedGraphicProfile[], cueOrder
  * @param segment Segment to extract graphic profiles from.
  * @returns The list of graphic profiles along with their cue index.
  */
-function getUnsortedGraphicProfiles(segment: UnrankedSegment): UnsortedGraphicProfile[] {
+function getGraphicProfiles(segment: UnrankedSegment): UnsortedGraphicProfile[] {
 	return segment.iNewsStory.cues.reduce<UnsortedGraphicProfile[]>(
 		(graphicProfiles: UnsortedGraphicProfile[], cue: UnparsedCue, cueIndex: number) => {
 			const numberOfCueLines = cue !== null ? cue.length : -1

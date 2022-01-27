@@ -3,8 +3,9 @@ import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
-import { literal, ParseDateFromInews, ReflectPromise } from '../helpers'
+import { literal, parseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromise } from '../helpers'
 import { VERSION } from '../version'
+import { SegmentId } from '../helpers/id'
 
 function isFile(f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -49,7 +50,7 @@ export class RundownManager {
 						literal<ReducedSegment>({
 							externalId: ftpFileName.identifier,
 							name: ftpFileName.storyName,
-							modified: ftpFileName.modified || new Date(0),
+							modified: ftpFileName.modified ?? new Date(0),
 							locator: ftpFileName.locator,
 							rank: index,
 						})
@@ -64,9 +65,9 @@ export class RundownManager {
 
 	public async fetchINewsStoriesById(
 		queueName: string,
-		segmentExternalIds: string[]
-	): Promise<Map<string, UnrankedSegment>> {
-		const stories = new Map<string, UnrankedSegment>()
+		segmentExternalIds: SegmentId[]
+	): Promise<Map<SegmentId, UnrankedSegment>> {
+		const stories = new Map<SegmentId, UnrankedSegment>()
 		const dirList = await this._listStories(queueName)
 		const ps: Array<Promise<INewsStoryGW | undefined>> = []
 
@@ -82,8 +83,8 @@ export class RundownManager {
 				if (rawSegment) {
 					const segment: UnrankedSegment = {
 						externalId: rawSegment.identifier,
-						name: rawSegment.fields.title,
-						modified: ParseDateFromInews(rawSegment.fields.modifyDate),
+						name: rawSegment.fields.title ?? '',
+						modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
 						locator: rawSegment.locator,
 						rundownId: queueName,
 						iNewsStory: rawSegment,
@@ -140,6 +141,13 @@ export class RundownManager {
 			return this.downloadINewsStory(queueName, segment)
 		} else {
 			return Promise.reject(`Cannot find rundown with Id ${queueName}`)
+		}
+	}
+
+	emptyInewsFtpBuffer() {
+		if (this.inewsConnection) {
+			this.inewsConnection._queue.queuedJobList.list = {}
+			this.inewsConnection._queue.inprogressJobList.list = {}
 		}
 	}
 }

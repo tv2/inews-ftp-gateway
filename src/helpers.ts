@@ -1,15 +1,40 @@
+import { INewsStory } from 'inews'
+import { IngestSegment } from '@sofie-automation/blueprints-integration'
+
 export function literal<T>(o: T) {
 	return o
 }
 
-function isValidDate(d: unknown) {
-	return d instanceof Date
+export function assertUnreachable(_never: never): never {
+	throw new Error('Switch validation failed, look for assertUnreachable(...)')
 }
 
-export function ParseDateFromInews(date: string) {
-	const modifyDate = new Date(date)
+function isValidDate(d: Date) {
+	return !isNaN(d.getTime())
+}
 
-	return isValidDate(modifyDate) ? modifyDate : new Date()
+export function parseModifiedDateFromInewsStoryWithFallbackToNow(story: INewsStory): Date {
+	if (story?.fields?.modifyDate) {
+		const modifyDate = new Date(story?.fields?.modifyDate)
+		if (isValidDate(modifyDate)) {
+			return modifyDate
+		}
+	}
+
+	// fall back to "now"
+	return new Date()
+}
+
+export function parseModifiedDateFromIngestSegmentWithFallbackToNow(segment: IngestSegment): Date {
+	if (segment?.payload?.modified) {
+		const modifyDate = new Date(segment?.payload?.modified)
+		if (isValidDate(modifyDate)) {
+			return modifyDate
+		}
+	}
+
+	// fall back to "now"
+	return new Date()
 }
 
 export function ReflectPromise<T>(

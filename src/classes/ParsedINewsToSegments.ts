@@ -1,16 +1,5 @@
+import { RundownId, SegmentId } from '../helpers/id'
 import _ = require('underscore')
-import { literal } from '../helpers'
-import {
-	ReducedSegment,
-	RundownChange,
-	RundownChangeSegmentCreate,
-	RundownChangeType,
-	RundownChangeSegmentUpdate,
-	RundownChangeSegmentDelete,
-	ReducedRundown,
-	RundownChangeRundownCreate,
-	RundownChangeRundownUpdate,
-} from './RundownWatcher'
 import * as Winston from 'winston'
 
 export interface IParsedElement {
@@ -26,7 +15,7 @@ export interface IParsedElement {
 	}
 }
 
-export type SegmentRankings = Map<string, Map<string, SegmentRankingsInner>>
+export type SegmentRankings = Map<RundownId, Map<SegmentId, SegmentRankingsInner>>
 export interface SegmentRankingsInner {
 	/** Assigned rank */
 	rank: number
@@ -35,188 +24,73 @@ export interface SegmentRankingsInner {
 const BASE_RANK = 1000
 const PAD_RANK = 1000
 
-type UpdatesAndRanks = { segments: ReducedSegment[]; changes: RundownChange[]; recalculatedAsIntegers: boolean }
+type UpdatesAndRanks = { segmentRanks: Map<SegmentId, number>; recalculatedAsIntegers: boolean }
 
 export class ParsedINewsIntoSegments {
-	static GetUpdatesAndRanks(
-		rundownId: string,
-		rundown: ReducedRundown,
-		inewsRaw: ReducedSegment[],
+	static GetRanks(
+		rundownId: RundownId,
+		segmentOrder: SegmentId[],
 		previousRankings: SegmentRankings,
-		cachedRundown?: ReducedRundown,
-		_logger?: Winston.LoggerInstance
+		movedSegments: SegmentId[],
+		notMovedSegments: SegmentId[],
+		insertedSegments: SegmentId[],
+		_deletedSegments: SegmentId[],
+		logger?: Winston.LoggerInstance
 	): UpdatesAndRanks {
-		const segments: ReducedSegment[] = []
-		const changes: RundownChange[] = []
+		const segmentRanks: Map<SegmentId, number> = new Map()
 
 		const rundownPreviousRanks = previousRankings.get(rundownId)
 
-		if (!cachedRundown) {
-			changes.push(
-				literal<RundownChangeRundownCreate>({
-					type: RundownChangeType.RUNDOWN_CREATE,
-					rundownExternalId: rundownId,
-				})
-			)
-		} else {
-			if (!_.isEqual(_.omit(cachedRundown, 'segments'), _.omit(rundown, 'segments'))) {
-				changes.push(
-					literal<RundownChangeRundownUpdate>({
-						type: RundownChangeType.RUNDOWN_UPDATE,
-						rundownExternalId: rundownId,
-					})
-				)
-			}
-		}
-
 		// Initial startup of gateway
 		if (!rundownPreviousRanks || rundownPreviousRanks.size === 0) {
-			return ParsedINewsIntoSegments.RecalcualteRanksAsIntegerValues(rundownId, inewsRaw, changes)
+			logger?.debug(`Recalculate ranks for ${rundownId}`)
+			return ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(segmentOrder)
 		}
-
-		const newOrderSegmentIds = inewsRaw.map((raw) => raw.externalId)
-		const previousOrderSegmentIds = Array.from(rundownPreviousRanks.keys())
-
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = this.getMovedSegments(
-			previousOrderSegmentIds,
-			newOrderSegmentIds
-		)
-
-		const changedSegments = new Set<string>()
-
-		deletedSegments.forEach((segmentId) => {
-			if (!changedSegments.has(segmentId)) {
-				changes.push(
-					literal<RundownChangeSegmentDelete>({
-						type: RundownChangeType.SEGMENT_DELETE,
-						rundownExternalId: rundownId,
-						segmentExternalId: segmentId,
-					})
-				)
-				changedSegments.add(segmentId)
-			}
-		})
-
-		movedSegments.forEach((segmentId) => {
-			if (!changedSegments.has(segmentId)) {
-				changes.push(
-					literal<RundownChangeSegmentUpdate>({
-						type: RundownChangeType.SEGMENT_UPDATE,
-						rundownExternalId: rundownId,
-						segmentExternalId: segmentId,
-					})
-				)
-				changedSegments.add(segmentId)
-			}
-		})
-
-		insertedSegments.forEach((segmentId) => {
-			if (!changedSegments.has(segmentId)) {
-				changes.push(
-					literal<RundownChangeSegmentCreate>({
-						type: RundownChangeType.SEGMENT_CREATE,
-						rundownExternalId: rundownId,
-						segmentExternalId: segmentId,
-					})
-				)
-				changedSegments.add(segmentId)
-			}
-		})
-
-		notMovedSegments.forEach((segmentId) => {
-			const cachedSegment = cachedRundown?.segments.find((s) => s.externalId === segmentId)
-			const newSegment = inewsRaw.find((s) => s.externalId === segmentId)
-
-			if (cachedSegment && newSegment) {
-				if (cachedSegment.locator !== newSegment.locator) {
-					changes.push(
-						literal<RundownChangeSegmentUpdate>({
-							type: RundownChangeType.SEGMENT_UPDATE,
-							rundownExternalId: rundownId,
-							segmentExternalId: newSegment.externalId,
-						})
-					)
-				}
-			}
-		})
 
 		const movedSegmentsSet = new Set(movedSegments)
 		const notMovedSegmentsSet = new Set(notMovedSegments)
 
 		let lastStayed: string = ''
 		const assignedRanks: number[] = []
-		inewsRaw.forEach((rawSegment) => {
+		segmentOrder.forEach((segmentId) => {
 			// Previously existed and is in the same place
-			const previousRank = rundownPreviousRanks.get(rawSegment.externalId)?.rank
+			const previousRank = rundownPreviousRanks.get(segmentId)?.rank
 			const nextAvaliableRank = this.getNextAvailableRank(
 				rundownPreviousRanks,
 				assignedRanks,
 				notMovedSegments[notMovedSegments.indexOf(lastStayed) + 1]
 			)
-			if (notMovedSegmentsSet.has(rawSegment.externalId)) {
+			if (notMovedSegmentsSet.has(segmentId)) {
 				const newRank = previousRank ?? nextAvaliableRank
-				segments.push(
-					literal<ReducedSegment>({
-						externalId: rawSegment.externalId,
-						name: rawSegment.name,
-						modified: rawSegment.modified,
-						locator: rawSegment.locator,
-						rank: newRank,
-					})
-				)
+				segmentRanks.set(segmentId, newRank)
 				assignedRanks.push(newRank)
-				lastStayed = rawSegment.externalId
-			} else if (insertedSegments.includes(rawSegment.externalId) || movedSegmentsSet.has(rawSegment.externalId)) {
+				lastStayed = segmentId
+			} else if (insertedSegments.includes(segmentId) || movedSegmentsSet.has(segmentId)) {
 				const newRank = nextAvaliableRank
-				segments.push(
-					literal<ReducedSegment>({
-						externalId: rawSegment.externalId,
-						name: rawSegment.name,
-						modified: rawSegment.modified,
-						locator: rawSegment.locator,
-						rank: newRank,
-					})
-				)
+				segmentRanks.set(segmentId, newRank)
 				assignedRanks.push(newRank)
+			} else {
+				logger?.debug(`Don't know what to do with ranks for ${segmentId}`)
+				console.log(insertedSegments.join(','))
 			}
 		})
 
-		return { segments: segments.sort((a, b) => (a.rank < b.rank ? -1 : 1)), changes, recalculatedAsIntegers: true }
+		return { segmentRanks, recalculatedAsIntegers: true }
 	}
 
-	static RecalcualteRanksAsIntegerValues(
-		rundownId: string,
-		inewsRaw: ReducedSegment[],
-		changes: RundownChange[]
-	): UpdatesAndRanks {
-		const segments: ReducedSegment[] = []
+	static RecalculateRanksAsIntegerValues(segmentOrder: SegmentId[]): UpdatesAndRanks {
+		const segmentRanks: Map<SegmentId, number> = new Map()
 
-		inewsRaw.forEach((rawSegment, position) => {
-			segments.push(
-				literal<ReducedSegment>({
-					externalId: rawSegment.externalId,
-					name: rawSegment.name,
-					modified: rawSegment.modified,
-					locator: rawSegment.locator,
-					rank: BASE_RANK + PAD_RANK * position,
-				})
-			)
-			changes.push(
-				literal<RundownChangeSegmentCreate>({
-					type: RundownChangeType.SEGMENT_CREATE,
-					rundownExternalId: rundownId,
-					segmentExternalId: rawSegment.externalId,
-					skipCache: true,
-				})
-			)
+		segmentOrder.forEach((segmentId, position) => {
+			segmentRanks.set(segmentId, BASE_RANK + PAD_RANK * position)
 		})
-		return { segments, changes, recalculatedAsIntegers: true }
+		return { segmentRanks, recalculatedAsIntegers: true }
 	}
 
 	static getNextAvailableRank(
-		previousRanks: Map<string, SegmentRankingsInner>,
+		previousRanks: Map<SegmentId, SegmentRankingsInner>,
 		assignedRanks: number[],
-		nextKnownSegment?: string
+		nextKnownSegment?: SegmentId
 	): number {
 		const lastAssignedRank = _.last(assignedRanks)
 		const nextKnownRank = nextKnownSegment ? previousRanks.get(nextKnownSegment) : undefined
@@ -230,89 +104,5 @@ export class ParsedINewsIntoSegments {
 		} else {
 			return BASE_RANK
 		}
-	}
-
-	static getDeletedSegments(oldOrder: string[], newOrder: string[]): string[] {
-		return oldOrder.filter((segment) => !newOrder.includes(segment))
-	}
-
-	static getInsertedSegments(oldOrder: string[], newOrder: string[]): string[] {
-		return newOrder.filter((segment) => !oldOrder.includes(segment))
-	}
-
-	static getMovedSegments(
-		oldOrder: string[],
-		newOrder: string[]
-	): { movedSegments: string[]; notMovedSegments: string[]; insertedSegments: string[]; deletedSegments: string[] } {
-		const insertedSegments = this.getInsertedSegments(oldOrder, newOrder)
-		const insertedSegmentsSet = new Set(insertedSegments)
-		const deletedSegments = this.getDeletedSegments(oldOrder, newOrder)
-		const deletedSegmentsSet = new Set(deletedSegments)
-		const reducedOldOrder = oldOrder.filter((segment) => !deletedSegmentsSet.has(segment))
-		const reducedNewOrder = newOrder.filter((segment) => !insertedSegmentsSet.has(segment))
-
-		const oldOrderInd: Map<string, number> = new Map()
-		reducedOldOrder.forEach((ord, pos) => oldOrderInd.set(ord, pos))
-		const newOrderInd: number[] = []
-		reducedNewOrder.forEach((x) => {
-			const old = oldOrderInd.get(x)
-			if (old !== undefined) {
-				newOrderInd.push(old)
-			}
-		})
-
-		const notMovedIds = this.findLIS(newOrderInd)
-		const notMovedSet = new Set(notMovedIds)
-
-		const movedSegments = reducedOldOrder.filter((_segment, index) => !notMovedSet.has(index))
-		const notMovedSegments = reducedOldOrder.filter((_segment, index) => notMovedSet.has(index))
-
-		return { movedSegments, notMovedSegments, insertedSegments, deletedSegments }
-	}
-
-	// Method for finding the Longest Increasing Subsequence
-	// Complexity: O(nlogn)
-	static findLIS(v: number[]) {
-		const P = new Array(v.length + 1).fill(Infinity)
-		const Q = new Array(v.length).fill(0)
-		P[0] = -Infinity
-		let length = 0
-		for (let i = 0; i < v.length; i++) {
-			let low = 0
-			let high = length
-			while (low <= high) {
-				const mid = Math.floor((low + high) / 2)
-				if (P[mid] < v[i]) {
-					low = mid + 1
-				} else {
-					high = mid - 1
-				}
-			}
-			P[low] = v[i]
-			Q[i] = low
-			if (length < low) {
-				length = low
-			}
-		}
-
-		const res: number[] = new Array(length)
-		let i = 0
-		for (let j = 1; j < v.length; j++) {
-			if (Q[j] > Q[i]) {
-				i = j
-			}
-		}
-		let tail = Q[i] - 1
-		res[tail] = v[i]
-		--tail
-		for (let j = i - 1; j >= 0; j--) {
-			if (v[j] < v[i] && Q[j] === Q[i] - 1) {
-				i = j
-				res[tail] = v[i]
-				tail--
-			}
-		}
-
-		return res
 	}
 }

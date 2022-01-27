@@ -19,14 +19,14 @@ declare module 'inews' {
 		 * 	but may be used in blueprints - installation / organisation dependent.
 		 */
 		interface INewsFields {
-			title: string
-			modifyDate: string // number
+			title?: string
+			modifyDate?: string // number
 			pageNumber?: string
-			tapeTime: string // number
-			audioTime: string // number
-			totalTime: string // number
-			cumeTime: string // number
-			backTime: string // number
+			tapeTime?: string // number
+			audioTime?: string // number
+			totalTime?: string // number
+			cumeTime?: string // number
+			backTime?: string // @number (seconds since midnight)
 		}
 
 		interface INewsMetaData {
@@ -44,6 +44,7 @@ declare module 'inews' {
 
 		interface INewsStory {
 			/** Same identifier as the file the story came from */
+			id: string
 			identifier: string
 			locator: string
 			fields: INewsFields
@@ -73,10 +74,10 @@ declare module 'inews' {
 		type status = 'connecting' | 'connected' | 'error' | 'disconnected'
 
 		interface INewsClient extends EventEmitter {
-			/* _queue: { // Expose queue so if can be flsuhed after used
-				queuedJobList: { list: object },
+			_queue: {
+				queuedJobList: { list: object }
 				inprogressJobList: { list: object }
-			} */
+			}
 			list(queneName: string, cb: (error: Error | null, dirList: Array<INewsDirItem>) => void): void
 			story(queueName: string, file: string, cb: (error: Error | null, rawStory: INewsStory) => void): void
 			storyNsml(queueName: string, file: string, cb: (error: Error | null, nsml: string) => void): void

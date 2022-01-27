@@ -1,18 +1,25 @@
 import * as _ from 'underscore'
-import { IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
+import { IngestPlaylist, IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
 import { RundownSegment, ISegment } from './classes/datastructures/Segment'
-import { ReducedRundown } from './classes/RundownWatcher'
-import { ParseDateFromInews } from './helpers'
+import { ReducedPlaylist, ReducedRundown } from './classes/RundownWatcher'
+import { parseModifiedDateFromIngestSegmentWithFallbackToNow } from './helpers'
 
 export const INGEST_RUNDOWN_TYPE = 'inews'
 
-export function mutateRundown(rundown: ReducedRundown): IngestRundown {
+export function mutatePlaylist(playlist: ReducedPlaylist, rundowns: IngestRundown[]): IngestPlaylist {
+	return {
+		externalId: playlist.externalId,
+		rundowns,
+	}
+}
+
+export function mutateRundown(rundown: ReducedRundown, segments: RundownSegment[]): IngestRundown {
 	return {
 		externalId: rundown.externalId,
 		name: rundown.name,
 		type: INGEST_RUNDOWN_TYPE,
 		payload: omit(rundown, 'segments'),
-		segments: [],
+		segments: segments.map(mutateSegment),
 	}
 }
 export function mutateSegment(segment: RundownSegment): IngestSegment {
@@ -38,11 +45,12 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 	return new RundownSegment(
 		rundownId,
 		inewsStory,
-		ParseDateFromInews(modified),
+		parseModifiedDateFromIngestSegmentWithFallbackToNow(modified),
 		locator,
 		ingestSegment.externalId,
 		ingestSegment.rank,
-		ingestSegment.name
+		ingestSegment.name,
+		ingestSegment.payload?.untimed
 	)
 }
 

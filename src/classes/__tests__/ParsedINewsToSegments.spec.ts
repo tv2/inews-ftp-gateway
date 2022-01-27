@@ -10,24 +10,11 @@ import {
 	segmentGW06,
 	segmentGW07,
 } from './__mocks__/mockSegments'
-import { literal } from '../../helpers'
-import {
-	RundownChangeSegmentCreate,
-	RundownChangeType,
-	RundownChangeSegmentUpdate,
-	ReducedSegment,
-	ReducedRundown,
-	RundownChangeRundownCreate,
-} from '../RundownWatcher'
-import { VERSION } from '../../version'
+import { ReducedSegment } from '../RundownWatcher'
+import { GetDeletedSegments, GetInsertedSegments, GetMovedSegments } from '../../helpers/GetMovedSegments'
+import { SegmentId } from '../../helpers/id'
 
 const rundownId = 'test-rundown'
-const mockrundown: ReducedRundown = {
-	externalId: rundownId,
-	gatewayVersion: VERSION,
-	name: 'Mock Rundown',
-	segments: [],
-}
 
 function makeSegmentRanks(segments: { [segmentId: string]: SegmentRankingsInner }): SegmentRankings {
 	const ranks: SegmentRankings = new Map()
@@ -39,8 +26,8 @@ function makeSegmentRanks(segments: { [segmentId: string]: SegmentRankingsInner 
 
 function makeSegmentRanksInner(segments: {
 	[segmentId: string]: SegmentRankingsInner
-}): Map<string, SegmentRankingsInner> {
-	const segmentRanksInner: Map<string, SegmentRankingsInner> = new Map()
+}): Map<SegmentId, SegmentRankingsInner> {
+	const segmentRanksInner: Map<SegmentId, SegmentRankingsInner> = new Map()
 
 	for (const segmentId in segments) {
 		segmentRanksInner.set(segmentId, segments[segmentId])
@@ -80,7 +67,7 @@ describe('ParsedINewsIntoSegments', () => {
 	})
 
 	it('Finds deleted segments', () => {
-		const result = ParsedINewsIntoSegments.getDeletedSegments(
+		const result = GetDeletedSegments(
 			['segment-01', 'segment-02', 'segment-03', 'segment-04'],
 			['segment-01', 'segment-04', 'segment-03']
 		)
@@ -88,7 +75,7 @@ describe('ParsedINewsIntoSegments', () => {
 	})
 
 	it('Finds new segments', () => {
-		const result = ParsedINewsIntoSegments.getInsertedSegments(
+		const result = GetInsertedSegments(
 			['segment-01', 'segment-02'],
 			['segment-01', 'segment-03', 'segment-02', 'segment-04']
 		)
@@ -96,7 +83,7 @@ describe('ParsedINewsIntoSegments', () => {
 	})
 
 	it('Finds moved segments', () => {
-		let result = ParsedINewsIntoSegments.getMovedSegments(
+		let result = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			['segment-01', 'segment-03', 'segment-02'] // LIS: 01, 03
 		)
@@ -107,7 +94,7 @@ describe('ParsedINewsIntoSegments', () => {
 			insertedSegments: [],
 		})
 
-		result = ParsedINewsIntoSegments.getMovedSegments(
+		result = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			['segment-01', 'segment-03', 'segment-04', 'segment-05', 'segment-02'] // LIS: 01, 03
 		)
@@ -118,7 +105,7 @@ describe('ParsedINewsIntoSegments', () => {
 			insertedSegments: ['segment-04', 'segment-05'],
 		})
 
-		result = ParsedINewsIntoSegments.getMovedSegments(
+		result = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			['segment-03', 'segment-01', 'segment-02', 'segment-04', 'segment-05'] // LIS: 01, 02
 		)
@@ -129,7 +116,7 @@ describe('ParsedINewsIntoSegments', () => {
 			insertedSegments: ['segment-04', 'segment-05'],
 		})
 
-		result = ParsedINewsIntoSegments.getMovedSegments(
+		result = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			['segment-04', 'segment-02', 'segment-03', 'segment-05', 'segment-01'] // LIS: 02, 04
 		)
@@ -140,7 +127,7 @@ describe('ParsedINewsIntoSegments', () => {
 			insertedSegments: ['segment-04', 'segment-05'],
 		})
 
-		result = ParsedINewsIntoSegments.getMovedSegments(
+		result = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05'],
 			['segment-02', 'segment-03', 'segment-05', 'segment-04', 'segment-01'] // LIS: 02, 03, 05
 		)
@@ -151,7 +138,7 @@ describe('ParsedINewsIntoSegments', () => {
 			insertedSegments: [],
 		})
 
-		result = ParsedINewsIntoSegments.getMovedSegments(
+		result = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03', 'segment-04'],
 			['segment-01', 'segment-03', 'segment-02', 'segment-04'] // LIS: 01, 02, 04
 		)
@@ -167,10 +154,23 @@ describe('ParsedINewsIntoSegments', () => {
 		const iNewsRaw: ReducedSegment[] = [segmentGW01, segmentGW02, segmentGW03]
 		const rundownId = 'test-rundown'
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(rundownId, mockrundown, iNewsRaw, new Map())
-		const segments = result.segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			[],
+			iNewsRaw.map((s) => s.externalId)
+		)
+		const result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			new Map(),
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
 		expect(segments).toEqual([
 			{
 				rank: 1000,
@@ -185,30 +185,6 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-03',
 			},
 		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeRundownCreate>({
-				type: RundownChangeType.RUNDOWN_CREATE,
-				rundownExternalId: rundownId,
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-01',
-				skipCache: true,
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-02',
-				skipCache: true,
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-03',
-				skipCache: true,
-			}),
-		])
 	})
 
 	it('Preserves existing ranks', () => {
@@ -220,16 +196,23 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-03': { rank: 3 },
 		})
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
-			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks,
-			mockrundown
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-01', 'segment-02', 'segment-03'],
+			iNewsRaw.map((s) => s.externalId)
 		)
-		const segments = result.segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
+		const result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
 		expect(segments).toEqual([
 			{
 				rank: 1,
@@ -244,7 +227,6 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-03',
 			},
 		])
-		expect(result.changes).toEqual([])
 	})
 
 	it('Creates a new rank for a new segment', () => {
@@ -256,16 +238,23 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-03': { rank: 3 },
 		})
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
-			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks,
-			mockrundown
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-01', 'segment-02', 'segment-03'],
+			iNewsRaw.map((s) => s.externalId)
 		)
-		const segments = result.segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
+		const result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
 		expect(segments).toEqual([
 			{
 				rank: 1,
@@ -283,13 +272,6 @@ describe('ParsedINewsIntoSegments', () => {
 				rank: 3,
 				externalId: 'segment-03',
 			},
-		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-04',
-			}),
 		])
 	})
 
@@ -311,16 +293,23 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-03': { rank: 3000 },
 		})
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
-			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks,
-			mockrundown
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-01', 'segment-02', 'segment-03'],
+			iNewsRaw.map((s) => s.externalId)
 		)
-		const segments = result.segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
+		const result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
 		expect(segments).toEqual([
 			{
 				rank: 500,
@@ -355,33 +344,6 @@ describe('ParsedINewsIntoSegments', () => {
 				externalId: 'segment-07',
 			},
 		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-08',
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-04',
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-05',
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-06',
-			}),
-			literal<RundownChangeSegmentCreate>({
-				type: RundownChangeType.SEGMENT_CREATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-07',
-			}),
-		])
 	})
 
 	it('Creates a new rank for a moved segment', () => {
@@ -397,16 +359,23 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-03': { rank: 3000 },
 		})
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
-			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks,
-			mockrundown
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-01', 'segment-02', 'segment-03'],
+			iNewsRaw.map((s) => s.externalId)
 		)
-		const segments = result.segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
+		const result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
 		expect(segments).toEqual([
 			{
 				rank: 1000,
@@ -420,13 +389,6 @@ describe('ParsedINewsIntoSegments', () => {
 				rank: 4000,
 				externalId: 'segment-02',
 			},
-		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeSegmentUpdate>({
-				type: RundownChangeType.SEGMENT_UPDATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-02',
-			}),
 		])
 	})
 
@@ -445,16 +407,23 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-04': { rank: 3000 },
 		})
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
-			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks,
-			mockrundown
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-01', 'segment-02', 'segment-03', 'segment-04'],
+			iNewsRaw.map((s) => s.externalId)
 		)
-		const segments = result.segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
+		const result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
 		expect(segments).toEqual([
 			{
 				rank: 500,
@@ -472,18 +441,6 @@ describe('ParsedINewsIntoSegments', () => {
 				rank: 4000,
 				externalId: 'segment-03',
 			},
-		])
-		expect(result.changes).toEqual([
-			literal<RundownChangeSegmentUpdate>({
-				type: RundownChangeType.SEGMENT_UPDATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-02',
-			}),
-			literal<RundownChangeSegmentUpdate>({
-				type: RundownChangeType.SEGMENT_UPDATE,
-				rundownExternalId: rundownId,
-				segmentExternalId: 'segment-03',
-			}),
 		])
 	})
 
@@ -506,15 +463,24 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-05', 'segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-06'],
+			iNewsRaw.map((s) => s.externalId)
+		)
+		const result = ParsedINewsIntoSegments.GetRanks(
 			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks
-		).segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
-		expect(result).toEqual([
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -563,15 +529,24 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 }, // Stay
 		})
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-05', 'segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-06'],
+			iNewsRaw.map((s) => s.externalId)
+		)
+		const result = ParsedINewsIntoSegments.GetRanks(
 			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks
-		).segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
-		expect(result).toEqual([
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -630,15 +605,24 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		const result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-05', 'segment-02', 'segment-01', 'segment-04', 'segment-03', 'segment-07', 'segment-08', 'segment-06'],
+			iNewsRaw.map((s) => s.externalId)
+		)
+		const result = ParsedINewsIntoSegments.GetRanks(
 			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks
-		).segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
-		expect(result).toEqual([
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		const segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -697,15 +681,24 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		let result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
+		let { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-05', 'segment-02', 'segment-01', 'segment-04', 'segment-03', 'segment-07', 'segment-08', 'segment-06'],
+			iNewsRaw.map((s) => s.externalId)
+		)
+		let result = ParsedINewsIntoSegments.GetRanks(
 			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks
-		).segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
-		expect(result).toEqual([
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		let segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -762,12 +755,29 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		result = ParsedINewsIntoSegments.GetUpdatesAndRanks(rundownId, mockrundown, iNewsRaw, previousRanks).segments.map(
-			(res) => {
-				return { rank: res.rank, externalId: res.externalId }
-			}
+		let {
+			movedSegments: movedSegments2,
+			notMovedSegments: notMovedSegments2,
+			insertedSegments: insertedSegments2,
+			deletedSegments: deletedSegments2,
+		} = GetMovedSegments(
+			['segment-05', 'segment-02', 'segment-01', 'segment-04', 'segment-03', 'segment-07', 'segment-08', 'segment-06'],
+			iNewsRaw.map((s) => s.externalId)
 		)
-		expect(result).toEqual([
+		result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments2,
+			notMovedSegments2,
+			insertedSegments2,
+			deletedSegments2
+		)
+		segments = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -815,12 +825,29 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		result = ParsedINewsIntoSegments.GetUpdatesAndRanks(rundownId, mockrundown, iNewsRaw, previousRanks).segments.map(
-			(res) => {
-				return { rank: res.rank, externalId: res.externalId }
-			}
+		const {
+			movedSegments: movedSegments3,
+			notMovedSegments: notMovedSegments3,
+			insertedSegments: insertedSegments3,
+			deletedSegments: deletedSegments3,
+		} = GetMovedSegments(
+			['segment-05', 'segment-01', 'segment-02', 'segment-04', 'segment-03', 'segment-07', 'segment-08', 'segment-06'],
+			iNewsRaw.map((s) => s.externalId)
 		)
-		expect(result).toEqual([
+		result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments3,
+			notMovedSegments3,
+			insertedSegments3,
+			deletedSegments3
+		)
+		segments = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-05',
@@ -867,15 +894,24 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-05': { rank: 5000 },
 		})
 
-		let result = ParsedINewsIntoSegments.GetUpdatesAndRanks(
+		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+			['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05'],
+			iNewsRaw.map((s) => s.externalId)
+		)
+		let result = ParsedINewsIntoSegments.GetRanks(
 			rundownId,
-			mockrundown,
-			iNewsRaw,
-			previousRanks
-		).segments.map((res) => {
-			return { rank: res.rank, externalId: res.externalId }
-		})
-		expect(result).toEqual([
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments,
+			notMovedSegments,
+			insertedSegments,
+			deletedSegments
+		)
+		let segments: Array<{ rank: number; externalId: SegmentId }> = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-01',
@@ -894,12 +930,29 @@ describe('ParsedINewsIntoSegments', () => {
 			},
 		])
 
-		result = ParsedINewsIntoSegments.GetUpdatesAndRanks(rundownId, mockrundown, iNewsRaw, previousRanks).segments.map(
-			(res) => {
-				return { rank: res.rank, externalId: res.externalId }
-			}
+		const {
+			movedSegments: movedSegments2,
+			notMovedSegments: notMovedSegments2,
+			insertedSegments: insertedSegments2,
+			deletedSegments: deletedSegments2,
+		} = GetMovedSegments(
+			['segment-01', 'segment-02', 'segment-03'],
+			iNewsRaw.map((s) => s.externalId)
 		)
-		expect(result).toEqual([
+		result = ParsedINewsIntoSegments.GetRanks(
+			rundownId,
+			iNewsRaw.map((s) => s.externalId),
+			previousRanks,
+			movedSegments2,
+			notMovedSegments2,
+			insertedSegments2,
+			deletedSegments2
+		)
+		segments = []
+		for (let [segmentId, rank] of result.segmentRanks) {
+			segments.push({ externalId: segmentId, rank })
+		}
+		expect(segments).toEqual([
 			{
 				rank: 1000,
 				externalId: 'segment-01',

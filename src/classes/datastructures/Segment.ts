@@ -12,6 +12,7 @@ export interface ISegment {
 	rank: number
 	name: string
 	float: boolean
+	untimed: boolean
 }
 
 export class RundownSegment implements ISegment {
@@ -24,19 +25,26 @@ export class RundownSegment implements ISegment {
 		public locator: string,
 		public externalId: string,
 		public rank: number,
-		public name: string
+		public name: string,
+		public untimed: boolean
 	) {
 		this.float = iNewsStory.meta.float === 'float'
 	}
 
-	serialize(): Omit<ISegment, 'modified' | 'locator'> {
+	serialize(): Omit<ISegment, 'modified' | 'locator' | 'rank'> {
 		return {
 			rundownId: this.rundownId,
-			iNewsStory: this.iNewsStory,
+			iNewsStory: {
+				...this.iNewsStory,
+				fields: { ...this.iNewsStory.fields, modifyDate: '' },
+				identifier: '',
+				id: '',
+				locator: '',
+			},
 			externalId: this.externalId,
-			rank: this.rank,
 			name: this.name,
 			float: this.float,
+			untimed: this.untimed,
 		}
 	}
 }

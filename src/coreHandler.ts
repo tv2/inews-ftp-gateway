@@ -13,13 +13,14 @@ import * as _ from 'underscore'
 
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
-import { mutateSegment, IngestSegmentToRundownSegment } from './mutate'
+import { IngestSegmentToRundownSegment } from './mutate'
 import { RundownSegment } from './classes/datastructures/Segment'
-import { IngestSegment, IngestRundown } from '@sofie-automation/blueprints-integration'
+import { IngestSegment, IngestRundown, IngestPlaylist } from '@sofie-automation/blueprints-integration'
 import { INEWS_DEVICE_CONFIG_MANIFEST } from './configManifest'
 import { ReflectPromise } from './helpers'
 import { ReducedRundown } from './classes/RundownWatcher'
 import { VersionIsCompatible } from './version'
+import { RundownId, SegmentId } from './helpers/id'
 
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -39,6 +40,7 @@ export interface CoreConfig {
 	port: number
 	watchdog: boolean
 }
+
 /**
  * Represents a connection between mos-integration and Core
  */
@@ -117,7 +119,7 @@ export class CoreHandler {
 			this.logger.warn(`Error when setting status: + ${e}`)
 			return {
 				statusCode: P.StatusCode.WARNING_MAJOR,
-				messages: ['Error when setting status', e],
+				messages: ['Error when setting status', e as string],
 			}
 		}
 	}
@@ -221,11 +223,6 @@ export class CoreHandler {
 						success = true
 						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadRundownResult])
 						break
-					case 'triggerReloadSegment':
-						const reloadSegmentResult = await Promise.resolve(this.triggerReloadSegment(cmd.args[0], cmd.args[1]))
-						success = true
-						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadSegmentResult])
-						break
 					case 'pingResponse':
 						let pingResponseResult = await Promise.resolve(this.pingResponse(cmd.args[0]))
 						success = true
@@ -250,10 +247,10 @@ export class CoreHandler {
 						throw Error('Function "' + cmd.functionName + '" not found!')
 				}
 			} catch (err) {
-				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, err.stack)
+				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, (err as any).stack)
 				if (!success) {
 					await this.core
-						.callMethod(P.methods.functionReply, [cmd._id, err.toString(), null])
+						.callMethod(P.methods.functionReply, [cmd._id, (err as any).toString(), null])
 						.catch((e) => this.logger.error('executeFunction reply error after execution failure', e, e.stack))
 				}
 			}
@@ -377,10 +374,10 @@ export class CoreHandler {
 	/** Get snapshot of the gateway. */
 	getSnapshot(): any {
 		this.logger.info('getSnapshot')
-		if (this.iNewsHandler?.iNewsWatcher?.rundowns) {
+		if (this.iNewsHandler?.iNewsWatcher?.playlists) {
 			const ret: any = {}
-			Object.keys(this.iNewsHandler.iNewsWatcher.rundowns).forEach((key) => {
-				const rundown = this.iNewsHandler?.iNewsWatcher?.rundowns.get(key)
+			Object.keys(this.iNewsHandler.iNewsWatcher.playlists).forEach((key) => {
+				const rundown = this.iNewsHandler?.iNewsWatcher?.playlists.get(key)
 				if (rundown) {
 					ret[key] = rundown
 				}
@@ -399,56 +396,9 @@ export class CoreHandler {
 	async triggerReloadRundown(rundownId: string): Promise<IngestRundown | null> {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
 		if (this.iNewsHandler?.iNewsWatcher) {
-			this.iNewsHandler.iNewsWatcher.ResyncRundown(rundownId)
+			await this.iNewsHandler.iNewsWatcher.ResyncRundown(rundownId)
 		}
 		return null
-	}
-
-	/**
-	 * Called by core to reload a segment. Returns the requested segment.
-	 * Promise is rejected if the rundown or segment cannot be found, or if the gateway is initialising.
-	 * @param rundownId Rundown to fetch from.
-	 * @param segmentId Segment to reload.
-	 */
-	async triggerReloadSegment(rundownId: string, segmentId: string): Promise<IngestSegment | null> {
-		this.logger.info(`Reloading segment ${segmentId} from rundown ${rundownId}`)
-		if (this.iNewsHandler && this.iNewsHandler.iNewsWatcher) {
-			const rundown = this.iNewsHandler.iNewsWatcher.rundowns.get(rundownId)
-
-			if (rundown) {
-				const segmentIndex = rundown.segments.findIndex((sgmnt) => sgmnt.externalId === segmentId)
-				if (segmentIndex === -1) return Promise.reject(`iNews gateway: segment does not exist ${segmentId}`)
-
-				const prevSegment = rundown.segments[segmentIndex]
-				const rawSegments = await this.iNewsHandler.iNewsWatcher.rundownManager.fetchINewsStoriesById(rundownId, [
-					segmentId,
-				])
-				const rawSegment = rawSegments.get(segmentId)
-
-				if (!rawSegment) {
-					return null
-				}
-
-				const segment = new RundownSegment(
-					rundownId,
-					rawSegment.iNewsStory,
-					rawSegment.modified,
-					rawSegment.locator,
-					`${rawSegment.externalId}`,
-					prevSegment.rank,
-					rawSegment.name
-				)
-
-				rundown.segments[segmentIndex] = segment
-				this.iNewsHandler.iNewsWatcher.rundowns.set(rundownId, rundown)
-
-				return mutateSegment(segment)
-			} else {
-				return Promise.reject(`iNews gateway can't find rundown with Id ${rundownId}`)
-			}
-		} else {
-			return Promise.reject(`iNews gateway is still connecting to iNews`)
-		}
 	}
 
 	/**
@@ -474,13 +424,35 @@ export class CoreHandler {
 						versions[dir] = json.version || 'N/A'
 					}
 				} catch (e) {
-					this.logger.error(e)
+					this.logger.error(e as string)
 				}
 			})
 		} catch (e) {
-			this.logger.error(e)
+			this.logger.error(e as string)
 		}
 		return versions
+	}
+
+	public async GetPlaylistCache(playlistExternalIds: string[]): Promise<Array<IngestPlaylist>> {
+		this.logger.debug(`Making a call to core (GetPlaylistCache)`)
+		const res: IngestPlaylist[] = []
+
+		const ps: Array<Promise<IngestPlaylist>> = []
+		for (let id of playlistExternalIds) {
+			this.logger.debug(`Getting cache for playlist ${id}`)
+			ps.push(this.core.callMethod(P.methods.dataPlaylistGet, [id]))
+		}
+
+		const results = await Promise.all(ps.map(ReflectPromise))
+
+		results.forEach((result) => {
+			if (result.status === 'fulfilled') {
+				this.logger.debug(`Found cached playlist ${result.value.externalId}`)
+				res.push(result.value)
+			}
+		})
+
+		return res
 	}
 
 	/**
@@ -492,7 +464,7 @@ export class CoreHandler {
 
 		const ps: Array<Promise<IngestRundown>> = []
 		for (let id of rundownExternalIds) {
-			this.logger.debug(`Getting cach for rundown ${id}`)
+			this.logger.debug(`Getting cache for rundown ${id}`)
 			ps.push(this.core.callMethod(P.methods.dataRundownGet, [id]))
 		}
 
@@ -511,9 +483,13 @@ export class CoreHandler {
 	}
 
 	public async GetSegmentsCacheById(
-		rundownExternalId: string,
-		segmentExternalIds: string[]
-	): Promise<Map<string, RundownSegment>> {
+		rundownExternalId: RundownId,
+		segmentExternalIds: SegmentId[]
+	): Promise<Map<SegmentId, RundownSegment>> {
+		if (!segmentExternalIds.length) {
+			return new Map()
+		}
+
 		this.logger.debug(`Making a call to core (GetSegmentsCacheById)`)
 		this.logger.debug(`Looking for external IDs ${JSON.stringify(segmentExternalIds)}`)
 
@@ -532,7 +508,7 @@ export class CoreHandler {
 			}
 		})
 
-		const rundownSegments: Map<string, RundownSegment> = new Map()
+		const rundownSegments: Map<SegmentId, RundownSegment> = new Map()
 		cachedSegments.forEach((segment) => {
 			const parsed = IngestSegmentToRundownSegment(segment)
 

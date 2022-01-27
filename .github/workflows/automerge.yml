@@ -1,4 +1,4 @@
-name: Merge master to staging
+name: Merge staging to develop
 
 on:
   schedule:
@@ -14,7 +14,7 @@ jobs:
       - uses: tgymnich/fork-sync@v1.6
         with:
           owner: tv2
-          head: master
-          base: staging
-          pr_title: Automerge master
+          head: staging
+          base: develop
+          pr_title: Automerge staging
           auto_merge: false

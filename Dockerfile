@@ -1,13 +1,6 @@
-# BUILD IMAGE
-FROM node:8.11.4
-WORKDIR /opt/sofie-spreadsheet-gateway
-COPY . .
-RUN yarn install --check-files --frozen-lockfile
-RUN yarn build:main
-
-# DEPLOY IMAGE
-FROM node:8.11.4-alpine
-RUN apk add --no-cache tzdata
-COPY --from=0 /opt/sofie-spreadsheet-gateway /opt/sofie-spreadsheet-gateway
-WORKDIR /opt/sofie-spreadsheet-gateway
+FROM node:12-alpine3.9
+RUN apk add --no-cache tzdata git
+COPY . /opt/sofie-inews-gateway
+WORKDIR /opt/sofie-inews-gateway
+RUN yarn install --production
 CMD ["yarn", "start"]

@@ -1,56 +1,153 @@
-import { InewsRundown } from './datastructures/Rundown'
-import { IOutputLayer } from 'tv-automation-sofie-blueprints-integration'
 import * as Winston from 'winston'
-import { SplitRawDataToElements } from './converters/SplitRawDataToElements'
-import { ParsedElementsIntoSegments } from './ParsedElementsToSegments'
+import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
+import { promisify } from 'util'
+import { INewsStoryGW } from './datastructures/Segment'
+import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
+import { literal, parseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromise } from '../helpers'
+import { VERSION } from '../version'
+import { SegmentId } from '../helpers/id'
+
+function isFile(f: INewsDirItem): f is INewsFile {
+	return f.filetype === 'file'
+}
 
 export class RundownManager {
+	private _listStories!: (queueName: string) => Promise<Array<INewsDirItem>>
+	private _getStory!: (queueName: string, story: string) => Promise<INewsStory>
 
-	private _logger: Winston.LoggerInstance
-
-	constructor (private logger: Winston.LoggerInstance, private inewsConnection: any) {
-		this._logger = this.logger
-		this.inewsConnection = inewsConnection
+	constructor(private _logger?: Winston.LoggerInstance, private inewsConnection?: INewsClient) {
+		if (this.inewsConnection) {
+			this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
+			this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
+		}
 	}
 
-	downloadRunningOrder (rundownSheetId: string, outputLayers: IOutputLayer[]): Promise<InewsRundown> {
-		return this.downloadINewsRundown(rundownSheetId)
-		.then(rundownRaw => {
-			this._logger.info(rundownSheetId, ' Downloaded ')
-			return this.convertNSMLtoSofie(this._logger, rundownSheetId, rundownSheetId, rundownRaw, outputLayers)
-		})
+	/**
+	 * Downloads a rundown by ID.
+	 */
+	async downloadRundown(rundownId: string): Promise<ReducedRundown> {
+		let reducedRundown = await this.downloadINewsRundown(rundownId)
+		return reducedRundown
 	}
 
-	convertNSMLtoSofie (_logger: Winston.LoggerInstance, sheetId: string, name: string, rundownNSML: any[][], outputLayers: IOutputLayer[]): InewsRundown {
-		_logger.info('START : ', name, ' convert to Sofie Rundown')
-		let parsedData = SplitRawDataToElements.convert(_logger, rundownNSML, outputLayers)
-		let rundown = new InewsRundown(sheetId, name, parsedData.meta.version, parsedData.meta.startTime, parsedData.meta.endTime)
-		let segments = ParsedElementsIntoSegments.parse(sheetId, parsedData.elements)
-		rundown.addSegments(segments)
-		_logger.info('DONE : ', name, ' converted to Sofie Rundown')
+	/**
+	 * Download a rundown from iNews.
+	 * @param queueName Name of queue to download.
+	 * @param oldRundown Old rundown object.
+	 */
+	async downloadINewsRundown(queueName: string): Promise<ReducedRundown> {
+		const rundown: ReducedRundown = {
+			externalId: queueName,
+			name: queueName,
+			gatewayVersion: VERSION,
+			segments: [],
+		}
+		try {
+			let dirList = await this._listStories(queueName)
+			dirList.forEach((ftpFileName: INewsDirItem, index) => {
+				if (isFile(ftpFileName)) {
+					rundown.segments.push(
+						literal<ReducedSegment>({
+							externalId: ftpFileName.identifier,
+							name: ftpFileName.storyName,
+							modified: ftpFileName.modified ?? new Date(0),
+							locator: ftpFileName.locator,
+							rank: index,
+						})
+					)
+				}
+			})
+		} catch (err) {
+			this._logger?.error('Error downloading iNews rundown: ', err, err.stack)
+		}
 		return rundown
 	}
 
-	async downloadINewsRundown (queueName: string): Promise<Array<any>> {
-		return new Promise((resolve) => {
-			let stories: Array<any> = []
-			this.inewsConnection.list(queueName, (error: any, dirList: any) => {
-				if (!error && dirList.length > 0) {
-					dirList.forEach((storyFile: any, index: number) => {
-						this.inewsConnection.story(queueName, storyFile.file, (error: any, story: any) => {
-							console.log('DUMMY LOG : ', error)
-							stories.push({ 'storyName': storyFile.storyName, 'story': story })
-							if (index === dirList.length - 1) {
-								resolve(stories)
-							}
-							this._logger.info('Queue : ', queueName, error || '', ' Story : ', storyFile.storyName)
-						})
-					})
-				} else {
-					this._logger.error('Error downloading iNews rundown : ', error)
-					resolve([])
+	public async fetchINewsStoriesById(
+		queueName: string,
+		segmentExternalIds: SegmentId[]
+	): Promise<Map<SegmentId, UnrankedSegment>> {
+		const stories = new Map<SegmentId, UnrankedSegment>()
+		const dirList = await this._listStories(queueName)
+		const ps: Array<Promise<INewsStoryGW | undefined>> = []
+
+		for (const storyExternalId of segmentExternalIds) {
+			ps.push(this.downloadINewsStoryById(queueName, storyExternalId, dirList))
+		}
+
+		const results = await Promise.all(ps.map(ReflectPromise))
+
+		results.forEach((result) => {
+			if (result.status === 'fulfilled') {
+				const rawSegment = result.value
+				if (rawSegment) {
+					const segment: UnrankedSegment = {
+						externalId: rawSegment.identifier,
+						name: rawSegment.fields.title ?? '',
+						modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
+						locator: rawSegment.locator,
+						rundownId: queueName,
+						iNewsStory: rawSegment,
+					}
+					stories.set(rawSegment.identifier, segment)
 				}
-			})
+			}
 		})
+
+		return stories
+	}
+
+	/*
+	 * Download an iNews story.
+	 * @param storyFile File to download.
+	 * @param oldRundown Old rundown to overwrite.
+	 */
+	async downloadINewsStory(queueName: string, storyFile: INewsDirItem): Promise<INewsStoryGW | undefined> {
+		let story: INewsStoryGW
+		try {
+			story = {
+				...(await this._getStory(queueName, storyFile.file)),
+				identifier: (storyFile as INewsFile).identifier,
+				locator: (storyFile as INewsFile).locator,
+			}
+		} catch (err) {
+			this._logger?.error(`Error downloading iNews story: ${err}`)
+			return undefined
+		}
+
+		this._logger?.debug('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
+		/* Add fileId and update modifyDate to ftp reference in storyFile */
+		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
+		this._logger?.debug('Queue : ', queueName, ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
+		return story
+	}
+
+	/**
+	 * Downloads a segment from iNews with a given file name (externalId).
+	 * @param queueName Rundown to download from.
+	 * @param segmentId Segment to download.
+	 */
+	async downloadINewsStoryById(
+		queueName: string,
+		segmentId: string,
+		dirList: Array<INewsDirItem>
+	): Promise<INewsStoryGW | undefined> {
+		dirList = dirList || (await this._listStories(queueName))
+		if (dirList.length > 0) {
+			const segment = dirList.find((segment: INewsDirItem) => (segment as INewsFile).identifier === segmentId)
+
+			if (!segment) return Promise.reject(`Cannot find segment with name ${segmentId}`)
+
+			return this.downloadINewsStory(queueName, segment)
+		} else {
+			return Promise.reject(`Cannot find rundown with Id ${queueName}`)
+		}
+	}
+
+	emptyInewsFtpBuffer() {
+		if (this.inewsConnection) {
+			this.inewsConnection._queue.queuedJobList.list = {}
+			this.inewsConnection._queue.inprogressJobList.list = {}
+		}
 	}
 }

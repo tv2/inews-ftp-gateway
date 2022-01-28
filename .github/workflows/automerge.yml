@@ -2,7 +2,7 @@ name: Merge staging to develop
 
 on:
   schedule:
-    - cron: '23 45 * * *' # every night
+    - cron: '15 0 * * *' # every night
   workflow_dispatch: # on button click
 
 jobs:

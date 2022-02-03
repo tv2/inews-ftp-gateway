@@ -397,6 +397,35 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
+	it('tests that we pick the first graphics profile cue', () => {
+		const segments = [
+			createKlarOnAirSegment(1, {
+				cues: [
+					null,
+					'KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n'),
+					'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
+					null,
+					'KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n'),
+					'KOMMANDO=GRAPHICSPROFILE\nTV2 News\n;0.00'.split('\n'),
+				],
+				body:
+					'<p>something</p>\n<p><a idref="4" /></p>\n<p><a idref="5" /></p>\n<p><a idref="1" /></p>\n<p><a idref="2" /></p>\n',
+			}),
+		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01'],
+					payload: { graphicProfile: 'TV2 Sporten' },
+				},
+			]),
+			untimedSegments: new Set(['segment-01']),
+		})
+	})
+
 	it('tests that we only care about non-floated segments (kommando)', () => {
 		const segments = [
 			createUnrankedSegment(1),

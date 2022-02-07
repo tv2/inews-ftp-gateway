@@ -37,12 +37,10 @@ export function ResolveRundownIntoPlaylist(
 	let klarOnAirStoryFound = false
 
 	for (const segment of segments) {
-		// Check for graphic profile changes (KLAR ON AIR only).
 		if (shouldLookForGraphicProfile(segment, currentRundown)) {
 			const graphicProfiles = getOrderedGraphicProfiles(segment)
 
 			if (graphicProfiles.length > 0) {
-				// Extract and set graphic profile for rundown
 				const graphicProfile = graphicProfiles[0]
 				currentRundown.payload = {
 					...(currentRundown.payload ?? null),

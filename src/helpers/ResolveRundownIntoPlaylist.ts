@@ -23,21 +23,22 @@ export function ResolveRundownIntoPlaylist(
 		segments: [],
 	}
 
-	// TODO: Use for creating multi-rundown playlists
-	// const splitRundown = () => {
-	// 	resolvedPlaylist.push(currentRundown)
-	// 	rundownIndex++
-	// 	currentRundown = {
-	// 		rundownId: `${playlistExternalId}_${rundownIndex + 1}`,
-	// 		segments: [],
-	// 	}
-	// }
+	const splitRundown = () => {
+		if (currentRundown.segments.length === 0) return
+		resolvedPlaylist.push(currentRundown)
+		rundownIndex++
+		currentRundown = {
+			rundownId: `${playlistExternalId}_${rundownIndex + 1}`,
+			segments: [],
+		}
+	}
 
 	let continuityStoryFound = false
 	let klarOnAirStoryFound = false
 
 	for (const segment of segments) {
 		if (shouldLookForGraphicProfile(segment, currentRundown)) {
+			splitRundown()
 			extractAndSetGraphicProfile(segment, currentRundown)
 		}
 
@@ -89,10 +90,8 @@ function setGraphicsProfile(rundown: ResolvedPlaylistRundown, graphicProfile: st
 }
 
 function shouldLookForGraphicProfile(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): boolean {
-	const isKlarOnAirSegment = isKlarOnAir(segment)
 	const isFloated = segment.iNewsStory.meta.float ?? false
-	const rundownHasGraphicProfile = rundown?.payload?.graphicProfile !== undefined
-	return !isFloated && isKlarOnAirSegment && !rundownHasGraphicProfile
+	return !isFloated
 }
 
 function getOrderedGraphicProfiles(segment: UnrankedSegment): string[] {

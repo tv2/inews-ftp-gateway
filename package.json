@@ -26,7 +26,7 @@
     "build:main": "tsc -p tsconfig.json",
     "lint": "prettier --check .",
     "lint-fix": "prettier --write .",
-    "unit": "jest",
+    "unit": "jest --coverage",
     "test": "yarn lint && yarn unit",
     "test:integration": "yarn lint && jest --config=jest-integration.config.js",
     "watch": "jest --watch",
@@ -84,8 +84,8 @@
   },
   "resolutions": {
     "minimist": "^1.2.3",
-		"set-value": "^4.0.1",
-		"ansi-regex": "^5.0.1"
+    "set-value": "^4.0.1",
+    "ansi-regex": "^5.0.1"
   },
   "devDependencies": {
     "@types/jest": "^24.0.11",

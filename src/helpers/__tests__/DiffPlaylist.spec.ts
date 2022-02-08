@@ -14,7 +14,11 @@ import { RundownSegment } from '../../classes/datastructures/Segment'
 import { literal } from '../../helpers'
 import { INewsStory, INewsFields } from 'inews'
 
-function makeINewsRundown(rundownId: string, segmentIds: Array<{ _id: SegmentId; backTime?: string }>): INewsRundown {
+function makeINewsRundown(
+	rundownId: string,
+	segmentIds: Array<{ _id: SegmentId; backTime?: string }>,
+	payload?: { [key: string]: any }
+): INewsRundown {
 	const segments = segmentIds.map(
 		(segment, i) =>
 			new RundownSegment(
@@ -29,7 +33,7 @@ function makeINewsRundown(rundownId: string, segmentIds: Array<{ _id: SegmentId;
 			)
 	)
 
-	const rundown = new INewsRundown(rundownId, rundownId, 'v0.0', segments)
+	const rundown = new INewsRundown(rundownId, rundownId, 'v0.0', segments, payload)
 
 	return rundown
 }
@@ -546,4 +550,222 @@ describe('DiffPlaylist', () => {
 			changedSegments: [],
 		})
 	})
+
+	it('tests if adding a graphic profile triggers update meta data', () => {
+		let prevPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+		]
+
+		let newPlaylist = [
+			makeINewsRundown(
+				'test-rundown_1',
+				[
+					{
+						_id: 'segment-01',
+					},
+					{
+						_id: 'segment-02',
+					},
+					{
+						_id: 'segment-03',
+					},
+				],
+				{
+					graphicProfile: 'TV2 Nyhederne',
+				}
+			),
+		]
+
+		let result = DiffPlaylist(newPlaylist, prevPlaylist)
+
+		expect(result.changes).toEqual([
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			}),
+		])
+		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
+			movedSegments: [],
+			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			insertedSegments: [],
+			deletedSegments: [],
+			changedSegments: [],
+		})
+	})
+
+	it('tests that keeping a graphic profile does not trigger any updates.', () => {
+		let prevPlaylist = [
+			makeINewsRundown(
+				'test-rundown_1',
+				[
+					{
+						_id: 'segment-01',
+					},
+					{
+						_id: 'segment-02',
+					},
+					{
+						_id: 'segment-03',
+					},
+				],
+				{
+					graphicProfile: 'TV2 Nyhederne',
+				}
+			),
+		]
+
+		let newPlaylist = [
+			makeINewsRundown(
+				'test-rundown_1',
+				[
+					{
+						_id: 'segment-01',
+					},
+					{
+						_id: 'segment-02',
+					},
+					{
+						_id: 'segment-03',
+					},
+				],
+				{
+					graphicProfile: 'TV2 Nyhederne',
+				}
+			),
+		]
+
+		let result = DiffPlaylist(newPlaylist, prevPlaylist)
+
+		expect(result.changes).toEqual([])
+		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
+			movedSegments: [],
+			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			insertedSegments: [],
+			deletedSegments: [],
+			changedSegments: [],
+		})
+	})
+
+	it('tests if changing a graphic profile triggers update meta data', () => {
+		let prevPlaylist = [
+			makeINewsRundown(
+				'test-rundown_1',
+				[
+					{
+						_id: 'segment-01',
+					},
+					{
+						_id: 'segment-02',
+					},
+					{
+						_id: 'segment-03',
+					},
+				],
+				{
+					graphicProfile: 'TV2 Nyhederne',
+				}
+			),
+		]
+
+		let newPlaylist = [
+			makeINewsRundown(
+				'test-rundown_1',
+				[
+					{
+						_id: 'segment-01',
+					},
+					{
+						_id: 'segment-02',
+					},
+					{
+						_id: 'segment-03',
+					},
+				],
+				{
+					graphicProfile: 'TV2 Sporten',
+				}
+			),
+		]
+
+		let result = DiffPlaylist(newPlaylist, prevPlaylist)
+
+		expect(result.changes).toEqual([
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			}),
+		])
+		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
+			movedSegments: [],
+			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			insertedSegments: [],
+			deletedSegments: [],
+			changedSegments: [],
+		})
+	})
+
+	it('tests if deleting a graphic profile triggers update meta data', () => {
+		let prevPlaylist = [
+			makeINewsRundown(
+				'test-rundown_1',
+				[
+					{
+						_id: 'segment-01',
+					},
+					{
+						_id: 'segment-02',
+					},
+					{
+						_id: 'segment-03',
+					},
+				],
+				{
+					graphicProfile: 'TV2 Nyhederne',
+				}
+			),
+		]
+
+		let newPlaylist = [
+			makeINewsRundown('test-rundown_1', [
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			]),
+		]
+
+		let result = DiffPlaylist(newPlaylist, prevPlaylist)
+
+		expect(result.changes).toEqual([
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			}),
+		])
+		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
+			movedSegments: [],
+			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			insertedSegments: [],
+			deletedSegments: [],
+			changedSegments: [],
+		})
+	})
+
+	// it('tests that creating a ')
+	// Test for checking
 })

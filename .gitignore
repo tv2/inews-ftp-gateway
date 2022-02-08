@@ -6,3 +6,4 @@ token.json
 .env
 src/DEFAULTS.ts
 npm-debug.log
+coverage

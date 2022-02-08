@@ -4,3 +4,4 @@ package*.json
 dist
 **/**/__mocks_/*.json
 *.yml
+coverage

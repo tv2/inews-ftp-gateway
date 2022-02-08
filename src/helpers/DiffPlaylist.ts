@@ -131,6 +131,10 @@ export function DiffPlaylist(
 			continue
 		}
 
+		if (prevRundown.payload?.graphicProfile !== rundown.payload?.graphicProfile) {
+			updatedRundownMetaData.add(rundown.externalId)
+		}
+
 		let { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
 			prevRundown.segments.map((s) => s.externalId),
 			rundown.segments.map((s) => s.externalId)

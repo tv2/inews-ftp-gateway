@@ -89,7 +89,7 @@ function setGraphicsProfile(rundown: ResolvedPlaylistRundown, graphicProfile: st
 	}
 }
 
-function shouldLookForGraphicProfile(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): boolean {
+function shouldLookForGraphicProfile(segment: UnrankedSegment, _rundown: ResolvedPlaylistRundown): boolean {
 	const isFloated = segment.iNewsStory.meta.float ?? false
 	return !isFloated
 }

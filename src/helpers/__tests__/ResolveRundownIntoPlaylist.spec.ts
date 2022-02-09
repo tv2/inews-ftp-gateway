@@ -292,7 +292,7 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile (kommando)', () => {
+	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
@@ -306,7 +306,11 @@ describe('Resolve Rundown Into Playlist', () => {
 			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02'],
+					segments: ['segment-01'],
+				},
+				{
+					rundownId: 'test-playlist_2',
+					segments: ['segment-02'],
 					payload: { graphicProfile: 'TV2 Nyhederne' },
 				},
 			]),
@@ -314,7 +318,7 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile (kommando)', () => {
+	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
@@ -333,15 +337,24 @@ describe('Resolve Rundown Into Playlist', () => {
 			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04'],
+					segments: ['segment-01'],
+				},
+				{
+					rundownId: 'test-playlist_2',
+					segments: ['segment-02', 'segment-03'],
 					payload: { graphicProfile: 'TV2 Nyhederne' },
+				},
+				{
+					rundownId: 'test-playlist_3',
+					segments: ['segment-04'],
+					payload: { graphicProfile: 'TV2 Sporten' },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
 		})
 	})
 
-	it('tests that we can only set graphicProfile from KLAR ON AIR (kommando)', () => {
+	it('tests that we can set graphicProfile in non KLAR-ON-AIR stories', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createUnrankedSegment(2, {
@@ -359,14 +372,24 @@ describe('Resolve Rundown Into Playlist', () => {
 			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
+					segments: ['segment-01'],
+				},
+				{
+					rundownId: 'test-playlist_2',
+					segments: ['segment-02'],
+					payload: { graphicProfile: 'TV2 Nyhederne' },
+				},
+				{
+					rundownId: 'test-playlist_3',
+					segments: ['segment-03'],
+					payload: { graphicProfile: 'TV2 Sporten' },
 				},
 			]),
 			untimedSegments: new Set([]),
 		})
 	})
 
-	it('tests that we only care about the first cue (kommando)', () => {
+	it('tests that we only care about the first cue', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
@@ -389,8 +412,17 @@ describe('Resolve Rundown Into Playlist', () => {
 			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
+					segments: ['segment-01'],
+				},
+				{
+					rundownId: 'test-playlist_2',
+					segments: ['segment-02'],
 					payload: { graphicProfile: 'TV2 Nyhederne' },
+				},
+				{
+					rundownId: 'test-playlist_3',
+					segments: ['segment-03'],
+					payload: { graphicProfile: 'TV2 Sporten' },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
@@ -426,7 +458,7 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that we only care about non-floated segments (kommando)', () => {
+	it('tests that we only care about non-floated segments', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
@@ -445,7 +477,11 @@ describe('Resolve Rundown Into Playlist', () => {
 			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
+					segments: ['segment-01', 'segment-02'],
+				},
+				{
+					rundownId: 'test-playlist_2',
+					segments: ['segment-03'],
 					payload: { graphicProfile: 'TV2 Sporten' },
 				},
 			]),

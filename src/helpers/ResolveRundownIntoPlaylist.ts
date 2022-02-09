@@ -108,8 +108,7 @@ function parseGraphicProfile(cue: UnparsedCue | undefined): string | null {
 	// Kommando cue (ignoring timing)
 	const kommandoPattern = /^\s*KOMMANDO\s*=\s*GRAPHICSPROFILE/i
 	if (numberOfCueLines >= 2 && kommandoPattern.test(cue![0])) {
-		const graphicProfile = cue![1].trim()
-		return graphicProfile
+		return cue![1].trim()
 	}
 	return null
 }

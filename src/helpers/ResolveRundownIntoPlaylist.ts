@@ -38,8 +38,12 @@ export function ResolveRundownIntoPlaylist(
 
 	for (const segment of segments) {
 		if (shouldLookForGraphicProfile(segment, currentRundown)) {
-			splitRundown()
-			extractAndSetGraphicProfile(segment, currentRundown)
+			const graphicProfiles = getOrderedGraphicProfiles(segment)
+			if (graphicProfiles.length > 0) {
+				splitRundown()
+				const graphicProfile = graphicProfiles[0]
+				setGraphicProfile(currentRundown, graphicProfile)
+			}
 		}
 
 		currentRundown.segments.push(segment.externalId)
@@ -74,15 +78,7 @@ function isKlarOnAir(segment: UnrankedSegment): boolean {
 	return !!segment.name?.match(klarOnAirPattern)
 }
 
-function extractAndSetGraphicProfile(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): void {
-	const graphicProfiles = getOrderedGraphicProfiles(segment)
-	if (graphicProfiles.length > 0) {
-		const graphicProfile = graphicProfiles[0]
-		setGraphicsProfile(rundown, graphicProfile)
-	}
-}
-
-function setGraphicsProfile(rundown: ResolvedPlaylistRundown, graphicProfile: string) {
+function setGraphicProfile(rundown: ResolvedPlaylistRundown, graphicProfile: string) {
 	rundown.payload = {
 		...(rundown.payload ?? null),
 		graphicProfile,
@@ -98,7 +94,7 @@ function getOrderedGraphicProfiles(segment: UnrankedSegment): string[] {
 	const cueOrder = getCueOrder(segment)
 	const orderedGraphicProfiles: string[] = []
 	cueOrder.forEach((cueIndex: number) => {
-		const parsedProfile = parseGraphicsProfile(segment.iNewsStory.cues[cueIndex])
+		const parsedProfile = parseGraphicProfile(segment.iNewsStory.cues[cueIndex])
 		if (parsedProfile) {
 			orderedGraphicProfiles.push(parsedProfile)
 		}
@@ -106,7 +102,7 @@ function getOrderedGraphicProfiles(segment: UnrankedSegment): string[] {
 	return orderedGraphicProfiles
 }
 
-function parseGraphicsProfile(cue: UnparsedCue | undefined): string | null {
+function parseGraphicProfile(cue: UnparsedCue | undefined): string | null {
 	const numberOfCueLines = !!cue ? cue.length : -1
 
 	// Kommando cue (ignoring timing)

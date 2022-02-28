@@ -292,7 +292,7 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile', () => {
+	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown showstyleVariant', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
@@ -307,14 +307,14 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
 		})
 	})
 
-	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile', () => {
+	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown showstyleVariant', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
@@ -334,14 +334,14 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
 		})
 	})
 
-	it('tests that we can only set graphicProfile from KLAR ON AIR', () => {
+	it('tests that we can only set showstyleVariant from KLAR ON AIR', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createUnrankedSegment(2, {
@@ -390,7 +390,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
@@ -419,7 +419,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
-					payload: { graphicProfile: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
 			]),
 			untimedSegments: new Set(['segment-01']),
@@ -446,7 +446,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { graphicProfile: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
 			]),
 			untimedSegments: new Set(['segment-03']),

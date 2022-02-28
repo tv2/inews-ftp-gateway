@@ -131,7 +131,7 @@ export function DiffPlaylist(
 			continue
 		}
 
-		if (prevRundown.payload?.graphicProfile !== rundown.payload?.graphicProfile) {
+		if (prevRundown.payload?.showstyleVariant !== rundown.payload?.showstyleVariant) {
 			updatedRundownMetaData.add(rundown.externalId)
 		}
 

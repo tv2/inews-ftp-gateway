@@ -157,6 +157,7 @@ export function GenerateCoreCalls(
 			playlistId,
 			assignedRundown.rundownId,
 			assignedRundown.segments,
+			assignedRundown.payload,
 			iNewsDataCache,
 			assignedRanks,
 			untimedSegments
@@ -278,6 +279,7 @@ export function GenerateCoreCalls(
 			playlistId,
 			assignedRundown.rundownId,
 			assignedRundown.segments,
+			assignedRundown.payload,
 			iNewsDataCache,
 			assignedRanks,
 			untimedSegments
@@ -300,6 +302,7 @@ function playlistRundownToIngestRundown(
 	playlistId: PlaylistId,
 	rundownId: RundownId,
 	segments: string[],
+	payload: object | undefined,
 	inewsCache: Map<SegmentId, UnrankedSegment>,
 	ranks: Map<SegmentId, number>,
 	untimedSegments: Set<SegmentId>
@@ -333,6 +336,7 @@ function playlistRundownToIngestRundown(
 		type: INGEST_RUNDOWN_TYPE,
 		segments: ingestSegments,
 		payload: {
+			...(payload ?? null),
 			playlistExternalId: playlistId,
 		},
 	})

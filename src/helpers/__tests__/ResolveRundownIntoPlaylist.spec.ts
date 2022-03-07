@@ -3,7 +3,14 @@ import { ResolvedPlaylist, ResolveRundownIntoPlaylist } from '../ResolveRundownI
 import { UnrankedSegment } from '../../classes/RundownWatcher'
 import { INewsStory, INewsFields } from 'inews'
 
-function createUnrankedSegment(num: number, backTime?: string): UnrankedSegment {
+type SegmentOptions = {
+	backTime?: string
+	cues?: (string[] | null)[]
+	meta?: object
+	body?: string
+}
+
+function createUnrankedSegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
@@ -24,14 +31,14 @@ function createUnrankedSegment(num: number, backTime?: string): UnrankedSegment 
 				cumeTime: '',
 				backTime,
 			}),
-			meta: {},
-			cues: [],
-			body: '',
+			meta: meta ?? {},
+			cues: cues ?? [],
+			body: body ?? '',
 		}),
 	})
 }
 
-function createContinuitySegment(num: number, backTime?: string): UnrankedSegment {
+function createContinuitySegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
@@ -52,14 +59,14 @@ function createContinuitySegment(num: number, backTime?: string): UnrankedSegmen
 				cumeTime: '',
 				backTime,
 			}),
-			meta: {},
-			cues: [],
-			body: '',
+			meta: meta ?? {},
+			cues: cues ?? [],
+			body: body ?? '',
 		}),
 	})
 }
 
-function createKlarOnAirSegment(num: number, backTime?: string): UnrankedSegment {
+function createKlarOnAirSegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
@@ -80,14 +87,18 @@ function createKlarOnAirSegment(num: number, backTime?: string): UnrankedSegment
 				cumeTime: '',
 				backTime,
 			}),
-			meta: {},
-			cues: [],
-			body: '',
+			meta: meta ?? {},
+			cues: cues ?? [],
+			body: body ?? '',
 		}),
 	})
 }
 
-function createUnnamedSegment(num: number, segmentName: any): UnrankedSegment {
+function createUnnamedSegment(
+	num: number,
+	segmentName: any,
+	{ cues, meta, body }: SegmentOptions = {}
+): UnrankedSegment {
 	let id = num.toString().padStart(2, '0')
 	return literal<UnrankedSegment>({
 		externalId: `segment-${id}`,
@@ -107,9 +118,9 @@ function createUnnamedSegment(num: number, segmentName: any): UnrankedSegment {
 				totalTime: '',
 				cumeTime: '',
 			}),
-			meta: {},
-			cues: [],
-			body: '',
+			meta: meta ?? {},
+			cues: cues ?? [],
+			body: body ?? '',
 		}),
 	})
 }
@@ -140,7 +151,7 @@ describe('Resolve Rundown Into Playlist', () => {
 			createUnrankedSegment(1),
 			createUnrankedSegment(2),
 			createUnrankedSegment(3),
-			createContinuitySegment(4, '@1234'),
+			createContinuitySegment(4, { backTime: '@1234' }),
 		]
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
@@ -162,7 +173,7 @@ describe('Resolve Rundown Into Playlist', () => {
 			createUnrankedSegment(1),
 			createUnrankedSegment(2),
 			createUnrankedSegment(3),
-			createContinuitySegment(4, '@1234'),
+			createContinuitySegment(4, { backTime: '@1234' }),
 			createUnrankedSegment(5),
 		]
 
@@ -185,9 +196,9 @@ describe('Resolve Rundown Into Playlist', () => {
 			createUnrankedSegment(1),
 			createUnrankedSegment(2),
 			createUnrankedSegment(3),
-			createContinuitySegment(4, '@1234'),
+			createContinuitySegment(4, { backTime: '@1234' }),
 			createUnrankedSegment(5),
-			createContinuitySegment(6, '@5678'),
+			createContinuitySegment(6, { backTime: '@5678' }),
 		]
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
@@ -211,7 +222,7 @@ describe('Resolve Rundown Into Playlist', () => {
 			createUnrankedSegment(3),
 			createContinuitySegment(4),
 			createUnrankedSegment(5),
-			createContinuitySegment(6, '@5678'),
+			createContinuitySegment(6, { backTime: '@5678' }),
 		]
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
@@ -281,135 +292,242 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	// todo - create object with undefined Segment name
-
-	// TODO: Breaks, future work
-	/*it('Splits with one segment with back-time', () => {
-		let segments: Array<UnrankedSegment> = [
+	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown showstyleVariant', () => {
+		const segments = [
 			createUnrankedSegment(1),
-			createUnrankedSegment(2, '@1234'),
-			createUnrankedSegment(3),
+			createKlarOnAirSegment(2, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
 		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
-
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02'],
-					backTime: '@1234',
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: ['segment-03'],
-				},
-			])
-		)
+			]),
+			untimedSegments: new Set(['segment-02']),
+		})
 	})
 
-	it('Splits when every segment has back-time', () => {
-		let segments: Array<UnrankedSegment> = [
-			createUnrankedSegment(1, '@1234'),
-			createUnrankedSegment(2, '@1234'),
-			createUnrankedSegment(3, '@1234'),
+	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown showstyleVariant', () => {
+		const segments = [
+			createUnrankedSegment(1),
+			createKlarOnAirSegment(2, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n'), null],
+				body: '<p><a idref="0" /></p>\n<p><a idref="1" /></p>',
+			}),
+			createUnrankedSegment(3),
+			createKlarOnAirSegment(4, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
 		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04'],
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
+				},
+			]),
+			untimedSegments: new Set(['segment-02']),
+		})
+	})
 
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+	it('tests that we can only set showstyleVariant from KLAR ON AIR', () => {
+		const segments = [
+			createUnrankedSegment(1),
+			createUnrankedSegment(2, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
+			createUnnamedSegment(3, '', {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
+		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01', 'segment-02', 'segment-03'],
+				},
+			]),
+			untimedSegments: new Set([]),
+		})
+	})
+
+	it('tests that we only care about the first cue', () => {
+		const segments = [
+			createUnrankedSegment(1),
+			createKlarOnAirSegment(2, {
+				cues: [
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n'),
+					'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 News\n;0.00'.split('\n'),
+				],
+				body: '<p><a idref="0" /></p>\n<p><a idref="2" /></p>\n<p><a idref="3" /></p>\n<p><a idref="4" /></p>\n',
+			}),
+			createUnnamedSegment(3, '', {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
+		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01', 'segment-02', 'segment-03'],
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
+				},
+			]),
+			untimedSegments: new Set(['segment-02']),
+		})
+	})
+
+	it('tests that we pick the first graphics profile cue', () => {
+		const segments = [
+			createKlarOnAirSegment(1, {
+				cues: [
+					null,
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n'),
+					'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
+					null,
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 News\n;0.00'.split('\n'),
+				],
+				body:
+					'<p>something</p>\n<p><a idref="4" /></p>\n<p><a idref="5" /></p>\n<p><a idref="1" /></p>\n<p><a idref="2" /></p>\n',
+			}),
+		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
-					backTime: '@1234',
+					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: ['segment-02'],
-					backTime: '@1234',
-				},
-				{
-					rundownId: 'test-playlist_3',
-					segments: ['segment-03'],
-					backTime: '@1234',
-				},
-			])
-		)
+			]),
+			untimedSegments: new Set(['segment-01']),
+		})
 	})
 
-	it('Splits a large rundown', () => {
-		let segments: Array<UnrankedSegment> = [
-			...Array.from({ length: 100 }, (_, i) => createUnrankedSegment(i)),
-			createUnrankedSegment(100, '@1234'),
-			...Array.from({ length: 100 }, (_, i) => createUnrankedSegment(100 + i)),
+	it('tests that we only care about non-floated segments', () => {
+		const segments = [
+			createUnrankedSegment(1),
+			createKlarOnAirSegment(2, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+				meta: { float: true },
+			}),
+			createKlarOnAirSegment(3, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
 		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
-
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
-					segments: [
-						...Array.from({ length: 100 }, (_, i) => `segment-${i.toString().padStart(2, '0')}`),
-						'segment-100',
-					],
-					backTime: '@1234',
+					segments: ['segment-01', 'segment-02', 'segment-03'],
+					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: Array.from({ length: 100 }, (_, i) => `segment-${(100 + i).toString().padStart(2, '0')}`),
-				},
-			])
-		)
+			]),
+			untimedSegments: new Set(['segment-03']),
+		})
 	})
 
-	it('Splits a really large rundown', () => {
-		let numPer = 1000
-		let segments: Array<UnrankedSegment> = [
-			...Array.from({ length: numPer }, (_, i) => createUnrankedSegment(i)),
-			createUnrankedSegment(numPer, '@1234'),
-			...Array.from({ length: numPer }, (_, i) => createUnrankedSegment(numPer + i)),
-			createUnrankedSegment(2 * numPer, '@1234'),
-			...Array.from({ length: numPer }, (_, i) => createUnrankedSegment(2 * numPer + i)),
-			createUnrankedSegment(3 * numPer, '@1234'),
-			...Array.from({ length: numPer }, (_, i) => createUnrankedSegment(3 * numPer + i)),
+	it('tests that an empty idref is not parsed.', () => {
+		const segments = [
+			createUnrankedSegment(1),
+			createKlarOnAirSegment(2, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="" /></p>',
+				meta: { float: true },
+			}),
+			createKlarOnAirSegment(3, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="" /></p>',
+			}),
 		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
-
-		expect(result).toEqual(
-			literal<ResolvedPlaylist>([
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
-					segments: [
-						...Array.from({ length: numPer }, (_, i) => `segment-${i.toString().padStart(2, '0')}`),
-						`segment-${numPer}`,
-					],
-					backTime: '@1234',
+					segments: ['segment-01', 'segment-02', 'segment-03'],
 				},
+			]),
+			untimedSegments: new Set(['segment-03']),
+		})
+	})
+
+	it('tests that a non-digit idref is not parsed.', () => {
+		const segments = [
+			createUnrankedSegment(1),
+			createKlarOnAirSegment(2, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="hello" /></p>',
+				meta: { float: true },
+			}),
+			createKlarOnAirSegment(3, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="world" /></p>',
+			}),
+		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
-					rundownId: 'test-playlist_2',
-					segments: [
-						...Array.from({ length: numPer }, (_, i) => `segment-${(numPer + i).toString().padStart(2, '0')}`),
-						`segment-${2 * numPer}`,
-					],
-					backTime: '@1234',
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01', 'segment-02', 'segment-03'],
 				},
+			]),
+			untimedSegments: new Set(['segment-03']),
+		})
+	})
+
+	it('tests that a non-digit (with digits) idref is not parsed.', () => {
+		const segments = [
+			createUnrankedSegment(1),
+			createKlarOnAirSegment(2, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
+				body: '<p><a idref="hello2" /></p>',
+				meta: { float: true },
+			}),
+			createKlarOnAirSegment(3, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
+				body: '<p><a idref="wor3ld" /></p>',
+			}),
+		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
-					rundownId: 'test-playlist_3',
-					segments: [
-						...Array.from({ length: numPer }, (_, i) => `segment-${(2 * numPer + i).toString().padStart(2, '0')}`),
-						`segment-${3 * numPer}`,
-					],
-					backTime: '@1234',
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01', 'segment-02', 'segment-03'],
 				},
-				{
-					rundownId: 'test-playlist_4',
-					segments: Array.from({ length: numPer }, (_, i) => `segment-${(3 * numPer + i).toString().padStart(2, '0')}`),
-				},
-			])
-		)
-	})*/
+			]),
+			untimedSegments: new Set(['segment-03']),
+		})
+	})
 })

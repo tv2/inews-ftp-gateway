@@ -581,7 +581,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]
@@ -619,7 +619,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]
@@ -639,7 +639,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]
@@ -672,7 +672,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]
@@ -692,7 +692,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Sporten',
+					showstyleVariant: 'TV2 Sporten',
 				}
 			),
 		]
@@ -730,7 +730,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]

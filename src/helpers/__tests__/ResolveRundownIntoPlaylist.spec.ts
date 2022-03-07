@@ -292,11 +292,11 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile (kommando)', () => {
+	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown showstyleVariant', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
 		]
@@ -307,23 +307,23 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
 		})
 	})
 
-	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown graphicProfile (kommando)', () => {
+	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown showstyleVariant', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n'), null],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n'), null],
 				body: '<p><a idref="0" /></p>\n<p><a idref="1" /></p>',
 			}),
 			createUnrankedSegment(3),
 			createKlarOnAirSegment(4, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
 		]
@@ -334,22 +334,22 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
 		})
 	})
 
-	it('tests that we can only set graphicProfile from KLAR ON AIR (kommando)', () => {
+	it('tests that we can only set showstyleVariant from KLAR ON AIR', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createUnrankedSegment(2, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
 			createUnnamedSegment(3, '', {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
 		]
@@ -366,20 +366,20 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that we only care about the first cue (kommando)', () => {
+	it('tests that we only care about the first cue', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
 				cues: [
-					'KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n'),
 					'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
-					'KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n'),
-					'KOMMANDO=GRAPHICSPROFILE\nTV2 News\n;0.00'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 News\n;0.00'.split('\n'),
 				],
 				body: '<p><a idref="0" /></p>\n<p><a idref="2" /></p>\n<p><a idref="3" /></p>\n<p><a idref="4" /></p>\n',
 			}),
 			createUnnamedSegment(3, '', {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
 		]
@@ -390,7 +390,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { graphicProfile: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
@@ -402,11 +402,11 @@ describe('Resolve Rundown Into Playlist', () => {
 			createKlarOnAirSegment(1, {
 				cues: [
 					null,
-					'KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n'),
 					'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
 					null,
-					'KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n'),
-					'KOMMANDO=GRAPHICSPROFILE\nTV2 News\n;0.00'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n'),
+					'SOFIE=SHOWSTYLEVARIANT\nTV2 News\n;0.00'.split('\n'),
 				],
 				body:
 					'<p>something</p>\n<p><a idref="4" /></p>\n<p><a idref="5" /></p>\n<p><a idref="1" /></p>\n<p><a idref="2" /></p>\n',
@@ -419,23 +419,23 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
-					payload: { graphicProfile: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
 			]),
 			untimedSegments: new Set(['segment-01']),
 		})
 	})
 
-	it('tests that we only care about non-floated segments (kommando)', () => {
+	it('tests that we only care about non-floated segments', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 				meta: { float: true },
 			}),
 			createKlarOnAirSegment(3, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
 		]
@@ -446,7 +446,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { graphicProfile: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
 			]),
 			untimedSegments: new Set(['segment-03']),
@@ -457,12 +457,12 @@ describe('Resolve Rundown Into Playlist', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
 				body: '<p><a idref="" /></p>',
 				meta: { float: true },
 			}),
 			createKlarOnAirSegment(3, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
 				body: '<p><a idref="" /></p>',
 			}),
 		]
@@ -483,12 +483,12 @@ describe('Resolve Rundown Into Playlist', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
 				body: '<p><a idref="hello" /></p>',
 				meta: { float: true },
 			}),
 			createKlarOnAirSegment(3, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
 				body: '<p><a idref="world" /></p>',
 			}),
 		]
@@ -509,12 +509,12 @@ describe('Resolve Rundown Into Playlist', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Nyhederne\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne\n;0.00'.split('\n')],
 				body: '<p><a idref="hello2" /></p>',
 				meta: { float: true },
 			}),
 			createKlarOnAirSegment(3, {
-				cues: ['KOMMANDO=GRAPHICSPROFILE\nTV2 Sporten\n;0.00'.split('\n')],
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten\n;0.00'.split('\n')],
 				body: '<p><a idref="wor3ld" /></p>',
 			}),
 		]

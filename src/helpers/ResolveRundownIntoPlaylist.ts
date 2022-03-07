@@ -37,8 +37,8 @@ export function ResolveRundownIntoPlaylist(
 	let klarOnAirStoryFound = false
 
 	for (const segment of segments) {
-		if (shouldLookForGraphicProfile(segment, currentRundown)) {
-			extractAndSetGraphicProfile(segment, currentRundown)
+		if (shouldLookForShowstyleVariant(segment, currentRundown)) {
+			extractAndSetShowstyleVariant(segment, currentRundown)
 		}
 
 		currentRundown.segments.push(segment.externalId)
@@ -73,48 +73,47 @@ function isKlarOnAir(segment: UnrankedSegment): boolean {
 	return !!segment.name?.match(klarOnAirPattern)
 }
 
-function extractAndSetGraphicProfile(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): void {
-	const graphicProfiles = getOrderedGraphicProfiles(segment)
-	if (graphicProfiles.length > 0) {
-		const graphicProfile = graphicProfiles[0]
-		setGraphicsProfile(rundown, graphicProfile)
+function extractAndSetShowstyleVariant(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): void {
+	const showstyleVariants = getOrderedShowstyleVariants(segment)
+	if (showstyleVariants.length > 0) {
+		const showstyleVariant = showstyleVariants[0]
+		setGraphicsProfile(rundown, showstyleVariant)
 	}
 }
 
-function setGraphicsProfile(rundown: ResolvedPlaylistRundown, graphicProfile: string) {
+function setGraphicsProfile(rundown: ResolvedPlaylistRundown, showstyleVariant: string) {
 	rundown.payload = {
 		...(rundown.payload ?? null),
-		graphicProfile,
+		showstyleVariant,
 	}
 }
 
-function shouldLookForGraphicProfile(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): boolean {
+function shouldLookForShowstyleVariant(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): boolean {
 	const isKlarOnAirSegment = isKlarOnAir(segment)
 	const isFloated = segment.iNewsStory.meta.float ?? false
-	const rundownHasGraphicProfile = rundown?.payload?.graphicProfile !== undefined
-	return !isFloated && isKlarOnAirSegment && !rundownHasGraphicProfile
+	const rundownHasShowstyleVariant = rundown?.payload?.showstyleVariant !== undefined
+	return !isFloated && isKlarOnAirSegment && !rundownHasShowstyleVariant
 }
 
-function getOrderedGraphicProfiles(segment: UnrankedSegment): string[] {
+function getOrderedShowstyleVariants(segment: UnrankedSegment): string[] {
 	const cueOrder = getCueOrder(segment)
-	const orderedGraphicProfiles: string[] = []
+	const orderedShowstyleVariants: string[] = []
 	cueOrder.forEach((cueIndex: number) => {
 		const parsedProfile = parseGraphicsProfile(segment.iNewsStory.cues[cueIndex])
 		if (parsedProfile) {
-			orderedGraphicProfiles.push(parsedProfile)
+			orderedShowstyleVariants.push(parsedProfile)
 		}
 	})
-	return orderedGraphicProfiles
+	return orderedShowstyleVariants
 }
 
 function parseGraphicsProfile(cue: UnparsedCue | undefined): string | null {
 	const numberOfCueLines = !!cue ? cue.length : -1
 
 	// Kommando cue (ignoring timing)
-	const kommandoPattern = /^\s*KOMMANDO\s*=\s*GRAPHICSPROFILE/i
-	if (numberOfCueLines >= 2 && kommandoPattern.test(cue![0])) {
-		const graphicProfile = cue![1].trim()
-		return graphicProfile
+	const showstyleVariantPattern = /^\s*SOFIE\s*=\s*SHOWSTYLEVARIANT/i
+	if (numberOfCueLines >= 2 && showstyleVariantPattern.test(cue![0])) {
+		return cue![1].trim()
 	}
 	return null
 }

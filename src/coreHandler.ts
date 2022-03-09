@@ -75,9 +75,11 @@ export class CoreHandler {
 		})
 		this.core.onDisconnected(() => {
 			this.logger.info('Core Disconnected!')
+			this.setStatus(P.StatusCode.WARNING_MAJOR, ['Core Disconnected'])
 		})
 		this.core.onError((err) => {
 			this.logger.error('Core Error: ' + (err.message || err.toString() || err))
+			this.setStatus(P.StatusCode.BAD, ['Core error'])
 		})
 
 		let ddpConfig: DDPConnectorOptions = {
@@ -200,10 +202,13 @@ export class CoreHandler {
 			this.core.autoSubscribe('ingestDataCache', {}),
 		])
 		this._subscriptions = this._subscriptions.concat(subs)
+		this.logger.info('Core: Setting up observers for peripheral device commands on ' + this.core.deviceId + '..')
 		this.setupObserverForPeripheralDeviceCommands() // Sets up observers
+		this.logger.info('Core: Execute peripheral device commands on ' + this.core.deviceId + '..')
 		this.executePeripheralDeviceCommands().catch((e) =>
 			this.logger.error(`executePeripheralDeviceCommands error`, e, e.stack)
 		) // Runs any commands async
+		this.logger.info('Core: Setting up observers for peripheral devices on ' + this.core.deviceId + '..')
 		this.setupObserverForPeripheralDevices()
 	}
 	/**

@@ -75,7 +75,6 @@ export class CoreHandler {
 		})
 		this.core.onDisconnected(() => {
 			this.logger.info('Core Disconnected!')
-			this.setStatus(P.StatusCode.WARNING_MAJOR, ['Core Disconnected'])
 		})
 		this.core.onError((err) => {
 			this.logger.error('Core Error: ' + (err.message || err.toString() || err))

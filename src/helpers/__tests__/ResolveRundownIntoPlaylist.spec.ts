@@ -292,7 +292,7 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that a KLAR ON AIR with GRAPHICSPROFILE sets the rundown showstyleVariant', () => {
+	it('tests that a KLAR ON AIR with ShowstyleVariant sets the rundown showstyleVariant', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
@@ -314,7 +314,7 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that only the first KLAR ON AIR with GRAPHICSPROFILE sets the rundown showstyleVariant', () => {
+	it('tests that only the first KLAR ON AIR with ShowstyleVariant sets the rundown showstyleVariant', () => {
 		const segments = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2, {
@@ -397,7 +397,7 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that we pick the first graphics profile cue', () => {
+	it('tests that we pick the first showstyle variant cue', () => {
 		const segments = [
 			createKlarOnAirSegment(1, {
 				cues: [

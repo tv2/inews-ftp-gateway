@@ -201,13 +201,10 @@ export class CoreHandler {
 			this.core.autoSubscribe('ingestDataCache', {}),
 		])
 		this._subscriptions = this._subscriptions.concat(subs)
-		this.logger.info('Core: Setting up observers for peripheral device commands on ' + this.core.deviceId + '..')
 		this.setupObserverForPeripheralDeviceCommands() // Sets up observers
-		this.logger.info('Core: Execute peripheral device commands on ' + this.core.deviceId + '..')
 		this.executePeripheralDeviceCommands().catch((e) =>
 			this.logger.error(`executePeripheralDeviceCommands error`, e, e.stack)
 		) // Runs any commands async
-		this.logger.info('Core: Setting up observers for peripheral devices on ' + this.core.deviceId + '..')
 		this.setupObserverForPeripheralDevices()
 	}
 	/**
@@ -270,6 +267,7 @@ export class CoreHandler {
 	 */
 	// Made async as it does async work ...
 	setupObserverForPeripheralDeviceCommands() {
+		this.logger.info('Core: Setting up observers for peripheral device commands on ' + this.core.deviceId + '..')
 		let observer = this.core.observe('peripheralDeviceCommands')
 		this.killProcess(0) // just make sure it exists
 		this._observers.push(observer)
@@ -306,6 +304,7 @@ export class CoreHandler {
 	 *  Execute all relevant commands now
 	 */
 	async executePeripheralDeviceCommands(): Promise<void> {
+		this.logger.info('Core: Execute peripheral device commands on ' + this.core.deviceId + '..')
 		let cmds = this.core.getCollection('peripheralDeviceCommands')
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 		await Promise.all(
@@ -323,6 +322,7 @@ export class CoreHandler {
 	 * Subscribes to changes to the device to get its associated studio ID.
 	 */
 	setupObserverForPeripheralDevices() {
+		this.logger.info('Core: Setting up observers for peripheral devices on ' + this.core.deviceId + '..')
 		// Setup observer.
 		let observer = this.core.observe('peripheralDevices')
 		this.killProcess(0)

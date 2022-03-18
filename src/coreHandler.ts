@@ -172,6 +172,7 @@ export class CoreHandler {
 		await this.setupSubscriptionsAndObservers().catch((e) => {
 			this.logger.error('setupSubscriptionsAndObservers error', e, e.stack)
 		})
+		this.iNewsHandler?.restartWatcher()
 	}
 	/**
 	 * Called when connected to core.

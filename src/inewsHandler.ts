@@ -227,4 +227,9 @@ export class InewsFTPHandler {
 				this._coreHandler.core.callMethod(P.methods.dataSegmentRanksUpdate, [rundownExteralId, newRanks])
 			})
 	}
+
+	restartWatcher(): void {
+		this._logger.info(`Restarting watchers`)
+		this.iNewsWatcher?.startWatcher()
+	}
 }

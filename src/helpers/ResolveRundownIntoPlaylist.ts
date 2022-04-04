@@ -77,11 +77,11 @@ function extractAndSetShowstyleVariant(segment: UnrankedSegment, rundown: Resolv
 	const showstyleVariants = getOrderedShowstyleVariants(segment)
 	if (showstyleVariants.length > 0) {
 		const showstyleVariant = showstyleVariants[0]
-		setGraphicsProfile(rundown, showstyleVariant)
+		setShowstyleVariant(rundown, showstyleVariant)
 	}
 }
 
-function setGraphicsProfile(rundown: ResolvedPlaylistRundown, showstyleVariant: string) {
+function setShowstyleVariant(rundown: ResolvedPlaylistRundown, showstyleVariant: string) {
 	rundown.payload = {
 		...(rundown.payload ?? null),
 		showstyleVariant,
@@ -99,7 +99,7 @@ function getOrderedShowstyleVariants(segment: UnrankedSegment): string[] {
 	const cueOrder = getCueOrder(segment)
 	const orderedShowstyleVariants: string[] = []
 	cueOrder.forEach((cueIndex: number) => {
-		const parsedProfile = parseGraphicsProfile(segment.iNewsStory.cues[cueIndex])
+		const parsedProfile = parseShowstyleVariant(segment.iNewsStory.cues[cueIndex])
 		if (parsedProfile) {
 			orderedShowstyleVariants.push(parsedProfile)
 		}
@@ -107,7 +107,7 @@ function getOrderedShowstyleVariants(segment: UnrankedSegment): string[] {
 	return orderedShowstyleVariants
 }
 
-function parseGraphicsProfile(cue: UnparsedCue | undefined): string | null {
+function parseShowstyleVariant(cue: UnparsedCue | undefined): string | null {
 	const numberOfCueLines = !!cue ? cue.length : -1
 
 	// Kommando cue (ignoring timing)

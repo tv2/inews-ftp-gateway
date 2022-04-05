@@ -75,7 +75,7 @@ export class ParsedINewsIntoSegments {
 			}
 		})
 
-		return { segmentRanks, recalculatedAsIntegers: true }
+		return { segmentRanks, recalculatedAsIntegers: false }
 	}
 
 	static RecalculateRanksAsIntegerValues(segmentOrder: SegmentId[]): UpdatesAndRanks {

@@ -123,5 +123,19 @@ export function AssignRanksToSegments(
 
 function numberOfDecimals(val: number) {
 	if (Math.floor(val) === val) return 0
-	return val.toString().split('.')[1].length || 0
+	const str = val.toString()
+	const pointPosition = str.indexOf('.')
+	const ePosition = str.indexOf('e-')
+	if (ePosition !== -1) {
+		let decimals = Number(str.substring(ePosition + 2))
+		if (pointPosition !== -1) {
+			decimals += ePosition - pointPosition - 1
+		}
+		return decimals
+	}
+	if (str.indexOf('e+') !== -1) return 0
+	if (pointPosition !== -1) {
+		return str.length - pointPosition - 1
+	}
+	return 0
 }

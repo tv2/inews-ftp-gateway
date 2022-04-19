@@ -551,7 +551,7 @@ describe('DiffPlaylist', () => {
 		})
 	})
 
-	it('tests if adding a graphic profile triggers update meta data', () => {
+	it('tests if adding a showstyle variant triggers update meta data', () => {
 		let prevPlaylist = [
 			makeINewsRundown('test-rundown_1', [
 				{
@@ -581,7 +581,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]
@@ -603,7 +603,7 @@ describe('DiffPlaylist', () => {
 		})
 	})
 
-	it('tests that keeping a graphic profile does not trigger any updates.', () => {
+	it('tests that keeping a showstyle variant does not trigger any updates.', () => {
 		let prevPlaylist = [
 			makeINewsRundown(
 				'test-rundown_1',
@@ -619,7 +619,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]
@@ -639,7 +639,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]
@@ -656,7 +656,7 @@ describe('DiffPlaylist', () => {
 		})
 	})
 
-	it('tests if changing a graphic profile triggers update meta data', () => {
+	it('tests if changing a showstyle variant triggers update meta data', () => {
 		let prevPlaylist = [
 			makeINewsRundown(
 				'test-rundown_1',
@@ -672,7 +672,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]
@@ -692,7 +692,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Sporten',
+					showstyleVariant: 'TV2 Sporten',
 				}
 			),
 		]
@@ -714,7 +714,7 @@ describe('DiffPlaylist', () => {
 		})
 	})
 
-	it('tests if deleting a graphic profile triggers update meta data', () => {
+	it('tests if deleting a showstyle variant triggers update meta data', () => {
 		let prevPlaylist = [
 			makeINewsRundown(
 				'test-rundown_1',
@@ -730,7 +730,7 @@ describe('DiffPlaylist', () => {
 					},
 				],
 				{
-					graphicProfile: 'TV2 Nyhederne',
+					showstyleVariant: 'TV2 Nyhederne',
 				}
 			),
 		]

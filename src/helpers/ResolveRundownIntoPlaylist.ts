@@ -37,12 +37,12 @@ export function ResolveRundownIntoPlaylist(
 	let klarOnAirStoryFound = false
 
 	for (const segment of segments) {
-		if (shouldLookForGraphicProfile(segment, currentRundown)) {
-			const graphicProfiles = getOrderedGraphicProfiles(segment)
-			if (graphicProfiles.length > 0) {
+		if (shouldLookForShowstyleVariant(segment, currentRundown)) {
+			const showstyleVariants = getOrderedShowstyleVariants(segment)
+			if (showstyleVariants.length > 0) {
 				splitRundown()
-				const graphicProfile = graphicProfiles[0]
-				setGraphicProfile(currentRundown, graphicProfile)
+				const showstyleVariant = showstyleVariants[0]
+				setShowstyleVariant(currentRundown, showstyleVariant)
 			}
 		}
 
@@ -78,36 +78,36 @@ function isKlarOnAir(segment: UnrankedSegment): boolean {
 	return !!segment.name?.match(klarOnAirPattern)
 }
 
-function setGraphicProfile(rundown: ResolvedPlaylistRundown, graphicProfile: string) {
+function setShowstyleVariant(rundown: ResolvedPlaylistRundown, showstyleVariant: string) {
 	rundown.payload = {
 		...(rundown.payload ?? null),
-		graphicProfile,
+		showstyleVariant,
 	}
 }
 
-function shouldLookForGraphicProfile(segment: UnrankedSegment, _rundown: ResolvedPlaylistRundown): boolean {
+function shouldLookForShowstyleVariant(segment: UnrankedSegment, _rundown: ResolvedPlaylistRundown): boolean {
 	const isFloated = segment.iNewsStory.meta.float ?? false
 	return !isFloated
 }
 
-function getOrderedGraphicProfiles(segment: UnrankedSegment): string[] {
+function getOrderedShowstyleVariants(segment: UnrankedSegment): string[] {
 	const cueOrder = getCueOrder(segment)
-	const orderedGraphicProfiles: string[] = []
+	const orderedShowstyleVariants: string[] = []
 	cueOrder.forEach((cueIndex: number) => {
-		const parsedProfile = parseGraphicProfile(segment.iNewsStory.cues[cueIndex])
+		const parsedProfile = parseShowstyleVariant(segment.iNewsStory.cues[cueIndex])
 		if (parsedProfile) {
-			orderedGraphicProfiles.push(parsedProfile)
+			orderedShowstyleVariants.push(parsedProfile)
 		}
 	})
-	return orderedGraphicProfiles
+	return orderedShowstyleVariants
 }
 
-function parseGraphicProfile(cue: UnparsedCue | undefined): string | null {
+function parseShowstyleVariant(cue: UnparsedCue | undefined): string | null {
 	const numberOfCueLines = !!cue ? cue.length : -1
 
 	// Kommando cue (ignoring timing)
-	const kommandoPattern = /^\s*KOMMANDO\s*=\s*GRAPHICSPROFILE/i
-	if (numberOfCueLines >= 2 && kommandoPattern.test(cue![0])) {
+	const showstyleVariantPattern = /^\s*SOFIE\s*=\s*SHOWSTYLEVARIANT/i
+	if (numberOfCueLines >= 2 && showstyleVariantPattern.test(cue![0])) {
 		return cue![1].trim()
 	}
 	return null

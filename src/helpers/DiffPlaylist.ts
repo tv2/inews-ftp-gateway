@@ -67,17 +67,16 @@ export type PlaylistChange =
 	| PlaylistChangeRundownDeleted
 	| PlaylistChangeRundownMetaDataUpdated
 
-export type SegmentChangesMap = Map<
-	RundownId,
-	{
-		// rundownId: changes
-		movedSegments: SegmentId[]
-		notMovedSegments: SegmentId[]
-		insertedSegments: SegmentId[]
-		deletedSegments: SegmentId[]
-		changedSegments: SegmentId[]
-	}
->
+export type SegmentChanges = {
+	// rundownId: changes
+	movedSegments: SegmentId[]
+	notMovedSegments: SegmentId[]
+	insertedSegments: SegmentId[]
+	deletedSegments: SegmentId[]
+	changedSegments: SegmentId[]
+}
+
+export type SegmentChangesMap = Map<RundownId, SegmentChanges>
 
 export function DiffPlaylist(
 	playlist: Array<INewsRundown>,

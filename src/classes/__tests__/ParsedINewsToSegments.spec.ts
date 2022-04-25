@@ -1,4 +1,4 @@
-import { ParsedINewsIntoSegments, SegmentRankingsInner, SegmentRankings } from '../ParsedINewsToSegments'
+import { ParsedINewsIntoSegments } from '../ParsedINewsToSegments'
 
 import {
 	segmentGW01,
@@ -9,32 +9,12 @@ import {
 	segmentGW05,
 	segmentGW06,
 	segmentGW07,
+	makeSegmentRanksInner,
+	makeSegmentRanks,
 } from './__mocks__/mockSegments'
 import { ReducedSegment } from '../RundownWatcher'
 import { GetDeletedSegments, GetInsertedSegments, GetMovedSegments } from '../../helpers/GetMovedSegments'
 import { SegmentId } from '../../helpers/id'
-
-const rundownId = 'test-rundown'
-
-function makeSegmentRanks(segments: { [segmentId: string]: SegmentRankingsInner }): SegmentRankings {
-	const ranks: SegmentRankings = new Map()
-
-	ranks.set(rundownId, makeSegmentRanksInner(segments))
-
-	return ranks
-}
-
-function makeSegmentRanksInner(segments: {
-	[segmentId: string]: SegmentRankingsInner
-}): Map<SegmentId, SegmentRankingsInner> {
-	const segmentRanksInner: Map<SegmentId, SegmentRankingsInner> = new Map()
-
-	for (const segmentId in segments) {
-		segmentRanksInner.set(segmentId, segments[segmentId])
-	}
-
-	return segmentRanksInner
-}
 
 describe('ParsedINewsIntoSegments', () => {
 	it('Finds the the next available rank', () => {
@@ -154,7 +134,7 @@ describe('ParsedINewsIntoSegments', () => {
 		const iNewsRaw: ReducedSegment[] = [segmentGW01, segmentGW02, segmentGW03]
 		const rundownId = 'test-rundown'
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			[],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -162,10 +142,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			new Map(),
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -196,7 +173,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-03': { rank: 3 },
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -204,10 +181,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -238,7 +212,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-03': { rank: 3 },
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -246,10 +220,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -293,7 +264,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-03': { rank: 3000 },
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -301,10 +272,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -359,7 +327,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-03': { rank: 3000 },
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -367,10 +335,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -407,7 +372,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-04': { rank: 3000 },
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03', 'segment-04'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -415,10 +380,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -463,7 +425,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-05', 'segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-06'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -471,10 +433,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -529,7 +488,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 }, // Stay
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-05', 'segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-06'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -537,10 +496,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -605,7 +561,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-05', 'segment-02', 'segment-01', 'segment-04', 'segment-03', 'segment-07', 'segment-08', 'segment-06'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -613,10 +569,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		const segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -681,7 +634,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		let { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		let segmentChanges = GetMovedSegments(
 			['segment-05', 'segment-02', 'segment-01', 'segment-04', 'segment-03', 'segment-07', 'segment-08', 'segment-06'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -689,10 +642,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		let segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -755,12 +705,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		let {
-			movedSegments: movedSegments2,
-			notMovedSegments: notMovedSegments2,
-			insertedSegments: insertedSegments2,
-			deletedSegments: deletedSegments2,
-		} = GetMovedSegments(
+		let segmentChanges2 = GetMovedSegments(
 			['segment-05', 'segment-02', 'segment-01', 'segment-04', 'segment-03', 'segment-07', 'segment-08', 'segment-06'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -768,10 +713,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments2,
-			notMovedSegments2,
-			insertedSegments2,
-			deletedSegments2
+			{ ...segmentChanges2, changedSegments: [] }
 		)
 		segments = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -825,12 +767,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-06': { rank: 5000 },
 		})
 
-		const {
-			movedSegments: movedSegments3,
-			notMovedSegments: notMovedSegments3,
-			insertedSegments: insertedSegments3,
-			deletedSegments: deletedSegments3,
-		} = GetMovedSegments(
+		const segmentChanges3 = GetMovedSegments(
 			['segment-05', 'segment-01', 'segment-02', 'segment-04', 'segment-03', 'segment-07', 'segment-08', 'segment-06'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -838,10 +775,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments3,
-			notMovedSegments3,
-			insertedSegments3,
-			deletedSegments3
+			{ ...segmentChanges3, changedSegments: [] }
 		)
 		segments = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -894,7 +828,7 @@ describe('ParsedINewsIntoSegments', () => {
 			'segment-05': { rank: 5000 },
 		})
 
-		const { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		const segmentChanges = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -902,10 +836,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments,
-			notMovedSegments,
-			insertedSegments,
-			deletedSegments
+			{ ...segmentChanges, changedSegments: [] }
 		)
 		let segments: Array<{ rank: number; externalId: SegmentId }> = []
 		for (let [segmentId, rank] of result.segmentRanks) {
@@ -930,12 +861,7 @@ describe('ParsedINewsIntoSegments', () => {
 			},
 		])
 
-		const {
-			movedSegments: movedSegments2,
-			notMovedSegments: notMovedSegments2,
-			insertedSegments: insertedSegments2,
-			deletedSegments: deletedSegments2,
-		} = GetMovedSegments(
+		const segmentChanges2 = GetMovedSegments(
 			['segment-01', 'segment-02', 'segment-03'],
 			iNewsRaw.map((s) => s.externalId)
 		)
@@ -943,10 +869,7 @@ describe('ParsedINewsIntoSegments', () => {
 			rundownId,
 			iNewsRaw.map((s) => s.externalId),
 			previousRanks,
-			movedSegments2,
-			notMovedSegments2,
-			insertedSegments2,
-			deletedSegments2
+			{ ...segmentChanges2, changedSegments: [] }
 		)
 		segments = []
 		for (let [segmentId, rank] of result.segmentRanks) {

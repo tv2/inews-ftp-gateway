@@ -5,6 +5,7 @@ import {
 	DDPConnectorOptions,
 	Observer,
 } from '@sofie-automation/server-core-integration'
+import { ILogger as Logger } from '@tv2media/logger'
 import * as fs from 'fs'
 import { Process } from './process'
 
@@ -20,7 +21,6 @@ import { ReflectPromise } from './helpers'
 import { ReducedRundown } from './classes/RundownWatcher'
 import { VersionIsCompatible } from './version'
 import { RundownId, SegmentId } from './helpers/id'
-import { ILogger as Logger } from '@tv2media/logger'
 
 export interface PeripheralDeviceCommand {
 	_id: string

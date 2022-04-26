@@ -1,6 +1,7 @@
 import { RundownId, SegmentId } from '../helpers/id'
 import _ = require('underscore')
 import { Logger } from '@tv2media/logger'
+import { SegmentChanges } from '../helpers/DiffPlaylist'
 
 export interface IParsedElement {
 	data: {
@@ -31,10 +32,7 @@ export class ParsedINewsIntoSegments {
 		rundownId: RundownId,
 		segmentOrder: SegmentId[],
 		previousRankings: SegmentRankings,
-		movedSegments: SegmentId[],
-		notMovedSegments: SegmentId[],
-		insertedSegments: SegmentId[],
-		_deletedSegments: SegmentId[],
+		{ movedSegments, notMovedSegments, insertedSegments }: SegmentChanges,
 		logger?: Logger
 	): UpdatesAndRanks {
 		const segmentRanks: Map<SegmentId, number> = new Map()
@@ -74,7 +72,7 @@ export class ParsedINewsIntoSegments {
 			}
 		})
 
-		return { segmentRanks, recalculatedAsIntegers: true }
+		return { segmentRanks, recalculatedAsIntegers: false }
 	}
 
 	static RecalculateRanksAsIntegerValues(segmentOrder: SegmentId[]): UpdatesAndRanks {

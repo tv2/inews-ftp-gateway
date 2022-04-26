@@ -1,5 +1,4 @@
 import * as _ from 'underscore'
-import * as Winston from 'winston'
 import { CollectionObj, PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
@@ -7,6 +6,7 @@ import * as inews from 'inews'
 import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { VERSION } from './version'
+import { ILogger as Logger } from '@tv2media/logger'
 
 type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions
@@ -38,15 +38,15 @@ export class InewsFTPHandler {
 
 	public iNewsWatcher?: RundownWatcher
 
-	private _logger: Winston.LoggerInstance
+	private _logger: Logger
 	private _disposed: boolean = false
 	private _settings?: INewsDeviceSettings
 	private _coreHandler: CoreHandler
 	private _isConnected: boolean = false
 	private _reconnectAttempts: number = 0
 
-	constructor(logger: Winston.LoggerInstance, coreHandler: CoreHandler) {
-		this._logger = logger
+	constructor(logger: Logger, coreHandler: CoreHandler) {
+		this._logger = logger.tag('InewsFTPHandler')
 		this._coreHandler = coreHandler
 	}
 
@@ -60,8 +60,8 @@ export class InewsFTPHandler {
 
 		try {
 			await this._setupDevices()
-		} catch (err) {
-			this._logger.error('Error during setup devices', err, (err as any).stack)
+		} catch (error) {
+			this._logger.data(error).error('Error during setup devices:')
 		}
 	}
 
@@ -119,7 +119,7 @@ export class InewsFTPHandler {
 		})
 
 		this.iNewsConnection.on('error', (error) => {
-			this._logger.error('FTP error:', error.message)
+			this._logger.error(`FTP error: ${error.message}`)
 		})
 
 		if (!this.iNewsWatcher) {
@@ -139,7 +139,7 @@ export class InewsFTPHandler {
 				this.updateChanges(this.iNewsWatcher)
 
 				queues.forEach((q) => {
-					this._logger.info(`Starting watch of `, q)
+					this._logger.info(`Starting watch of ${q}`)
 				})
 			}
 		}

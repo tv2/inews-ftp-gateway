@@ -3,7 +3,6 @@ import * as dotenv from 'dotenv'
 import { INewsRundown } from './datastructures/Rundown'
 import { RundownManager } from './RundownManager'
 import { RundownSegment, ISegment } from './datastructures/Segment'
-import * as Winston from 'winston'
 import { INewsQueue, InewsFTPHandler } from '../inewsHandler'
 import { INewsClient } from 'inews'
 import { CoreHandler } from '../coreHandler'
@@ -17,6 +16,7 @@ import { Mutex } from 'async-mutex'
 import { AssignRanksToSegments } from '../helpers/AssignRanksToSegments'
 import { CoreCallType, GenerateCoreCalls } from '../helpers/GenerateCoreCalls'
 import { assertUnreachable } from '../helpers'
+import { ILogger as Logger } from '@tv2media/logger'
 
 dotenv.config()
 
@@ -171,7 +171,7 @@ export class RundownWatcher extends EventEmitter {
 	private pollTimer: NodeJS.Timeout | undefined
 
 	public rundownManager: RundownManager
-	private _logger: Winston.LoggerInstance
+	private _logger: Logger
 	private previousRanks: SegmentRankings = new Map()
 	private lastForcedRankRecalculation: Map<RundownId, number> = new Map()
 
@@ -195,7 +195,7 @@ export class RundownWatcher extends EventEmitter {
 	 * @param delayStart (Optional) Set to a falsy value to prevent the watcher to start watching immediately.
 	 */
 	constructor(
-		private logger: Winston.LoggerInstance,
+		private logger: Logger,
 		private iNewsConnection: INewsClient,
 		private coreHandler: CoreHandler,
 		private iNewsQueue: Array<INewsQueue>,
@@ -204,7 +204,7 @@ export class RundownWatcher extends EventEmitter {
 		delayStart?: boolean
 	) {
 		super()
-		this._logger = this.logger
+		this._logger = this.logger.tag('RundownWatcher')
 
 		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
 
@@ -245,8 +245,8 @@ export class RundownWatcher extends EventEmitter {
 					this.rundownManager.emptyInewsFtpBuffer()
 				},
 				async (error) => {
-					this.logger.error('Something went wrong during check', error, error.stack)
-					await this.coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['Check INews rundows failed'])
+					this.logger.data(error).error('Something went wrong during check:')
+					await this.coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['INews rundowns check failed'])
 				}
 			)
 			.catch(this._logger.error)

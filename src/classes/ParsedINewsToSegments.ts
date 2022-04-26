@@ -1,6 +1,6 @@
 import { RundownId, SegmentId } from '../helpers/id'
 import _ = require('underscore')
-import * as Winston from 'winston'
+import { Logger } from '@tv2media/logger'
 
 export interface IParsedElement {
 	data: {
@@ -35,7 +35,7 @@ export class ParsedINewsIntoSegments {
 		notMovedSegments: SegmentId[],
 		insertedSegments: SegmentId[],
 		_deletedSegments: SegmentId[],
-		logger?: Winston.LoggerInstance
+		logger?: Logger
 	): UpdatesAndRanks {
 		const segmentRanks: Map<SegmentId, number> = new Map()
 
@@ -70,8 +70,7 @@ export class ParsedINewsIntoSegments {
 				segmentRanks.set(segmentId, newRank)
 				assignedRanks.push(newRank)
 			} else {
-				logger?.debug(`Don't know what to do with ranks for ${segmentId}`)
-				console.log(insertedSegments.join(','))
+				logger?.data(insertedSegments.join(',')).debug(`Don't know what to do with ranks for ${segmentId}`)
 			}
 		})
 

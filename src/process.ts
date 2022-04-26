@@ -1,4 +1,4 @@
-import { LoggerInstance } from 'winston'
+import { ILogger as Logger } from '@tv2media/logger'
 import { readFile } from 'fs'
 import { promisify } from 'util'
 import { ProcessConfig } from './connector'
@@ -6,12 +6,12 @@ import { ProcessConfig } from './connector'
 const readFilePromise = promisify(readFile)
 
 export class Process {
-	logger: LoggerInstance
+	logger: Logger
 
 	public certificates: Buffer[] = []
 
-	constructor(logger: LoggerInstance) {
-		this.logger = logger
+	constructor(logger: Logger) {
+		this.logger = logger.tag('Process')
 	}
 
 	async init(processConfig: ProcessConfig): Promise<void> {
@@ -30,7 +30,7 @@ export class Process {
 						this.logger.info(`Using certificate "${certificate}"`)
 						return certData
 					} catch (error) {
-						this.logger.error(`Error loading certificate "${certificate}"`, error)
+						this.logger.data(error).error(`Error loading certificate "${certificate}"`)
 						return Buffer.alloc(0)
 					}
 				})

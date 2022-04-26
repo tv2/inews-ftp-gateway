@@ -1,7 +1,6 @@
 import { Connector, Config } from './connector'
-import * as _ from 'underscore'
 import yargs = require('yargs/yargs')
-import { logger, SetLogLevel, SetupLogger } from './logger'
+import { logger, setLogLevel, setupLogger } from './logger'
 
 const argv = yargs(process.argv.slice(2))
 	.options({
@@ -39,15 +38,15 @@ if (!certs.length) {
 }
 let debug: boolean = argv.debug
 
-SetupLogger()
-SetLogLevel(debug ? 'debug' : 'info')
+setupLogger()
+setLogLevel(debug ? 'debug' : 'warn')
 
 // Because the default NodeJS-handler sucks and wont display error properly
-process.on('unhandledRejection', (e: any) => {
-	logger.error('Unhandled Promise rejection:', e, e.reason || e.message, e.stack)
+process.on('unhandledRejection', (error: any) => {
+	logger.data(error).error('Unhandled Promise rejection:')
 })
-process.on('warning', (e: any) => {
-	logger.warn('Unhandled warning:', e, e.reason || e.message, e.stack)
+process.on('warning', (error: any) => {
+	logger.data(error).warn('Unhandled warning:')
 })
 
 logger.info('-----------------------------------')

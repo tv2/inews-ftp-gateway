@@ -1,5 +1,5 @@
 import * as Winston from 'winston'
-import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
+import { INewsClient, INewsDirItem, INewsFile, INewsStory } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
@@ -119,7 +119,60 @@ export class RundownManager {
 		/* Add fileId and update modifyDate to ftp reference in storyFile */
 		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
 		this._logger?.debug('Queue : ', queueName, ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
+
+		this.generateDesignCuesFromFields(story)
 		return story
+	}
+
+	public generateDesignCuesFromFields(story: INewsStoryGW) {
+		if (!story.fields.layout) {
+			return
+		}
+		this.removeDesignCueFromBody(story)
+		this.addDesignLinkToStory(story)
+		this.addDesignCueToStory(story)
+	}
+
+	private removeDesignCueFromBody(story: INewsStory) {
+		let designCueIndex = story.cues.findIndex((c) => c && c.some((s) => s.includes('DESIGN')))
+		if (designCueIndex >= 0) {
+			const array = story.body!.split('<p>')
+			const index = array.findIndex((s) => s.includes(`<\a idref="${designCueIndex}">`))
+			if (index >= 0) {
+				array.splice(index, 1)
+				story.body = this.reAssembleBody(array)
+			}
+		}
+	}
+
+	private reAssembleBody(array: string[]): string {
+		return array.reduce((previousValue, currentValue) => {
+			return `${previousValue}<p>${currentValue}`
+		})
+	}
+
+	private addDesignLinkToStory(story: INewsStory) {
+		const layoutCueIndex = story.cues.length
+		const lines = story.body!.split('<p>')
+		const primaryIndex = lines.findIndex((line) => !!line.match(/<pi>(.*?)<\/pi>/i))
+		story.body =
+			primaryIndex > 0
+				? this.insertDesignLinkAfterFirstPrimaryCue(lines, primaryIndex, layoutCueIndex)
+				: story.body!.concat(`<p><\a idref="${layoutCueIndex}"></a></p>`)
+	}
+
+	private insertDesignLinkAfterFirstPrimaryCue(lines: string[], typeIndex: number, layoutCueIndex: number): string {
+		const throughPrimaryCueHalf = lines.slice(0, typeIndex + 1)
+		const afterPrimaryCueHalf = lines.slice(typeIndex + 1, lines.length)
+		return this.reAssembleBody([
+			...throughPrimaryCueHalf,
+			`<\a idref="${layoutCueIndex}"></a></p>\r\n`,
+			...afterPrimaryCueHalf,
+		])
+	}
+
+	private addDesignCueToStory(story: INewsStory): void {
+		story.cues.push([`DESIGN_LAYOUT=${story.fields.layout!.toUpperCase()}`])
 	}
 
 	/**

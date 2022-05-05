@@ -6,31 +6,31 @@ const LAYOUT: string = 'n'
 let testee: RundownManager
 
 describe('RundownManager', () => {
-	describe('generateDesignCuesFromFields', () => {
-		beforeEach(() => {
-			testee = new RundownManager()
-		})
+	beforeEach(() => {
+		testee = new RundownManager()
+	})
 
+	describe('generateCuesFromLayoutField', () => {
 		it('has no layout, dont generate anything', () => {
 			const story: INewsStoryGW = createStory()
 
 			const before = { ...story }
-			testee.generateDesignCuesFromFields(story)
+			testee.generateCuesFromLayoutField(story)
 			expect(story).toEqual(before)
 		})
 
 		it('has a layout, designLayout cue is added', () => {
-			const story: INewsStoryGW = createStory(LAYOUT)
-			const amountOfCuesBefore: number = story.cues.length
+			const story = createStory(LAYOUT)
 
-			testee.generateDesignCuesFromFields(story)
-			expect(story.cues.length).toBe(amountOfCuesBefore + 1)
+			expect(story.cues.some((cue) => cue!.some((line) => line.match(/DESIGN_LAYOUT=/i)))).toBeFalsy()
+			testee.generateCuesFromLayoutField(story)
+			expect(story.cues.some((cue) => cue!.some((line) => line.match(/DESIGN_LAYOUT=/i)))).toBeTruthy()
 		})
 
 		it('has the upper cased layout value in the design cue', () => {
 			const story: INewsStoryGW = createStory(LAYOUT)
 
-			testee.generateDesignCuesFromFields(story)
+			testee.generateCuesFromLayoutField(story)
 
 			expect(story.cues[0]![0]).toBe(`DESIGN_LAYOUT=${LAYOUT.toUpperCase()}`)
 		})
@@ -38,27 +38,27 @@ describe('RundownManager', () => {
 		it('has a layout, link to cue is generated in body', () => {
 			const story: INewsStoryGW = createStory(LAYOUT)
 
-			testee.generateDesignCuesFromFields(story)
+			testee.generateCuesFromLayoutField(story)
 			expect(story.body).toMatch(/<a(.*?)<\/a>/i)
 		})
 
-		it('has one cue already, new cue link references index 1', () => {
+		it('has one cue already, new cue link references index 2', () => {
 			testCorrectCueReferenceInLink(1)
 		})
 
-		it('has two cues already, new cue link references index 2', () => {
+		it('has two cues already, new cue link references index 3', () => {
 			testCorrectCueReferenceInLink(2)
 		})
 
-		it('has fourteen cues already, new cue link references index 14', () => {
-			testCorrectCueReferenceInLink(2)
+		it('has fourteen cues already, new cue link references index 15', () => {
+			testCorrectCueReferenceInLink(14)
 		})
 
 		it('inserts the cue link right after the first <pi> tag', () => {
 			const body: string = `<p><pi></pi></p>\r\n<p></p>\r\n`
 			const story = createStory('n', body)
 
-			testee.generateDesignCuesFromFields(story)
+			testee.generateCuesFromLayoutField(story)
 
 			const lines = story.body!.split('\r\n')
 			const index = lines.findIndex((line) => line.match('<pi>'))
@@ -71,7 +71,7 @@ describe('RundownManager', () => {
 			const story = createStory(LAYOUT, body)
 			story.cues.push(designCueFromBody)
 
-			testee.generateDesignCuesFromFields(story)
+			testee.generateCuesFromLayoutField(story)
 
 			expect(story.body!.match(/<\a idref="0"><\/a>/i)).toBeFalsy()
 		})
@@ -82,9 +82,36 @@ describe('RundownManager', () => {
 			const story = createStory(undefined, body)
 			story.cues.push(designCueFromBody)
 
-			testee.generateDesignCuesFromFields(story)
+			testee.generateCuesFromLayoutField(story)
 
 			expect(story.body!.match(/<\a idref="0"><\/a>/i)).toBeTruthy()
+		})
+
+		it('adds a DESIGN_BG to cues', () => {
+			const story = createStory(LAYOUT)
+
+			expect(story.cues.some((cue) => cue!.some((line) => line.match(/DESIGN_BG=/i)))).toBeFalsy()
+			testee.generateCuesFromLayoutField(story)
+			expect(story.cues.some((cue) => cue!.some((line) => line.match(/DESIGN_BG=/i)))).toBeTruthy()
+		})
+
+		it('assigns the upper cased layout value to the DESIGN_BG cue', () => {
+			const story = createStory(LAYOUT)
+
+			testee.generateCuesFromLayoutField(story)
+
+			expect(
+				story.cues.some((cue) => cue!.some((line) => line.match(`DESIGN_BG=${LAYOUT.toUpperCase()}`)))
+			).toBeTruthy()
+		})
+
+		it('adds link to DESIGN_BG cue', () => {
+			const story = createStory(LAYOUT)
+
+			testee.generateCuesFromLayoutField(story)
+
+			const cueIndex = story.cues!.findIndex((cue) => cue!.some((line) => line.match(/DESIGN_BG=/i)))
+			expect(story.body!.match(`<\a idref="${cueIndex}"><\\/a>`)).toBeTruthy()
 		})
 	})
 })
@@ -101,12 +128,12 @@ function createStory(layout?: string, body?: string): INewsStoryGW {
 	}
 }
 
-function testCorrectCueReferenceInLink(numberOfCues: number): void {
+function testCorrectCueReferenceInLink(numberOfExistingCues: number): void {
 	const story: INewsStoryGW = createStory(LAYOUT)
-	for (let i = 0; i < numberOfCues; i++) {
+	for (let i = 0; i < numberOfExistingCues; i++) {
 		story.cues.push([`cue${i}`])
 	}
 
-	testee.generateDesignCuesFromFields(story)
-	expect(story.body!.match(`<\a idref="${numberOfCues}"><\\/a>`)).toBeTruthy()
+	testee.generateCuesFromLayoutField(story)
+	expect(story.body!.match(`<\a idref="${numberOfExistingCues + 1}"><\\/a>`)).toBeTruthy()
 }

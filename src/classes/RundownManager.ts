@@ -120,59 +120,75 @@ export class RundownManager {
 		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
 		this._logger?.debug('Queue : ', queueName, ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
 
-		this.generateDesignCuesFromFields(story)
+		this.generateCuesFromLayoutField(story)
 		return story
 	}
 
-	public generateDesignCuesFromFields(story: INewsStoryGW) {
+	public generateCuesFromLayoutField(story: INewsStory): void {
 		if (!story.fields.layout) {
 			return
 		}
-		this.removeDesignCueFromBody(story)
-		this.addDesignLinkToStory(story)
-		this.addDesignCueToStory(story)
+		this.addDesignLayoutCueToStory(story)
+		this.addDesignBgCueToStory(story)
 	}
 
-	private removeDesignCueFromBody(story: INewsStory) {
+	private addDesignLayoutCueToStory(story: INewsStory): void {
+		this.removeDesignCueFromBody(story)
+		const cueIndex = this.addCueToStory(story, 'DESIGN_LAYOUT')
+		this.addLinkToStory(story, cueIndex)
+	}
+
+	private removeDesignCueFromBody(story: INewsStory): void {
 		let designCueIndex = story.cues.findIndex((c) => c && c.some((s) => s.includes('DESIGN')))
 		if (designCueIndex >= 0) {
 			const array = story.body!.split('<p>')
 			const index = array.findIndex((s) => s.includes(`<\a idref="${designCueIndex}">`))
 			if (index >= 0) {
 				array.splice(index, 1)
-				story.body = this.reAssembleBody(array)
+				story.body = this.reassembleBody(array)
 			}
 		}
 	}
 
-	private reAssembleBody(array: string[]): string {
+	private reassembleBody(array: string[]): string {
 		return array.reduce((previousValue, currentValue) => {
 			return `${previousValue}<p>${currentValue}`
 		})
 	}
 
-	private addDesignLinkToStory(story: INewsStory) {
-		const layoutCueIndex = story.cues.length
+	/**
+	 * Adds a new link to the story that references the cue at the 'cueIndex'
+	 */
+	private addLinkToStory(story: INewsStory, cueIndex: number): void {
 		const lines = story.body!.split('<p>')
-		const primaryIndex = lines.findIndex((line) => !!line.match(/<pi>(.*?)<\/pi>/i))
+		const primaryCueIndex = lines.findIndex((line) => !!line.match(/<pi>(.*?)<\/pi>/i))
 		story.body =
-			primaryIndex > 0
-				? this.insertDesignLinkAfterFirstPrimaryCue(lines, primaryIndex, layoutCueIndex)
-				: story.body!.concat(`<p><\a idref="${layoutCueIndex}"></a></p>`)
+			primaryCueIndex > 0
+				? this.insertDesignLinkAfterFirstPrimaryCue(lines, primaryCueIndex, cueIndex)
+				: story.body!.concat(`<p><\a idref="${cueIndex}"></a></p>`)
 	}
 
 	private insertDesignLinkAfterFirstPrimaryCue(lines: string[], typeIndex: number, layoutCueIndex: number): string {
 		const throughPrimaryCueHalf = lines.slice(0, typeIndex + 1)
 		const afterPrimaryCueHalf = lines.slice(typeIndex + 1, lines.length)
-		return this.reAssembleBody([
+		return this.reassembleBody([
 			...throughPrimaryCueHalf,
 			`<\a idref="${layoutCueIndex}"></a></p>\r\n`,
 			...afterPrimaryCueHalf,
 		])
 	}
 
-	private addDesignCueToStory(story: INewsStory): void {
-		story.cues.push([`DESIGN_LAYOUT=${story.fields.layout!.toUpperCase()}`])
+	/**
+	 * Adds a cue to the story. Returns the index of the newly added cue.
+	 */
+	private addCueToStory(story: INewsStory, cueKey: string): number {
+		story.cues.push([`${cueKey}=${story.fields.layout!.toUpperCase()}`])
+		return story.cues.length
+	}
+
+	private addDesignBgCueToStory(story: INewsStory): void {
+		const cueIndex = this.addCueToStory(story, 'DESIGN_BG')
+		this.addLinkToStory(story, cueIndex)
 	}
 
 	/**

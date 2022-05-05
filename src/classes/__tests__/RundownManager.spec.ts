@@ -42,15 +42,15 @@ describe('RundownManager', () => {
 			expect(story.body).toMatch(/<a(.*?)<\/a>/i)
 		})
 
-		it('has one cue already, new cue link references index 2', () => {
+		it('has one cue already, new cue link references index 1', () => {
 			testCorrectCueReferenceInLink(1)
 		})
 
-		it('has two cues already, new cue link references index 3', () => {
+		it('has two cues already, new cue link references index 2', () => {
 			testCorrectCueReferenceInLink(2)
 		})
 
-		it('has fourteen cues already, new cue link references index 15', () => {
+		it('has fourteen cues already, new cue link references index 14', () => {
 			testCorrectCueReferenceInLink(14)
 		})
 
@@ -135,5 +135,5 @@ function testCorrectCueReferenceInLink(numberOfExistingCues: number): void {
 	}
 
 	testee.generateCuesFromLayoutField(story)
-	expect(story.body!.match(`<\a idref="${numberOfExistingCues + 1}"><\\/a>`)).toBeTruthy()
+	expect(story.body!.match(`<\a idref="${numberOfExistingCues}"><\\/a>`)).toBeTruthy()
 }

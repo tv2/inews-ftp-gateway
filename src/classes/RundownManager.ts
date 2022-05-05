@@ -183,7 +183,7 @@ export class RundownManager {
 	 */
 	private addCueToStory(story: INewsStory, cueKey: string): number {
 		story.cues.push([`${cueKey}=${story.fields.layout!.toUpperCase()}`])
-		return story.cues.length
+		return story.cues.length - 1
 	}
 
 	private addDesignBgCueToStory(story: INewsStory): void {

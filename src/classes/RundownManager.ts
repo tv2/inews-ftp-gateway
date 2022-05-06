@@ -139,15 +139,17 @@ export class RundownManager {
 	}
 
 	private removeDesignCueFromBody(story: INewsStory): void {
-		let designCueIndex = story.cues.findIndex((c) => c && c.some((s) => s.includes('DESIGN')))
-		if (designCueIndex >= 0) {
-			const array = story.body!.split('<p>')
-			const index = array.findIndex((s) => s.includes(`<\a idref="${designCueIndex}">`))
-			if (index >= 0) {
-				array.splice(index, 1)
-				story.body = this.reassembleBody(array)
-			}
+		const designCueIndex = story.cues.findIndex((c) => c && c.some((s) => s.includes('DESIGN')))
+		if (designCueIndex < 0) {
+			return
 		}
+		const array = story.body!.split('<p>')
+		const index = array.findIndex((s) => s.includes(`<\a idref="${designCueIndex}">`))
+		if (index < 0) {
+			return
+		}
+		array.splice(index, 1)
+		story.body = this.reassembleBody(array)
 	}
 
 	private reassembleBody(array: string[]): string {

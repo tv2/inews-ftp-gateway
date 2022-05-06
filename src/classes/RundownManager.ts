@@ -143,17 +143,17 @@ export class RundownManager {
 		if (designCueIndex < 0) {
 			return
 		}
-		const array = story.body!.split('<p>')
-		const index = array.findIndex((s) => s.includes(`<\a idref="${designCueIndex}">`))
+		const lines = story.body!.split('<p>')
+		const index = lines.findIndex((s) => s.includes(`<\a idref="${designCueIndex}">`))
 		if (index < 0) {
 			return
 		}
-		array.splice(index, 1)
-		story.body = this.reassembleBody(array)
+		lines.splice(index, 1)
+		story.body = this.reassembleBody(lines)
 	}
 
-	private reassembleBody(array: string[]): string {
-		return array.reduce((previousValue, currentValue) => {
+	private reassembleBody(lines: string[]): string {
+		return lines.reduce((previousValue, currentValue) => {
 			return `${previousValue}<p>${currentValue}`
 		})
 	}
@@ -166,11 +166,11 @@ export class RundownManager {
 		const primaryCueIndex = lines.findIndex((line) => !!line.match(/<pi>(.*?)<\/pi>/i))
 		story.body =
 			primaryCueIndex > 0
-				? this.insertDesignLinkAfterFirstPrimaryCue(lines, primaryCueIndex, cueIndex)
+				? this.insertLinkAfterFirstPrimaryCue(lines, primaryCueIndex, cueIndex)
 				: story.body!.concat(`<p><\a idref="${cueIndex}"></a></p>`)
 	}
 
-	private insertDesignLinkAfterFirstPrimaryCue(lines: string[], typeIndex: number, layoutCueIndex: number): string {
+	private insertLinkAfterFirstPrimaryCue(lines: string[], typeIndex: number, layoutCueIndex: number): string {
 		const throughPrimaryCueHalf = lines.slice(0, typeIndex + 1)
 		const afterPrimaryCueHalf = lines.slice(typeIndex + 1, lines.length)
 		return this.reassembleBody([

@@ -294,8 +294,7 @@ describe('Resolve Rundown Into Playlist', () => {
 
 	it('tests that a KLAR ON AIR with ShowstyleVariant sets the rundown showstyleVariant', () => {
 		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, {
+			createKlarOnAirSegment(1, {
 				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
@@ -307,26 +306,21 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
-				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: ['segment-02'],
 					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 			]),
-			untimedSegments: new Set(['segment-02']),
+			untimedSegments: new Set(['segment-01']),
 		})
 	})
 
 	it('tests that only the first KLAR ON AIR with ShowstyleVariant sets the rundown showstyleVariant', () => {
 		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, {
+			createKlarOnAirSegment(1, {
 				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n'), null],
 				body: '<p><a idref="0" /></p>\n<p><a idref="1" /></p>',
 			}),
-			createUnrankedSegment(3),
-			createKlarOnAirSegment(4, {
+			createUnrankedSegment(2),
+			createKlarOnAirSegment(3, {
 				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
@@ -337,31 +331,26 @@ describe('Resolve Rundown Into Playlist', () => {
 			resolvedPlaylist: literal<ResolvedPlaylist>([
 				{
 					rundownId: 'test-playlist_1',
-					segments: ['segment-01'],
-				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: ['segment-02', 'segment-03'],
+					segments: ['segment-01', 'segment-02'],
 					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 				{
-					rundownId: 'test-playlist_3',
-					segments: ['segment-04'],
+					rundownId: 'test-playlist_2',
+					segments: ['segment-03'],
 					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
 			]),
-			untimedSegments: new Set(['segment-02']),
+			untimedSegments: new Set(['segment-01']),
 		})
 	})
 
 	it('tests that we can set showstyleVariant in non KLAR-ON-AIR stories', () => {
 		const segments = [
-			createUnrankedSegment(1),
-			createUnrankedSegment(2, {
+			createUnrankedSegment(1, {
 				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
-			createUnnamedSegment(3, '', {
+			createUnnamedSegment(2, '', {
 				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
@@ -373,15 +362,11 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 				{
 					rundownId: 'test-playlist_2',
 					segments: ['segment-02'],
-					payload: { showstyleVariant: 'TV2 Nyhederne' },
-				},
-				{
-					rundownId: 'test-playlist_3',
-					segments: ['segment-03'],
 					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
 			]),
@@ -391,8 +376,7 @@ describe('Resolve Rundown Into Playlist', () => {
 
 	it('tests that we only care about the first cue', () => {
 		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, {
+			createKlarOnAirSegment(1, {
 				cues: [
 					'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n'),
 					'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
@@ -401,7 +385,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				],
 				body: '<p><a idref="0" /></p>\n<p><a idref="2" /></p>\n<p><a idref="3" /></p>\n<p><a idref="4" /></p>\n',
 			}),
-			createUnnamedSegment(3, '', {
+			createUnnamedSegment(2, '', {
 				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
 				body: '<p><a idref="0" /></p>',
 			}),
@@ -413,19 +397,15 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					payload: { showstyleVariant: 'TV2 Nyhederne' },
 				},
 				{
 					rundownId: 'test-playlist_2',
 					segments: ['segment-02'],
-					payload: { showstyleVariant: 'TV2 Nyhederne' },
-				},
-				{
-					rundownId: 'test-playlist_3',
-					segments: ['segment-03'],
 					payload: { showstyleVariant: 'TV2 Sporten' },
 				},
 			]),
-			untimedSegments: new Set(['segment-02']),
+			untimedSegments: new Set(['segment-01']),
 		})
 	})
 

@@ -21,6 +21,9 @@ export function ResolveRundownIntoPlaylist(
 	let currentRundown: ResolvedPlaylistRundown = {
 		rundownId: `${playlistExternalId}_${rundownIndex + 1}`, // 1-index for users
 		segments: [],
+		payload: {
+			rank: 0,
+		},
 	}
 
 	const splitRundown = () => {
@@ -30,6 +33,9 @@ export function ResolveRundownIntoPlaylist(
 		currentRundown = {
 			rundownId: `${playlistExternalId}_${rundownIndex + 1}`,
 			segments: [],
+			payload: {
+				rank: rundownIndex,
+			},
 		}
 	}
 

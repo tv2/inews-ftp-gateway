@@ -140,6 +140,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(),
@@ -162,6 +163,7 @@ describe('Resolve Rundown Into Playlist', () => {
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04'],
 					backTime: '@1234',
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-04']),
@@ -185,6 +187,7 @@ describe('Resolve Rundown Into Playlist', () => {
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05'],
 					backTime: '@1234',
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-04', 'segment-05']),
@@ -209,6 +212,7 @@ describe('Resolve Rundown Into Playlist', () => {
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05', 'segment-06'],
 					backTime: '@1234',
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-04', 'segment-05', 'segment-06']),
@@ -232,6 +236,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05', 'segment-06'],
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-04', 'segment-05', 'segment-06']),
@@ -254,6 +259,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03', 'segment-04', 'segment-05'],
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
@@ -270,6 +276,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set([]),
@@ -286,6 +293,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set([]),
@@ -307,11 +315,12 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					payload: { rank: 0 },
 				},
 				{
 					rundownId: 'test-playlist_2',
 					segments: ['segment-02'],
-					payload: { showstyleVariant: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 1 },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
@@ -338,16 +347,17 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					payload: { rank: 0 },
 				},
 				{
 					rundownId: 'test-playlist_2',
 					segments: ['segment-02', 'segment-03'],
-					payload: { showstyleVariant: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 1 },
 				},
 				{
 					rundownId: 'test-playlist_3',
 					segments: ['segment-04'],
-					payload: { showstyleVariant: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten', rank: 2 },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
@@ -373,16 +383,17 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					payload: { rank: 0 },
 				},
 				{
 					rundownId: 'test-playlist_2',
 					segments: ['segment-02'],
-					payload: { showstyleVariant: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 1 },
 				},
 				{
 					rundownId: 'test-playlist_3',
 					segments: ['segment-03'],
-					payload: { showstyleVariant: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten', rank: 2 },
 				},
 			]),
 			untimedSegments: new Set([]),
@@ -413,16 +424,17 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
+					payload: { rank: 0 },
 				},
 				{
 					rundownId: 'test-playlist_2',
 					segments: ['segment-02'],
-					payload: { showstyleVariant: 'TV2 Nyhederne' },
+					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 1 },
 				},
 				{
 					rundownId: 'test-playlist_3',
 					segments: ['segment-03'],
-					payload: { showstyleVariant: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten', rank: 2 },
 				},
 			]),
 			untimedSegments: new Set(['segment-02']),
@@ -451,7 +463,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01'],
-					payload: { showstyleVariant: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten', rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-01']),
@@ -478,11 +490,12 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02'],
+					payload: { rank: 0 },
 				},
 				{
 					rundownId: 'test-playlist_2',
 					segments: ['segment-03'],
-					payload: { showstyleVariant: 'TV2 Sporten' },
+					payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
 				},
 			]),
 			untimedSegments: new Set(),
@@ -509,6 +522,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-03']),
@@ -535,6 +549,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-03']),
@@ -561,6 +576,7 @@ describe('Resolve Rundown Into Playlist', () => {
 				{
 					rundownId: 'test-playlist_1',
 					segments: ['segment-01', 'segment-02', 'segment-03'],
+					payload: { rank: 0 },
 				},
 			]),
 			untimedSegments: new Set(['segment-03']),

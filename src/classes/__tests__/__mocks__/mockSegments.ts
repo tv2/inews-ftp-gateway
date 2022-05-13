@@ -2,6 +2,10 @@ import { INewsStoryGW, RundownSegment } from '../../datastructures/Segment'
 import * as _ from 'underscore'
 import { ReducedSegment } from '../../RundownWatcher'
 import { parseModifiedDateFromInewsStoryWithFallbackToNow } from '../../../helpers'
+import { SegmentId } from '../../../helpers/id'
+import { SegmentRankingsInner, SegmentRankings } from '../../ParsedINewsToSegments'
+
+export const rundownId = 'test-rundown'
 
 export const segmentGW01: ReducedSegment = {
 	name: 'Segment 01',
@@ -84,4 +88,24 @@ export function RundownSegmentFromMockSegment(
 		segmentGW.fields.title ?? '',
 		untimed
 	)
+}
+
+export function makeSegmentRanks(segments: { [segmentId: string]: SegmentRankingsInner }): SegmentRankings {
+	const ranks: SegmentRankings = new Map()
+
+	ranks.set(rundownId, makeSegmentRanksInner(segments))
+
+	return ranks
+}
+
+export function makeSegmentRanksInner(segments: {
+	[segmentId: string]: SegmentRankingsInner
+}): Map<SegmentId, SegmentRankingsInner> {
+	const segmentRanksInner: Map<SegmentId, SegmentRankingsInner> = new Map()
+
+	for (const segmentId in segments) {
+		segmentRanksInner.set(segmentId, segments[segmentId])
+	}
+
+	return segmentRanksInner
 }

@@ -27,7 +27,12 @@ export function ResolveRundownIntoPlaylist(
 	}
 
 	const splitRundown = () => {
-		if (currentRundown.segments.length === 0) return
+		const isAllSegmentsForCurrentRundownEmpty = currentRundown.segments
+			.map((segmentExternalId) => segments.find((segment) => segment.externalId === segmentExternalId))
+			.every(isSegmentEmpty)
+
+		if (currentRundown.segments.length === 0 || isAllSegmentsForCurrentRundownEmpty) return
+
 		resolvedPlaylist.push(currentRundown)
 		rundownIndex++
 		currentRundown = {
@@ -77,6 +82,22 @@ export function ResolveRundownIntoPlaylist(
 	}
 
 	return { resolvedPlaylist, untimedSegments }
+}
+
+function isSegmentEmpty(segment: UnrankedSegment | undefined): boolean {
+	if (segment === undefined) {
+		return true
+	}
+	const isCuesEmpty = segment.iNewsStory.cues.length === 0
+	return isCuesEmpty && isSegmentBodyEmpty(segment)
+}
+
+function isSegmentBodyEmpty(segment: UnrankedSegment): boolean {
+	if (segment.iNewsStory.body === undefined) {
+		return true
+	}
+	const lines = segment.iNewsStory.body.split('\r\n').filter((line) => !/<p>\s*<\/p>|\s*/i.test(line))
+	return lines.length === 0
 }
 
 function isKlarOnAir(segment: UnrankedSegment): boolean {

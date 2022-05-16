@@ -1,6 +1,6 @@
 import { Connector, Config } from './connector'
 import yargs = require('yargs/yargs')
-import { logger, setLogLevel, setupLogger } from './logger'
+import { ensureLogLevel, logger, setLogLevel, setupLogger } from './logger'
 
 const argv = yargs(process.argv.slice(2))
 	.options({
@@ -39,7 +39,8 @@ if (!certs.length) {
 let debug: boolean = argv.debug
 
 setupLogger()
-setLogLevel(debug ? 'debug' : 'warn')
+const logLevel = debug ? 'debug' : ensureLogLevel(process.env.LOG_LEVEL) ?? 'warn'
+setLogLevel(logLevel)
 
 // Because the default NodeJS-handler sucks and wont display error properly
 process.on('unhandledRejection', (error: any) => {

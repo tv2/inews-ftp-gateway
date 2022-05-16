@@ -3,7 +3,7 @@ import { CoreHandler, CoreConfig } from './coreHandler'
 import * as _ from 'underscore'
 import { Process } from './process'
 import { Observer } from '@sofie-automation/server-core-integration'
-import { setLogLevel } from './logger'
+import { ensureLogLevel, setLogLevel } from './logger'
 import { ILogger as Logger } from '@tv2media/logger'
 
 export interface Config {
@@ -32,7 +32,7 @@ export class Connector {
 	private _debug: boolean
 
 	constructor(logger: Logger, config: Config, debug: boolean) {
-		this._logger = logger.tag('Connector')
+		this._logger = logger.tag(this.constructor.name)
 		this._config = config
 		this._debug = debug
 		this._process = new Process(this._logger)
@@ -116,7 +116,8 @@ export class Connector {
 
 				if (settings.debug !== undefined && settings.debug !== this._debug) {
 					this._debug = settings.debug
-					setLogLevel(this._debug ? 'debug' : 'warn')
+					const logLevel = this._debug ? 'debug' : ensureLogLevel(process.env.LOG_LEVEL) ?? 'warn'
+					setLogLevel(logLevel)
 				}
 
 				this._settings = settings

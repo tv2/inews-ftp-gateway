@@ -46,7 +46,7 @@ export class InewsFTPHandler {
 	private _reconnectAttempts: number = 0
 
 	constructor(logger: Logger, coreHandler: CoreHandler) {
-		this._logger = logger.tag('InewsFTPHandler')
+		this._logger = logger.tag(this.constructor.name)
 		this._coreHandler = coreHandler
 	}
 

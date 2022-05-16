@@ -11,7 +11,7 @@ export class Process {
 	public certificates: Buffer[] = []
 
 	constructor(logger: Logger) {
-		this.logger = logger.tag('Process')
+		this.logger = logger.tag(this.constructor.name)
 	}
 
 	async init(processConfig: ProcessConfig): Promise<void> {

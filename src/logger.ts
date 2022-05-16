@@ -25,3 +25,7 @@ export function setupLogger() {
 export function setLogLevel(level: keyof typeof Level) {
 	logger.setLevel(Level[level])
 }
+
+export function ensureLogLevel(level?: string): keyof typeof Level | undefined {
+	return Object.keys(Level).find((l) => l === level) as keyof typeof Level | undefined
+}

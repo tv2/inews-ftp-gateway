@@ -59,7 +59,7 @@ export class CoreHandler {
 	public iNewsHandler?: InewsFTPHandler
 
 	constructor(logger: Logger, deviceOptions: DeviceConfig) {
-		this.logger = logger.tag('CoreHandler')
+		this.logger = logger.tag(this.constructor.name)
 		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'iNews Gateway'))
 	}
 

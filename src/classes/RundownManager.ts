@@ -1,4 +1,4 @@
-import { INewsClient, INewsStory, INewsDirItem, INewsFile } from 'inews'
+import { INewsClient, INewsDirItem, INewsFile, INewsStory } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
@@ -26,8 +26,7 @@ export class RundownManager {
 	 * Downloads a rundown by ID.
 	 */
 	async downloadRundown(rundownId: string): Promise<ReducedRundown> {
-		let reducedRundown = await this.downloadINewsRundown(rundownId)
-		return reducedRundown
+		return this.downloadINewsRundown(rundownId)
 	}
 
 	/**
@@ -118,8 +117,80 @@ export class RundownManager {
 		this._logger?.debug('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
 		/* Add fileId and update modifyDate to ftp reference in storyFile */
 		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
+
 		this._logger?.debug(`Queue: ${queueName} Story: ${isFile(storyFile) ? storyFile.storyName : storyFile.file}`)
+
+		this.generateCuesFromLayoutField(story)
 		return story
+	}
+
+	public generateCuesFromLayoutField(story: INewsStory): void {
+		if (!story.fields.layout) {
+			return
+		}
+		this.addDesignLayoutCueToStory(story)
+		this.addDesignBgCueToStory(story)
+	}
+
+	private addDesignLayoutCueToStory(story: INewsStory): void {
+		this.removeDesignCueFromBody(story)
+		const cueIndex = this.addCueToStory(story, 'DESIGN_LAYOUT')
+		this.addLinkToStory(story, cueIndex)
+	}
+
+	private removeDesignCueFromBody(story: INewsStory): void {
+		const designCueIndex = story.cues.findIndex((c) => c && c.some((s) => s.includes('DESIGN')))
+		if (designCueIndex < 0) {
+			return
+		}
+		const lines = story.body!.split('<p>')
+		const index = lines.findIndex((s) => s.includes(`<\a idref="${designCueIndex}">`))
+		if (index < 0) {
+			return
+		}
+		lines.splice(index, 1)
+		story.body = this.reassembleBody(lines)
+	}
+
+	private reassembleBody(lines: string[]): string {
+		return lines.reduce((previousValue, currentValue) => {
+			return `${previousValue}<p>${currentValue}`
+		})
+	}
+
+	/**
+	 * Adds a new link to the story that references the cue at the 'cueIndex'
+	 */
+	private addLinkToStory(story: INewsStory, cueIndex: number): void {
+		const lines = story.body!.split('<p>')
+		const primaryCueIndex = lines.findIndex((line) => !!line.match(/<pi>(.*?)<\/pi>/i))
+		story.body =
+			primaryCueIndex > 0
+				? this.insertLinkAfterFirstPrimaryCue(lines, primaryCueIndex, cueIndex)
+				: story.body!.concat(`<p><\a idref="${cueIndex}"></a></p>`)
+	}
+
+	private insertLinkAfterFirstPrimaryCue(lines: string[], typeIndex: number, layoutCueIndex: number): string {
+		const throughPrimaryCueHalf = lines.slice(0, typeIndex + 1)
+		const afterPrimaryCueHalf = lines.slice(typeIndex + 1, lines.length)
+		return this.reassembleBody([
+			...throughPrimaryCueHalf,
+			`<\a idref="${layoutCueIndex}"></a></p>\r\n`,
+			...afterPrimaryCueHalf,
+		])
+	}
+
+	/**
+	 * Adds a cue to the story. Returns the index of the newly added cue.
+	 */
+	private addCueToStory(story: INewsStory, cueKey: string): number {
+		story.cues.push([`${cueKey}=${story.fields.layout!.toUpperCase()}`])
+		return story.cues.length - 1
+	}
+
+	private addDesignBgCueToStory(story: INewsStory): void {
+		const cueIndex = this.addCueToStory(story, 'DESIGN_BG')
+		this.addLinkToStory(story, cueIndex)
 	}
 
 	/**

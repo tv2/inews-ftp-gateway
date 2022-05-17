@@ -65,28 +65,6 @@ describe('RundownManager', () => {
 			expect(lines[index + 1]).toMatch(/<a(.*?)<\/a>/i)
 		})
 
-		it('already have design cue, remove link to cue', () => {
-			const body = '<p></p>\r\n</p><p><a idref="0"></a></p>'
-			const designCueFromBody = ['KG=DESIGN_OL']
-			const story = createStory(LAYOUT, body)
-			story.cues.push(designCueFromBody)
-
-			testee.generateCuesFromLayoutField(story)
-
-			expect(story.body!.match(/<\a idref="0"><\/a>/i)).toBeFalsy()
-		})
-
-		it('already have design cue, but no layout, dont remove link to cue', () => {
-			const body = '<p></p>\r\n</p><p><a idref="0"></a></p>'
-			const designCueFromBody = ['KG=DESIGN_OL']
-			const story = createStory(undefined, body)
-			story.cues.push(designCueFromBody)
-
-			testee.generateCuesFromLayoutField(story)
-
-			expect(story.body!.match(/<\a idref="0"><\/a>/i)).toBeTruthy()
-		})
-
 		it('adds a DESIGN_BG to cues', () => {
 			const story = createStory(LAYOUT)
 

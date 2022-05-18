@@ -133,29 +133,8 @@ export class RundownManager {
 	}
 
 	private addDesignLayoutCueToStory(story: INewsStory): void {
-		this.removeDesignCueFromBody(story)
 		const cueIndex = this.addCueToStory(story, 'DESIGN_LAYOUT')
 		this.addLinkToStory(story, cueIndex)
-	}
-
-	private removeDesignCueFromBody(story: INewsStory): void {
-		const designCueIndex = story.cues.findIndex((c) => c && c.some((s) => s.includes('DESIGN')))
-		if (designCueIndex < 0) {
-			return
-		}
-		const lines = story.body!.split('<p>')
-		const index = lines.findIndex((s) => s.includes(`<\a idref="${designCueIndex}">`))
-		if (index < 0) {
-			return
-		}
-		lines.splice(index, 1)
-		story.body = this.reassembleBody(lines)
-	}
-
-	private reassembleBody(lines: string[]): string {
-		return lines.reduce((previousValue, currentValue) => {
-			return `${previousValue}<p>${currentValue}`
-		})
 	}
 
 	/**
@@ -178,6 +157,12 @@ export class RundownManager {
 			`<\a idref="${layoutCueIndex}"></a></p>\r\n`,
 			...afterPrimaryCueHalf,
 		])
+	}
+
+	private reassembleBody(lines: string[]): string {
+		return lines.reduce((previousValue, currentValue) => {
+			return `${previousValue}<p>${currentValue}`
+		})
 	}
 
 	/**

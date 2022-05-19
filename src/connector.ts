@@ -1,10 +1,10 @@
 import { InewsFTPHandler, INewsDeviceSettings } from './inewsHandler'
 import { CoreHandler, CoreConfig } from './coreHandler'
-import * as Winston from 'winston'
 import * as _ from 'underscore'
 import { Process } from './process'
 import { Observer } from '@sofie-automation/server-core-integration'
-import { SetLogLevel } from './logger'
+import { ensureLogLevel, setLogLevel } from './logger'
+import { ILogger as Logger } from '@tv2media/logger'
 
 export interface Config {
 	process: ProcessConfig
@@ -26,13 +26,13 @@ export class Connector {
 	private _observers: Array<Observer> = []
 	private coreHandler: CoreHandler
 	private _config: Config
-	private _logger: Winston.LoggerInstance
+	private _logger: Logger
 	private _process: Process
 	private _settings?: INewsDeviceSettings
 	private _debug: boolean
 
-	constructor(logger: Winston.LoggerInstance, config: Config, debug: boolean) {
-		this._logger = logger
+	constructor(logger: Logger, config: Config, debug: boolean) {
+		this._logger = logger.tag(this.constructor.name)
 		this._config = config
 		this._debug = debug
 		this._process = new Process(this._logger)
@@ -52,10 +52,10 @@ export class Connector {
 			this.setupObserver()
 			this._logger.info('Initialization of FTP-monitor done')
 		} catch (err) {
-			this._logger.error('Error during initialization:', err, err.stack)
+			this._logger.data(err).error(`Error during initialization:`)
 
 			this._logger.info('Shutting down in 10 seconds!')
-			this.dispose().catch((e) => this._logger.error(e))
+			this.dispose().catch((e) => this._logger.data(e).error('Error during dispose'))
 
 			setTimeout(() => {
 				process.exit(0)
@@ -109,14 +109,15 @@ export class Connector {
 							return this.initInewsFTPHandler()
 						})
 						.catch((error) => {
-							this._logger.error(error)
+							this._logger.data(error).error('Failed to update iNewsFTP settings:')
 							throw new Error('Failed to update iNewsFTP settings')
 						})
 				}
 
 				if (settings.debug !== undefined && settings.debug !== this._debug) {
 					this._debug = settings.debug
-					SetLogLevel(this._debug ? 'debug' : 'info')
+					const logLevel = this._debug ? 'debug' : ensureLogLevel(process.env.LOG_LEVEL) ?? 'warn'
+					setLogLevel(logLevel)
 				}
 
 				this._settings = settings

@@ -1,4 +1,3 @@
-import * as Winston from 'winston'
 import { INewsClient, INewsDirItem, INewsFile, INewsStory } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
@@ -6,6 +5,7 @@ import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatche
 import { literal, parseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromise } from '../helpers'
 import { VERSION } from '../version'
 import { SegmentId } from '../helpers/id'
+import { ILogger as Logger } from '@tv2media/logger'
 
 function isFile(f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -15,7 +15,7 @@ export class RundownManager {
 	private _listStories!: (queueName: string) => Promise<Array<INewsDirItem>>
 	private _getStory!: (queueName: string, story: string) => Promise<INewsStory>
 
-	constructor(private _logger?: Winston.LoggerInstance, private inewsConnection?: INewsClient) {
+	constructor(private _logger?: Logger, private inewsConnection?: INewsClient) {
 		if (this.inewsConnection) {
 			this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
 			this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
@@ -26,8 +26,7 @@ export class RundownManager {
 	 * Downloads a rundown by ID.
 	 */
 	async downloadRundown(rundownId: string): Promise<ReducedRundown> {
-		let reducedRundown = await this.downloadINewsRundown(rundownId)
-		return reducedRundown
+		return this.downloadINewsRundown(rundownId)
 	}
 
 	/**
@@ -57,8 +56,8 @@ export class RundownManager {
 					)
 				}
 			})
-		} catch (err) {
-			this._logger?.error('Error downloading iNews rundown: ', err, err.stack)
+		} catch (error) {
+			this._logger?.data(error).error('Error downloading iNews rundown:')
 		}
 		return rundown
 	}
@@ -118,7 +117,8 @@ export class RundownManager {
 		this._logger?.debug('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
 		/* Add fileId and update modifyDate to ftp reference in storyFile */
 		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
-		this._logger?.debug('Queue : ', queueName, ' Story : ', isFile(storyFile) ? storyFile.storyName : storyFile.file)
+
+		this._logger?.debug(`Queue: ${queueName} Story: ${isFile(storyFile) ? storyFile.storyName : storyFile.file}`)
 
 		this.generateCuesFromLayoutField(story)
 		return story

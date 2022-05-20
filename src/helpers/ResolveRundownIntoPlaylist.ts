@@ -23,22 +23,32 @@ export function ResolveRundownIntoPlaylist(
 		segments: [],
 	}
 
-	// TODO: Use for creating multi-rundown playlists
-	// const splitRundown = () => {
-	// 	resolvedPlaylist.push(currentRundown)
-	// 	rundownIndex++
-	// 	currentRundown = {
-	// 		rundownId: `${playlistExternalId}_${rundownIndex + 1}`,
-	// 		segments: [],
-	// 	}
-	// }
+	const splitRundown = () => {
+		const isAllSegmentsForCurrentRundownEmpty = currentRundown.segments
+			.map((segmentExternalId) => segments.find((segment) => segment.externalId === segmentExternalId))
+			.every(isSegmentEmpty)
+
+		if (currentRundown.segments.length === 0 || isAllSegmentsForCurrentRundownEmpty) return
+
+		resolvedPlaylist.push(currentRundown)
+		rundownIndex++
+		currentRundown = {
+			rundownId: `${playlistExternalId}_${rundownIndex + 1}`,
+			segments: [],
+		}
+	}
 
 	let continuityStoryFound = false
 	let klarOnAirStoryFound = false
 
 	for (const segment of segments) {
 		if (shouldLookForShowstyleVariant(segment, currentRundown)) {
-			extractAndSetShowstyleVariant(segment, currentRundown)
+			const showstyleVariants = getOrderedShowstyleVariants(segment)
+			if (showstyleVariants.length > 0) {
+				splitRundown()
+				const showstyleVariant = showstyleVariants[0]
+				setShowstyleVariant(currentRundown, showstyleVariant)
+			}
 		}
 
 		currentRundown.segments.push(segment.externalId)
@@ -68,17 +78,25 @@ export function ResolveRundownIntoPlaylist(
 	return { resolvedPlaylist, untimedSegments }
 }
 
+function isSegmentEmpty(segment: UnrankedSegment | undefined): boolean {
+	if (segment === undefined) {
+		return true
+	}
+	const isCuesEmpty = segment.iNewsStory.cues.length === 0
+	return isCuesEmpty && isSegmentBodyEmpty(segment)
+}
+
+function isSegmentBodyEmpty(segment: UnrankedSegment): boolean {
+	if (segment.iNewsStory.body === undefined) {
+		return true
+	}
+	const lines = segment.iNewsStory.body.split('\r\n').filter((line) => !/<p>\s*<\/p>|\s*/i.test(line))
+	return lines.length === 0
+}
+
 function isKlarOnAir(segment: UnrankedSegment): boolean {
 	const klarOnAirPattern = /klar[\s-]*on[\s-]*air/im
 	return !!segment.name?.match(klarOnAirPattern)
-}
-
-function extractAndSetShowstyleVariant(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): void {
-	const showstyleVariants = getOrderedShowstyleVariants(segment)
-	if (showstyleVariants.length > 0) {
-		const showstyleVariant = showstyleVariants[0]
-		setShowstyleVariant(rundown, showstyleVariant)
-	}
 }
 
 function setShowstyleVariant(rundown: ResolvedPlaylistRundown, showstyleVariant: string) {
@@ -88,11 +106,9 @@ function setShowstyleVariant(rundown: ResolvedPlaylistRundown, showstyleVariant:
 	}
 }
 
-function shouldLookForShowstyleVariant(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): boolean {
-	const isKlarOnAirSegment = isKlarOnAir(segment)
+function shouldLookForShowstyleVariant(segment: UnrankedSegment, _rundown: ResolvedPlaylistRundown): boolean {
 	const isFloated = segment.iNewsStory.meta.float ?? false
-	const rundownHasShowstyleVariant = rundown?.payload?.showstyleVariant !== undefined
-	return !isFloated && isKlarOnAirSegment && !rundownHasShowstyleVariant
+	return !isFloated
 }
 
 function getOrderedShowstyleVariants(segment: UnrankedSegment): string[] {

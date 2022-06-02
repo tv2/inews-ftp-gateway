@@ -227,7 +227,7 @@ export class RundownWatcher extends EventEmitter {
 
 	private watch() {
 		this.stopPollTimer()
-		this.logger.info('Check rundowns for updates')
+		this.logger.debug('Checking rundowns for updates')
 
 		this.checkINewsRundowns()
 			.then(

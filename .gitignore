@@ -7,3 +7,6 @@ token.json
 src/DEFAULTS.ts
 npm-debug.log
 coverage
+
+# Ignore JetBrain specific files
+.idea

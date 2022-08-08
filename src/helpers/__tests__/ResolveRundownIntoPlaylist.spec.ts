@@ -558,4 +558,32 @@ describe('Resolve Rundown Into Playlist', () => {
 			untimedSegments: new Set(['segment-03']),
 		})
 	})
+
+	it('tests that showstyle splits correctly even when having a non-empty floated segment prior.', () => {
+		const segments = [
+			createUnrankedSegment(1, {
+				body: '<p><a idref="0" /></p>',
+				meta: { float: true },
+			}),
+			createKlarOnAirSegment(2, {
+				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
+				body: '<p><a idref="0" /></p>',
+			}),
+			createKlarOnAirSegment(3, {
+				body: '<p><a idref="0" /></p>',
+			}),
+		]
+		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+
+		expect(resolvedPlayList).toEqual({
+			resolvedPlaylist: literal<ResolvedPlaylist>([
+				{
+					rundownId: 'test-playlist_1',
+					segments: ['segment-01', 'segment-02', 'segment-03'],
+					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
+				},
+			]),
+			untimedSegments: new Set(['segment-02']),
+		})
+	})
 })

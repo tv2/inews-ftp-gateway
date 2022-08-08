@@ -29,6 +29,8 @@ export function ResolveRundownIntoPlaylist(
 	const splitRundown = () => {
 		const isAllSegmentsForCurrentRundownEmpty = currentRundown.segments
 			.map((segmentExternalId) => segments.find((segment) => segment.externalId === segmentExternalId))
+			.filter(isSegment)
+			.filter((segment) => !isSegmentFloated(segment))
 			.every(isSegmentEmpty)
 
 		if (currentRundown.segments.length === 0 || isAllSegmentsForCurrentRundownEmpty) return
@@ -84,10 +86,15 @@ export function ResolveRundownIntoPlaylist(
 	return { resolvedPlaylist, untimedSegments }
 }
 
-function isSegmentEmpty(segment: UnrankedSegment | undefined): boolean {
-	if (segment === undefined) {
-		return true
-	}
+function isSegment(segment: UnrankedSegment | undefined): segment is UnrankedSegment {
+	return segment !== undefined
+}
+
+function isSegmentFloated(segment: UnrankedSegment): boolean {
+	return segment.iNewsStory.meta.float === 'float'
+}
+
+function isSegmentEmpty(segment: UnrankedSegment): boolean {
 	const isCuesEmpty = segment.iNewsStory.cues.length === 0
 	return isCuesEmpty && isSegmentBodyEmpty(segment)
 }

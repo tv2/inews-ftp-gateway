@@ -401,16 +401,16 @@
     tslib "^2.1.0"
     underscore "1.13.1"
 
-"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@1.37.0-rc12":
-  version "1.37.0-rc12"
-  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-1.37.0-rc12.tgz#03a875ff798b51165dcb2bb73fd9b99defe0a53f"
-  integrity sha512-gZLkuDGHlmXXOaCLdsHEB991aO5bAhtsn8qEKZNARYBd4ODV61n25Cyj3UV7EImfDNsQEm/FL4jPnOS0fG+dMQ==
+"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@42.0.0":
+  version "42.0.0"
+  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-42.0.0.tgz#9ab343e6238bc55402d9646ecabdd789ea9d24bf"
+  integrity sha512-C4471JoQsHOYvM2bIFXuXR062xhK5PeoYJpfeyfMTAZW76tNw0UkP4idKc8U0x2aUqYpmXjiSwsaHjdUVD7xBA==
   dependencies:
     data-store "^4.0.3"
-    ejson "^2.2.0"
+    ejson "^2.2.2"
     faye-websocket "^0.11.4"
-    got "^11.8.2"
-    tslib "^2.0.3"
+    got "^11.8.5"
+    tslib "^2.3.1"
     underscore "^1.12.1"
 
 "@stroncium/procfs@^1.0.0":
@@ -1757,10 +1757,10 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
-ejson@^2.2.0:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/ejson/-/ejson-2.2.1.tgz#53569bdf3a60013f5dc206e0f9640b64cd674acc"
-  integrity sha512-Tah5TfXynM7dCqnI/YyyI93/vN0hwXQrimNNzXIKmhr11vGrVtXhzwZ4Gyx+AHb4FqJa0YQORoaKnJHRB1TnwQ==
+ejson@^2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/ejson/-/ejson-2.2.2.tgz#095bf356a57295784cada6ff19b2b2abc70e4f9d"
+  integrity sha512-Wc/PZH7WMxuM6eBpAuD9+IX98q27hlBTD8nvhh7UyGy22eB9qTRG0oAzlviicADh9VVxYp+/onTyfYZC3DhI5w==
 
 electron-to-chromium@^1.4.17:
   version "1.4.49"
@@ -2388,7 +2388,7 @@ globby@^7.1.1:
     pify "^3.0.0"
     slash "^1.0.0"
 
-got@^11.8.2:
+got@^11.8.5:
   version "11.8.5"
   resolved "https://registry.yarnpkg.com/got/-/got-11.8.5.tgz#ce77d045136de56e8f024bebb82ea349bc730046"
   integrity sha512-o0Je4NvQObAuZPHLFoRSkdG2lTgtcynqymzg2Vupdx6PorhaT5MCbIyXG6d4D94kk8ZG57QeosgdiqfJWhEhlQ==
@@ -5828,10 +5828,15 @@ tslib@^1.7.1, tslib@^1.8.0, tslib@^1.8.1:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
 
-tslib@^2.0.0, tslib@^2.0.3, tslib@^2.1.0, tslib@^2.3.1:
+tslib@^2.0.0, tslib@^2.3.1:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.1.tgz#e8a335add5ceae51aa261d32a490158ef042ef01"
   integrity sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==
+
+tslib@^2.1.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.4.0.tgz#7cecaa7f073ce680a05847aa77be941098f36dc3"
+  integrity sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==
 
 tslint-config-prettier@^1.18.0:
   version "1.18.0"

@@ -27,6 +27,8 @@ export function ResolveRundownIntoPlaylist(
 	}
 
 	const splitRundown = () => {
+		// Note: Disabling rundowns temporarily for v42.0.
+		return
 		const isAllSegmentsForCurrentRundownEmpty = currentRundown.segments
 			.map((segmentExternalId) => segments.find((segment) => segment.externalId === segmentExternalId))
 			.filter(isSegment)
@@ -119,9 +121,10 @@ function setShowstyleVariant(rundown: ResolvedPlaylistRundown, showstyleVariant:
 	}
 }
 
-function shouldLookForShowstyleVariant(segment: UnrankedSegment, _rundown: ResolvedPlaylistRundown): boolean {
+function shouldLookForShowstyleVariant(segment: UnrankedSegment, rundown: ResolvedPlaylistRundown): boolean {
 	const isFloated = segment.iNewsStory.meta.float ?? false
-	return !isFloated
+	const hasShowstyleVariant = rundown.payload?.showstyleVariant !== undefined
+	return !isFloated && !hasShowstyleVariant
 }
 
 function getOrderedShowstyleVariants(segment: UnrankedSegment): string[] {

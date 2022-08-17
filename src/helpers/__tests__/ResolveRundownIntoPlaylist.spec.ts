@@ -300,290 +300,291 @@ describe('Resolve Rundown Into Playlist', () => {
 		})
 	})
 
-	it('tests that a KLAR ON AIR with ShowstyleVariant sets the rundown showstyleVariant', () => {
-		const segments = [
-			createKlarOnAirSegment(1, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
-				body: '<p><a idref="0" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// Note: Disabling rundowns temporarily for v42.0.
+	// it('tests that a KLAR ON AIR with ShowstyleVariant sets the rundown showstyleVariant', () => {
+	// 	const segments = [
+	// 		createKlarOnAirSegment(1, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
+	// 			body: '<p><a idref="0" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01'],
-					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
-				},
-			]),
-			untimedSegments: new Set(['segment-01']),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01'],
+	// 				payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(['segment-01']),
+	// 	})
+	// })
 
-	it('tests that only the first KLAR ON AIR with ShowstyleVariant sets the rundown showstyleVariant', () => {
-		const segments = [
-			createKlarOnAirSegment(1, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n'), null],
-				body: '<p><a idref="0" /></p>\n<p><a idref="1" /></p>',
-			}),
-			createUnrankedSegment(2),
-			createKlarOnAirSegment(3, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
-				body: '<p><a idref="0" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that only the first KLAR ON AIR with ShowstyleVariant sets the rundown showstyleVariant', () => {
+	// 	const segments = [
+	// 		createKlarOnAirSegment(1, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n'), null],
+	// 			body: '<p><a idref="0" /></p>\n<p><a idref="1" /></p>',
+	// 		}),
+	// 		createUnrankedSegment(2),
+	// 		createKlarOnAirSegment(3, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
+	// 			body: '<p><a idref="0" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02'],
-					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
-				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: ['segment-03'],
-					payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
-				},
-			]),
-			untimedSegments: new Set(['segment-01']),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01', 'segment-02'],
+	// 				payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
+	// 			},
+	// 			{
+	// 				rundownId: 'test-playlist_2',
+	// 				segments: ['segment-03'],
+	// 				payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(['segment-01']),
+	// 	})
+	// })
 
-	it('tests that we can set showstyleVariant in non KLAR-ON-AIR stories', () => {
-		const segments = [
-			createUnrankedSegment(1, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
-				body: '<p><a idref="0" /></p>',
-			}),
-			createUnnamedSegment(2, '', {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
-				body: '<p><a idref="0" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that we can set showstyleVariant in non KLAR-ON-AIR stories', () => {
+	// 	const segments = [
+	// 		createUnrankedSegment(1, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
+	// 			body: '<p><a idref="0" /></p>',
+	// 		}),
+	// 		createUnnamedSegment(2, '', {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
+	// 			body: '<p><a idref="0" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01'],
-					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
-				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: ['segment-02'],
-					payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
-				},
-			]),
-			untimedSegments: new Set([]),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01'],
+	// 				payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
+	// 			},
+	// 			{
+	// 				rundownId: 'test-playlist_2',
+	// 				segments: ['segment-02'],
+	// 				payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set([]),
+	// 	})
+	// })
 
-	it('tests that we only care about the first cue', () => {
-		const segments = [
-			createKlarOnAirSegment(1, {
-				cues: [
-					'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n'),
-					'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
-					'SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n'),
-					'SOFIE=SHOWSTYLEVARIANT\nTV2 News'.split('\n'),
-				],
-				body: '<p><a idref="0" /></p>\n<p><a idref="2" /></p>\n<p><a idref="3" /></p>\n<p><a idref="4" /></p>\n',
-			}),
-			createUnnamedSegment(2, '', {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
-				body: '<p><a idref="0" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that we only care about the first cue', () => {
+	// 	const segments = [
+	// 		createKlarOnAirSegment(1, {
+	// 			cues: [
+	// 				'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n'),
+	// 				'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
+	// 				'SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n'),
+	// 				'SOFIE=SHOWSTYLEVARIANT\nTV2 News'.split('\n'),
+	// 			],
+	// 			body: '<p><a idref="0" /></p>\n<p><a idref="2" /></p>\n<p><a idref="3" /></p>\n<p><a idref="4" /></p>\n',
+	// 		}),
+	// 		createUnnamedSegment(2, '', {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
+	// 			body: '<p><a idref="0" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01'],
-					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
-				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: ['segment-02'],
-					payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
-				},
-			]),
-			untimedSegments: new Set(['segment-01']),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01'],
+	// 				payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
+	// 			},
+	// 			{
+	// 				rundownId: 'test-playlist_2',
+	// 				segments: ['segment-02'],
+	// 				payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(['segment-01']),
+	// 	})
+	// })
 
-	it('tests that we pick the first showstyle variant cue', () => {
-		const segments = [
-			createKlarOnAirSegment(1, {
-				cues: [
-					null,
-					'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n'),
-					'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
-					null,
-					'SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n'),
-					'SOFIE=SHOWSTYLEVARIANT\nTV2 News'.split('\n'),
-				],
-				body:
-					'<p>something</p>\n<p><a idref="4" /></p>\n<p><a idref="5" /></p>\n<p><a idref="1" /></p>\n<p><a idref="2" /></p>\n',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that we pick the first showstyle variant cue', () => {
+	// 	const segments = [
+	// 		createKlarOnAirSegment(1, {
+	// 			cues: [
+	// 				null,
+	// 				'SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n'),
+	// 				'DVE=SOMMERFUGL\nINP1=KAM 1\nINP2=KAM 2\nBYNAVN=ODENSE/KØBENHAVN\n'.split('\n'),
+	// 				null,
+	// 				'SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n'),
+	// 				'SOFIE=SHOWSTYLEVARIANT\nTV2 News'.split('\n'),
+	// 			],
+	// 			body:
+	// 				'<p>something</p>\n<p><a idref="4" /></p>\n<p><a idref="5" /></p>\n<p><a idref="1" /></p>\n<p><a idref="2" /></p>\n',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01'],
-					payload: { showstyleVariant: 'TV2 Sporten', rank: 0 },
-				},
-			]),
-			untimedSegments: new Set(['segment-01']),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01'],
+	// 				payload: { showstyleVariant: 'TV2 Sporten', rank: 0 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(['segment-01']),
+	// 	})
+	// })
 
-	it('tests that we only care about non-floated segments', () => {
-		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
-				body: '<p><a idref="0" /></p>',
-				meta: { float: true },
-			}),
-			createUnrankedSegment(3, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
-				body: '<p><a idref="0" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that we only care about non-floated segments', () => {
+	// 	const segments = [
+	// 		createUnrankedSegment(1),
+	// 		createKlarOnAirSegment(2, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
+	// 			body: '<p><a idref="0" /></p>',
+	// 			meta: { float: true },
+	// 		}),
+	// 		createUnrankedSegment(3, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
+	// 			body: '<p><a idref="0" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02'],
-					payload: { rank: 0 },
-				},
-				{
-					rundownId: 'test-playlist_2',
-					segments: ['segment-03'],
-					payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
-				},
-			]),
-			untimedSegments: new Set(),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01', 'segment-02'],
+	// 				payload: { rank: 0 },
+	// 			},
+	// 			{
+	// 				rundownId: 'test-playlist_2',
+	// 				segments: ['segment-03'],
+	// 				payload: { showstyleVariant: 'TV2 Sporten', rank: 1 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(),
+	// 	})
+	// })
 
-	it('tests that an empty idref is not parsed.', () => {
-		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
-				body: '<p><a idref="" /></p>',
-				meta: { float: true },
-			}),
-			createKlarOnAirSegment(3, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
-				body: '<p><a idref="" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that an empty idref is not parsed.', () => {
+	// 	const segments = [
+	// 		createUnrankedSegment(1),
+	// 		createKlarOnAirSegment(2, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
+	// 			body: '<p><a idref="" /></p>',
+	// 			meta: { float: true },
+	// 		}),
+	// 		createKlarOnAirSegment(3, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
+	// 			body: '<p><a idref="" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { rank: 0 },
-				},
-			]),
-			untimedSegments: new Set(['segment-03']),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01', 'segment-02', 'segment-03'],
+	// 				payload: { rank: 0 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(['segment-03']),
+	// 	})
+	// })
 
-	it('tests that a non-digit idref is not parsed.', () => {
-		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
-				body: '<p><a idref="hello" /></p>',
-				meta: { float: true },
-			}),
-			createKlarOnAirSegment(3, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
-				body: '<p><a idref="world" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that a non-digit idref is not parsed.', () => {
+	// 	const segments = [
+	// 		createUnrankedSegment(1),
+	// 		createKlarOnAirSegment(2, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
+	// 			body: '<p><a idref="hello" /></p>',
+	// 			meta: { float: true },
+	// 		}),
+	// 		createKlarOnAirSegment(3, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
+	// 			body: '<p><a idref="world" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { rank: 0 },
-				},
-			]),
-			untimedSegments: new Set(['segment-03']),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01', 'segment-02', 'segment-03'],
+	// 				payload: { rank: 0 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(['segment-03']),
+	// 	})
+	// })
 
-	it('tests that a non-digit (with digits) idref is not parsed.', () => {
-		const segments = [
-			createUnrankedSegment(1),
-			createKlarOnAirSegment(2, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
-				body: '<p><a idref="hello2" /></p>',
-				meta: { float: true },
-			}),
-			createKlarOnAirSegment(3, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
-				body: '<p><a idref="wor3ld" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that a non-digit (with digits) idref is not parsed.', () => {
+	// 	const segments = [
+	// 		createUnrankedSegment(1),
+	// 		createKlarOnAirSegment(2, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
+	// 			body: '<p><a idref="hello2" /></p>',
+	// 			meta: { float: true },
+	// 		}),
+	// 		createKlarOnAirSegment(3, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Sporten'.split('\n')],
+	// 			body: '<p><a idref="wor3ld" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { rank: 0 },
-				},
-			]),
-			untimedSegments: new Set(['segment-03']),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01', 'segment-02', 'segment-03'],
+	// 				payload: { rank: 0 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(['segment-03']),
+	// 	})
+	// })
 
-	it('tests that showstyle splits correctly even when having a non-empty floated segment prior.', () => {
-		const segments = [
-			createUnrankedSegment(1, {
-				body: '<p><a idref="0" /></p>',
-				meta: { float: true },
-			}),
-			createKlarOnAirSegment(2, {
-				cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
-				body: '<p><a idref="0" /></p>',
-			}),
-			createKlarOnAirSegment(3, {
-				body: '<p><a idref="0" /></p>',
-			}),
-		]
-		const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
+	// it('tests that showstyle splits correctly even when having a non-empty floated segment prior.', () => {
+	// 	const segments = [
+	// 		createUnrankedSegment(1, {
+	// 			body: '<p><a idref="0" /></p>',
+	// 			meta: { float: true },
+	// 		}),
+	// 		createKlarOnAirSegment(2, {
+	// 			cues: ['SOFIE=SHOWSTYLEVARIANT\nTV2 Nyhederne'.split('\n')],
+	// 			body: '<p><a idref="0" /></p>',
+	// 		}),
+	// 		createKlarOnAirSegment(3, {
+	// 			body: '<p><a idref="0" /></p>',
+	// 		}),
+	// 	]
+	// 	const resolvedPlayList = ResolveRundownIntoPlaylist('test-playlist', segments)
 
-		expect(resolvedPlayList).toEqual({
-			resolvedPlaylist: literal<ResolvedPlaylist>([
-				{
-					rundownId: 'test-playlist_1',
-					segments: ['segment-01', 'segment-02', 'segment-03'],
-					payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
-				},
-			]),
-			untimedSegments: new Set(['segment-02']),
-		})
-	})
+	// 	expect(resolvedPlayList).toEqual({
+	// 		resolvedPlaylist: literal<ResolvedPlaylist>([
+	// 			{
+	// 				rundownId: 'test-playlist_1',
+	// 				segments: ['segment-01', 'segment-02', 'segment-03'],
+	// 				payload: { showstyleVariant: 'TV2 Nyhederne', rank: 0 },
+	// 			},
+	// 		]),
+	// 		untimedSegments: new Set(['segment-02']),
+	// 	})
+	// })
 })

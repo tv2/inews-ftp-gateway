@@ -204,9 +204,7 @@ export class InewsFTPHandler {
 				this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [rundown]).catch(this._logger.error)
 			})
 			.on('rundown_metadata_update', (_rundownExternalId, rundown) => {
-				this._coreHandler.core
-					.callMethodLowPrio(P.methods.dataRundownMetaDataUpdate, [rundown])
-					.catch(this._logger.error)
+				this._coreHandler.core.callMethod(P.methods.dataRundownMetaDataUpdate, [rundown]).catch(this._logger.error)
 			})
 			.on('segment_delete', (rundownExternalId, segmentId) => {
 				this._coreHandler.core

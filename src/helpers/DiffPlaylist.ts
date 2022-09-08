@@ -53,6 +53,11 @@ export interface PlaylistChangeRundownCreated extends PlaylistChangeBase {
 	rundownExternalId: string
 }
 
+export interface PlaylistChangeRundownUpdated extends PlaylistChangeBase {
+	type: PlaylistChangeType.PlaylistChangeRundownUpdated
+	rundownExternalId: string
+}
+
 export interface PlaylistChangeRundownMetaDataUpdated extends PlaylistChangeBase {
 	type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated
 	rundownExternalId: string
@@ -66,6 +71,7 @@ export type PlaylistChange =
 	| PlaylistChangeRundownCreated
 	| PlaylistChangeRundownDeleted
 	| PlaylistChangeRundownMetaDataUpdated
+	| PlaylistChangeRundownUpdated
 
 export type SegmentChanges = {
 	// rundownId: changes
@@ -131,6 +137,12 @@ export function DiffPlaylist(
 		}
 
 		if (prevRundown.payload?.showstyleVariant !== rundown.payload?.showstyleVariant) {
+			changes.push(
+				literal<PlaylistChangeRundownUpdated>({
+					type: PlaylistChangeType.PlaylistChangeRundownUpdated,
+					rundownExternalId: rundown.externalId,
+				})
+			)
 			updatedRundownMetaData.add(rundown.externalId)
 		}
 

@@ -3,6 +3,7 @@ import {
 	PlaylistChangeRundownCreated,
 	PlaylistChangeRundownDeleted,
 	PlaylistChangeRundownMetaDataUpdated,
+	PlaylistChangeRundownUpdated,
 	PlaylistChangeSegmentCreated,
 	PlaylistChangeSegmentDeleted,
 	PlaylistChangeSegmentMoved,
@@ -552,48 +553,17 @@ describe('DiffPlaylist', () => {
 	})
 
 	it('tests if adding a showstyle variant triggers update meta data', () => {
-		let prevPlaylist = [
-			makeINewsRundown('test-rundown_1', [
-				{
-					_id: 'segment-01',
-				},
-				{
-					_id: 'segment-02',
-				},
-				{
-					_id: 'segment-03',
-				},
-			]),
-		]
+		const prevPlaylist = createPlaylistWithDefaultSegments('test-rundown_1')
+		const newPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
 
-		let newPlaylist = [
-			makeINewsRundown(
-				'test-rundown_1',
-				[
-					{
-						_id: 'segment-01',
-					},
-					{
-						_id: 'segment-02',
-					},
-					{
-						_id: 'segment-03',
-					},
-				],
-				{
-					showstyleVariant: 'TV2 Nyhederne',
-				}
-			),
-		]
+		const result = DiffPlaylist(newPlaylist, prevPlaylist)
 
-		let result = DiffPlaylist(newPlaylist, prevPlaylist)
-
-		expect(result.changes).toEqual([
+		expect(result.changes).toContainEqual(
 			literal<PlaylistChangeRundownMetaDataUpdated>({
 				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
 				rundownExternalId: 'test-rundown_1',
-			}),
-		])
+			})
+		)
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
@@ -604,47 +574,10 @@ describe('DiffPlaylist', () => {
 	})
 
 	it('tests that keeping a showstyle variant does not trigger any updates.', () => {
-		let prevPlaylist = [
-			makeINewsRundown(
-				'test-rundown_1',
-				[
-					{
-						_id: 'segment-01',
-					},
-					{
-						_id: 'segment-02',
-					},
-					{
-						_id: 'segment-03',
-					},
-				],
-				{
-					showstyleVariant: 'TV2 Nyhederne',
-				}
-			),
-		]
+		const prevPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
+		const newPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
 
-		let newPlaylist = [
-			makeINewsRundown(
-				'test-rundown_1',
-				[
-					{
-						_id: 'segment-01',
-					},
-					{
-						_id: 'segment-02',
-					},
-					{
-						_id: 'segment-03',
-					},
-				],
-				{
-					showstyleVariant: 'TV2 Nyhederne',
-				}
-			),
-		]
-
-		let result = DiffPlaylist(newPlaylist, prevPlaylist)
+		const result = DiffPlaylist(newPlaylist, prevPlaylist)
 
 		expect(result.changes).toEqual([])
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
@@ -657,54 +590,17 @@ describe('DiffPlaylist', () => {
 	})
 
 	it('tests if changing a showstyle variant triggers update meta data', () => {
-		let prevPlaylist = [
-			makeINewsRundown(
-				'test-rundown_1',
-				[
-					{
-						_id: 'segment-01',
-					},
-					{
-						_id: 'segment-02',
-					},
-					{
-						_id: 'segment-03',
-					},
-				],
-				{
-					showstyleVariant: 'TV2 Nyhederne',
-				}
-			),
-		]
+		const prevPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
+		const newPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Sporten')
 
-		let newPlaylist = [
-			makeINewsRundown(
-				'test-rundown_1',
-				[
-					{
-						_id: 'segment-01',
-					},
-					{
-						_id: 'segment-02',
-					},
-					{
-						_id: 'segment-03',
-					},
-				],
-				{
-					showstyleVariant: 'TV2 Sporten',
-				}
-			),
-		]
+		const result = DiffPlaylist(newPlaylist, prevPlaylist)
 
-		let result = DiffPlaylist(newPlaylist, prevPlaylist)
-
-		expect(result.changes).toEqual([
+		expect(result.changes).toContainEqual(
 			literal<PlaylistChangeRundownMetaDataUpdated>({
 				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
 				rundownExternalId: 'test-rundown_1',
-			}),
-		])
+			})
+		)
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
@@ -715,48 +611,17 @@ describe('DiffPlaylist', () => {
 	})
 
 	it('tests if deleting a showstyle variant triggers update meta data', () => {
-		let prevPlaylist = [
-			makeINewsRundown(
-				'test-rundown_1',
-				[
-					{
-						_id: 'segment-01',
-					},
-					{
-						_id: 'segment-02',
-					},
-					{
-						_id: 'segment-03',
-					},
-				],
-				{
-					showstyleVariant: 'TV2 Nyhederne',
-				}
-			),
-		]
+		const prevPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
+		const newPlaylist = createPlaylistWithDefaultSegments('test-rundown_1')
 
-		let newPlaylist = [
-			makeINewsRundown('test-rundown_1', [
-				{
-					_id: 'segment-01',
-				},
-				{
-					_id: 'segment-02',
-				},
-				{
-					_id: 'segment-03',
-				},
-			]),
-		]
+		const result = DiffPlaylist(newPlaylist, prevPlaylist)
 
-		let result = DiffPlaylist(newPlaylist, prevPlaylist)
-
-		expect(result.changes).toEqual([
+		expect(result.changes).toContainEqual(
 			literal<PlaylistChangeRundownMetaDataUpdated>({
 				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
 				rundownExternalId: 'test-rundown_1',
-			}),
-		])
+			})
+		)
 		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
 			movedSegments: [],
 			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
@@ -766,6 +631,40 @@ describe('DiffPlaylist', () => {
 		})
 	})
 
-	// it('tests that creating a ')
-	// Test for checking
+	it('triggers updateRundown when showStyleVariant changes', () => {
+		const rundownId = 'test-rundown_1'
+		const playlist = createPlaylistWithDefaultSegments(rundownId, 'TV2 Nyhederne')
+		const updatedPlaylist = createPlaylistWithDefaultSegments(rundownId, 'TV2 Sporten')
+
+		const result = DiffPlaylist(playlist, updatedPlaylist)
+
+		expect(result.changes).toContainEqual(
+			literal<PlaylistChangeRundownUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownUpdated,
+				rundownExternalId: rundownId,
+			})
+		)
+	})
 })
+
+function createPlaylistWithDefaultSegments(rundownId: string, showstyleVariant?: string): INewsRundown[] {
+	return [
+		makeINewsRundown(
+			rundownId,
+			[
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			],
+			{
+				showstyleVariant,
+			}
+		),
+	]
+}

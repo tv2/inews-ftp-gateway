@@ -3,6 +3,7 @@ import {
 	PlaylistChangeRundownCreated,
 	PlaylistChangeRundownDeleted,
 	PlaylistChangeRundownMetaDataUpdated,
+	PlaylistChangeRundownUpdated,
 	PlaylistChangeSegmentCreated,
 	PlaylistChangeSegmentDeleted,
 	PlaylistChangeSegmentMoved,
@@ -14,7 +15,11 @@ import { RundownSegment } from '../../classes/datastructures/Segment'
 import { literal } from '../../helpers'
 import { INewsStory, INewsFields } from 'inews'
 
-function makeINewsRundown(rundownId: string, segmentIds: Array<{ _id: SegmentId; backTime?: string }>): INewsRundown {
+function makeINewsRundown(
+	rundownId: string,
+	segmentIds: Array<{ _id: SegmentId; backTime?: string }>,
+	payload?: { [key: string]: any }
+): INewsRundown {
 	const segments = segmentIds.map(
 		(segment, i) =>
 			new RundownSegment(
@@ -29,7 +34,7 @@ function makeINewsRundown(rundownId: string, segmentIds: Array<{ _id: SegmentId;
 			)
 	)
 
-	const rundown = new INewsRundown(rundownId, rundownId, 'v0.0', segments)
+	const rundown = new INewsRundown(rundownId, rundownId, 'v0.0', segments, payload)
 
 	return rundown
 }
@@ -546,4 +551,120 @@ describe('DiffPlaylist', () => {
 			changedSegments: [],
 		})
 	})
+
+	it('tests if adding a showstyle variant triggers update meta data', () => {
+		const prevPlaylist = createPlaylistWithDefaultSegments('test-rundown_1')
+		const newPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
+
+		const result = DiffPlaylist(newPlaylist, prevPlaylist)
+
+		expect(result.changes).toContainEqual(
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			})
+		)
+		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
+			movedSegments: [],
+			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			insertedSegments: [],
+			deletedSegments: [],
+			changedSegments: [],
+		})
+	})
+
+	it('tests that keeping a showstyle variant does not trigger any updates.', () => {
+		const prevPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
+		const newPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
+
+		const result = DiffPlaylist(newPlaylist, prevPlaylist)
+
+		expect(result.changes).toEqual([])
+		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
+			movedSegments: [],
+			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			insertedSegments: [],
+			deletedSegments: [],
+			changedSegments: [],
+		})
+	})
+
+	it('tests if changing a showstyle variant triggers update meta data', () => {
+		const prevPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
+		const newPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Sporten')
+
+		const result = DiffPlaylist(newPlaylist, prevPlaylist)
+
+		expect(result.changes).toContainEqual(
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			})
+		)
+		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
+			movedSegments: [],
+			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			insertedSegments: [],
+			deletedSegments: [],
+			changedSegments: [],
+		})
+	})
+
+	it('tests if deleting a showstyle variant triggers update meta data', () => {
+		const prevPlaylist = createPlaylistWithDefaultSegments('test-rundown_1', 'TV2 Nyhederne')
+		const newPlaylist = createPlaylistWithDefaultSegments('test-rundown_1')
+
+		const result = DiffPlaylist(newPlaylist, prevPlaylist)
+
+		expect(result.changes).toContainEqual(
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: 'test-rundown_1',
+			})
+		)
+		expect(result.segmentChanges.get('test-rundown_1')).toEqual({
+			movedSegments: [],
+			notMovedSegments: ['segment-01', 'segment-02', 'segment-03'],
+			insertedSegments: [],
+			deletedSegments: [],
+			changedSegments: [],
+		})
+	})
+
+	it('triggers updateRundown when showStyleVariant changes', () => {
+		const rundownId = 'test-rundown_1'
+		const playlist = createPlaylistWithDefaultSegments(rundownId, 'TV2 Nyhederne')
+		const updatedPlaylist = createPlaylistWithDefaultSegments(rundownId, 'TV2 Sporten')
+
+		const result = DiffPlaylist(playlist, updatedPlaylist)
+
+		expect(result.changes).toContainEqual(
+			literal<PlaylistChangeRundownUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownUpdated,
+				rundownExternalId: rundownId,
+			})
+		)
+	})
 })
+
+function createPlaylistWithDefaultSegments(rundownId: string, showstyleVariant?: string): INewsRundown[] {
+	return [
+		makeINewsRundown(
+			rundownId,
+			[
+				{
+					_id: 'segment-01',
+				},
+				{
+					_id: 'segment-02',
+				},
+				{
+					_id: 'segment-03',
+				},
+			],
+			{
+				showstyleVariant,
+			}
+		),
+	]
+}

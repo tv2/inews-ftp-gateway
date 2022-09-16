@@ -10,7 +10,8 @@ export class INewsRundown implements IRundown {
 		public externalId: string,
 		public name: string,
 		public gatewayVersion: string,
-		public segments: RundownSegment[] = []
+		public segments: RundownSegment[] = [],
+		public payload: { [key: string]: any } | undefined = undefined
 	) {}
 
 	serialize(): IRundown {

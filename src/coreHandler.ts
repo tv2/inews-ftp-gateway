@@ -5,7 +5,7 @@ import {
 	DDPConnectorOptions,
 	Observer,
 } from '@sofie-automation/server-core-integration'
-import * as Winston from 'winston'
+import { ILogger as Logger } from '@tv2media/logger'
 import * as fs from 'fs'
 import { Process } from './process'
 
@@ -47,7 +47,7 @@ export interface CoreConfig {
 export class CoreHandler {
 	public core: CoreConnection
 
-	private logger: Winston.LoggerInstance
+	private logger: Logger
 	private _observers: Array<Observer> = []
 	private _onConnected?: () => any
 	private _subscriptions: Array<any> = []
@@ -58,8 +58,8 @@ export class CoreHandler {
 	private _studioId?: string
 	public iNewsHandler?: InewsFTPHandler
 
-	constructor(logger: Winston.LoggerInstance, deviceOptions: DeviceConfig) {
-		this.logger = logger
+	constructor(logger: Logger, deviceOptions: DeviceConfig) {
+		this.logger = logger.tag(this.constructor.name)
 		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'iNews Gateway'))
 	}
 
@@ -70,14 +70,15 @@ export class CoreHandler {
 		this.core.onConnected(() => {
 			this.logger.info('Core Connected!')
 			if (this._isInitialized) {
-				this.onConnectionRestored().catch((e) => this.logger.error('onConnected error', e, e.stack))
+				this.onConnectionRestored().catch((error) => this.logger.data(error).error('onConnected error:'))
 			}
 		})
 		this.core.onDisconnected(() => {
 			this.logger.info('Core Disconnected!')
 		})
-		this.core.onError((err) => {
-			this.logger.error('Core Error: ' + (err.message || err.toString() || err))
+		this.core.onError((error) => {
+			this.logger.data(error).error('Core Error:')
+			this.setStatus(P.StatusCode.BAD, ['Core error'])
 		})
 
 		let ddpConfig: DDPConnectorOptions = {
@@ -115,11 +116,11 @@ export class CoreHandler {
 				statusCode: statusCode,
 				messages: messages,
 			})
-		} catch (e) {
-			this.logger.warn(`Error when setting status: + ${e}`)
+		} catch (error) {
+			this.logger.data(error).warn('Error when setting status:')
 			return {
 				statusCode: P.StatusCode.WARNING_MAJOR,
-				messages: ['Error when setting status', e as string],
+				messages: ['Error when setting status', error as string],
 			}
 		}
 	}
@@ -168,9 +169,10 @@ export class CoreHandler {
 		// The following command was placed after subscription setup but being
 		// executed before it.
 		if (this._onConnected) this._onConnected()
-		await this.setupSubscriptionsAndObservers().catch((e) => {
-			this.logger.error('setupSubscriptionsAndObservers error', e, e.stack)
+		await this.setupSubscriptionsAndObservers().catch((error) => {
+			this.logger.data(error).error('setupSubscriptionsAndObservers error:')
 		})
+		this.iNewsHandler?.restartWatcher()
 	}
 	/**
 	 * Called when connected to core.
@@ -191,7 +193,7 @@ export class CoreHandler {
 		}
 		this._subscriptions = []
 
-		this.logger.info('Core: Setting up subscriptions for ' + this.core.deviceId + '..')
+		this.logger.info(`Core: Setting up subscriptions for ${this.core.deviceId}..`)
 		let subs = await Promise.all([
 			this.core.autoSubscribe('peripheralDevices', {
 				_id: this.core.deviceId,
@@ -202,7 +204,7 @@ export class CoreHandler {
 		this._subscriptions = this._subscriptions.concat(subs)
 		this.setupObserverForPeripheralDeviceCommands() // Sets up observers
 		this.executePeripheralDeviceCommands().catch((e) =>
-			this.logger.error(`executePeripheralDeviceCommands error`, e, e.stack)
+			this.logger.data(e).error('executePeripheralDeviceCommands error:')
 		) // Runs any commands async
 		this.setupObserverForPeripheralDevices()
 	}
@@ -212,7 +214,9 @@ export class CoreHandler {
 	async executeFunction(cmd: PeripheralDeviceCommand): Promise<void> {
 		if (cmd) {
 			if (this._executedFunctions[cmd._id]) return // prevent it from running multiple times
-			this.logger.debug(cmd.functionName, cmd.args)
+			this.logger
+				.data({ functionName: cmd.functionName, args: cmd.args })
+				.debug('Executing a peripheral device command:')
 			this._executedFunctions[cmd._id] = true
 			let success = false
 
@@ -246,12 +250,12 @@ export class CoreHandler {
 					default:
 						throw Error('Function "' + cmd.functionName + '" not found!')
 				}
-			} catch (err) {
-				this.logger.error(`executeFunction error ${success ? 'during execution' : 'on reply'}`, err, (err as any).stack)
+			} catch (error) {
+				this.logger.data(error).error(`executeFunction error ${success ? 'during execution' : 'on reply'}:`)
 				if (!success) {
 					await this.core
-						.callMethod(P.methods.functionReply, [cmd._id, (err as any).toString(), null])
-						.catch((e) => this.logger.error('executeFunction reply error after execution failure', e, e.stack))
+						.callMethod(P.methods.functionReply, [cmd._id, (error as any).toString(), null])
+						.catch((e) => this.logger.data(e).error('executeFunction reply error after execution failure:'))
 				}
 			}
 		}
@@ -266,6 +270,7 @@ export class CoreHandler {
 	 */
 	// Made async as it does async work ...
 	setupObserverForPeripheralDeviceCommands() {
+		this.logger.info(`Core: Setting up observers for peripheral device commands on ${this.core.deviceId}..`)
 		let observer = this.core.observe('peripheralDeviceCommands')
 		this.killProcess(0) // just make sure it exists
 		this._observers.push(observer)
@@ -281,11 +286,8 @@ export class CoreHandler {
 			let cmd = cmds.findOne(id) as PeripheralDeviceCommand
 			if (!cmd) throw Error('PeripheralCommand "' + id + '" not found!')
 			if (cmd.deviceId === this.core.deviceId) {
-				this.executeFunction(cmd).catch((e) =>
-					this.logger.error('Error executing command recieved from core', e, e.stack)
-				)
+				this.executeFunction(cmd).catch((e) => this.logger.data(e).error(`Error executing command recieved from core:`))
 			}
-			return
 		}
 		observer.added = (id: string) => {
 			addedChangedCommand(id)
@@ -302,6 +304,7 @@ export class CoreHandler {
 	 *  Execute all relevant commands now
 	 */
 	async executePeripheralDeviceCommands(): Promise<void> {
+		this.logger.info(`Core: Execute peripheral device commands on ${this.core.deviceId}..`)
 		let cmds = this.core.getCollection('peripheralDeviceCommands')
 		if (!cmds) throw Error('"peripheralDeviceCommands" collection not found!')
 		await Promise.all(
@@ -319,6 +322,7 @@ export class CoreHandler {
 	 * Subscribes to changes to the device to get its associated studio ID.
 	 */
 	setupObserverForPeripheralDevices() {
+		this.logger.info(`Core: Setting up observers for peripheral devices on ${this.core.deviceId}..`)
 		// Setup observer.
 		let observer = this.core.observe('peripheralDevices')
 		this.killProcess(0)
@@ -424,11 +428,11 @@ export class CoreHandler {
 						versions[dir] = json.version || 'N/A'
 					}
 				} catch (e) {
-					this.logger.error(e as string)
+					this.logger.error(e)
 				}
 			})
 		} catch (e) {
-			this.logger.error(e as string)
+			this.logger.error(e)
 		}
 		return versions
 	}

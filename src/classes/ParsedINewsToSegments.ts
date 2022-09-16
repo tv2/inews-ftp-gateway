@@ -1,6 +1,7 @@
 import { RundownId, SegmentId } from '../helpers/id'
 import _ = require('underscore')
-import * as Winston from 'winston'
+import { ILogger as Logger } from '@tv2media/logger'
+import { SegmentChanges } from '../helpers/DiffPlaylist'
 
 export interface IParsedElement {
 	data: {
@@ -31,11 +32,8 @@ export class ParsedINewsIntoSegments {
 		rundownId: RundownId,
 		segmentOrder: SegmentId[],
 		previousRankings: SegmentRankings,
-		movedSegments: SegmentId[],
-		notMovedSegments: SegmentId[],
-		insertedSegments: SegmentId[],
-		_deletedSegments: SegmentId[],
-		logger?: Winston.LoggerInstance
+		{ movedSegments, notMovedSegments, insertedSegments }: SegmentChanges,
+		logger?: Logger
 	): UpdatesAndRanks {
 		const segmentRanks: Map<SegmentId, number> = new Map()
 
@@ -70,12 +68,11 @@ export class ParsedINewsIntoSegments {
 				segmentRanks.set(segmentId, newRank)
 				assignedRanks.push(newRank)
 			} else {
-				logger?.debug(`Don't know what to do with ranks for ${segmentId}`)
-				console.log(insertedSegments.join(','))
+				logger?.data(insertedSegments.join(',')).debug(`Don't know what to do with ranks for ${segmentId}`)
 			}
 		})
 
-		return { segmentRanks, recalculatedAsIntegers: true }
+		return { segmentRanks, recalculatedAsIntegers: false }
 	}
 
 	static RecalculateRanksAsIntegerValues(segmentOrder: SegmentId[]): UpdatesAndRanks {

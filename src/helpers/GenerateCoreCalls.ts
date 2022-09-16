@@ -5,9 +5,6 @@ import { literal } from '../helpers'
 import { logger } from '../logger'
 import {
 	PlaylistChange,
-	PlaylistChangeRundownCreated,
-	PlaylistChangeRundownDeleted,
-	PlaylistChangeRundownMetaDataUpdated,
 	PlaylistChangeSegmentChanged,
 	PlaylistChangeSegmentCreated,
 	PlaylistChangeSegmentDeleted,
@@ -15,7 +12,7 @@ import {
 	PlaylistChangeType,
 } from './DiffPlaylist'
 import { PlaylistId, RundownId, SegmentId } from './id'
-import { ResolvedPlaylist } from './ResolveRundownIntoPlaylist'
+import { ResolvedPlaylist, ResolvedPlaylistRundown } from './ResolveRundownIntoPlaylist'
 import { RundownSegment } from '../classes/datastructures/Segment'
 
 export enum CoreCallType {
@@ -95,144 +92,59 @@ export function GenerateCoreCalls(
 	ingestCacheData: Map<SegmentId, RundownSegment>,
 	untimedSegments: Set<SegmentId>
 ): CoreCall[] {
-	const calls: CoreCall[] = []
+	const coreCalls: CoreCall[] = []
 
-	const playlistDeletedRundowns: PlaylistChangeRundownDeleted[] = changes.filter(
-		(f) => f.type === PlaylistChangeType.PlaylistChangeRundownDeleted
-	) as PlaylistChangeRundownDeleted[]
-	let playlistCreatedRundowns: PlaylistChangeRundownCreated[] = changes.filter(
-		(f) => f.type === PlaylistChangeType.PlaylistChangeRundownCreated
-	) as PlaylistChangeRundownCreated[]
-	let playlistUpdatedRundownMetaData: PlaylistChangeRundownMetaDataUpdated[] = changes.filter(
-		(f) => f.type === PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated
-	) as PlaylistChangeRundownMetaDataUpdated[]
-	let playlistChangedSegments: Array<
-		PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated | PlaylistChangeSegmentChanged
-	> = changes.filter((f) => f.type === PlaylistChangeType.PlaylistChangeSegmentChanged) as Array<
-		PlaylistChangeSegmentMoved | PlaylistChangeSegmentCreated | PlaylistChangeSegmentChanged
-	>
-	let playlistDeletedSegments: PlaylistChangeSegmentDeleted[] = changes.filter(
-		(f) => f.type === PlaylistChangeType.PlaylistChangeSegmentDeleted
-	) as PlaylistChangeSegmentDeleted[]
-	let playlistCreatedSegments: PlaylistChangeSegmentCreated[] = changes.filter(
-		(f) => f.type === PlaylistChangeType.PlaylistChangeSegmentCreated
-	) as PlaylistChangeSegmentCreated[]
-	let playlistMovedSegments: PlaylistChangeSegmentMoved[] = changes.filter(
-		(f) => f.type === PlaylistChangeType.PlaylistChangeSegmentMoved
-	) as PlaylistChangeSegmentMoved[]
-
-	for (let rundown of playlistDeletedRundowns) {
-		logger.debug(`Adding core call: Rundown delete (${rundown.rundownExternalId})`)
-		calls.push(
-			literal<CoreCallRundownDelete>({
-				type: CoreCallType.dataRundownDelete,
-				rundownExternalId: rundown.rundownExternalId,
-			})
-		)
-	}
-
-	for (let deletedSegment of playlistDeletedSegments) {
-		logger.debug(`Adding core call: Segment delete (${deletedSegment.segmentExternalId})`)
-		calls.push(
-			literal<CoreCallSegmentDelete>({
-				type: CoreCallType.dataSegmentDelete,
-				rundownExternalId: deletedSegment.rundownExternalId,
-				segmentExternalId: deletedSegment.segmentExternalId,
-			})
-		)
-	}
-
-	for (let createdRundown of playlistCreatedRundowns) {
-		logger.debug(`Creating rundown: ${createdRundown.rundownExternalId}`)
-		const assignedRundown = playlistAssignments.find((r) => r.rundownId === createdRundown.rundownExternalId)
-
-		if (!assignedRundown) {
-			logger.error(
-				`Tried to create rundown ${createdRundown.rundownExternalId} but could not find the segments associated with this rundown.`
-			)
-			continue
-		}
-
-		const rundown = playlistRundownToIngestRundown(
+	coreCalls.push(...createDeletedRundownCoreCalls(changes))
+	coreCalls.push(...createSegmentDeletedCoreCalls(changes))
+	coreCalls.push(
+		...createRundownCreateCoreCalls(
+			changes,
+			playlistAssignments,
 			playlistId,
-			assignedRundown.rundownId,
-			assignedRundown.segments,
 			iNewsDataCache,
 			assignedRanks,
 			untimedSegments
 		)
-
-		logger.debug(`Adding core call: Rundown create (${rundown.externalId})`)
-		calls.push(
-			literal<CoreCallRundownCreate>({
-				type: CoreCallType.dataRundownCreate,
-				rundownExternalId: rundown.externalId,
-				rundown,
-			})
+	)
+	coreCalls.push(
+		...createMetaDataUpdateCoreCalls(
+			changes,
+			playlistAssignments,
+			playlistId,
+			iNewsDataCache,
+			assignedRanks,
+			untimedSegments
 		)
-	}
-
-	for (const changedSegment of playlistChangedSegments) {
-		const segmentId = changedSegment.segmentExternalId
-		const rundownId = changedSegment.rundownExternalId
-		const inews = iNewsDataCache.get(changedSegment.segmentExternalId)
-		let rank = assignedRanks.get(segmentId)
-		const cachedData = ingestCacheData.get(segmentId)
-		const untimed = untimedSegments.has(segmentId)
-
-		if (!inews) {
-			logger.error(`Could not process segment change ${segmentId}, iNews data could not be found`)
-			continue
-		}
-
-		if (rank === undefined) {
-			logger.error(`Could not assign rank to ${segmentId}, it will appear out of order`)
-			// Try to keep old position, otherwise send to top
-			rank = cachedData?.rank ?? 0
-		}
-
-		logger.debug(`Adding core call: Segment update (${segmentId})`)
-		const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed)
-		calls.push(
-			literal<CoreCallSegmentUpdate>({
-				type: CoreCallType.dataSegmentUpdate,
-				rundownExternalId: rundownId,
-				segmentExternalId: segmentId,
-				segment,
-			})
+	)
+	coreCalls.push(
+		...createSegmentChangedCoreCalls(changes, iNewsDataCache, assignedRanks, ingestCacheData, untimedSegments)
+	)
+	coreCalls.push(
+		...createSegmentCreatedCoreCalls(changes, iNewsDataCache, assignedRanks, ingestCacheData, untimedSegments)
+	)
+	coreCalls.push(...createSegmentMovedCoreCalls(changes, assignedRanks, ingestCacheData))
+	coreCalls.push(
+		...createRundownUpdatedCoreCalls(
+			changes,
+			playlistAssignments,
+			playlistId,
+			iNewsDataCache,
+			assignedRanks,
+			untimedSegments
 		)
-	}
+	)
 
-	for (const createdSegment of playlistCreatedSegments) {
-		const segmentId = createdSegment.segmentExternalId
-		const rundownId = createdSegment.rundownExternalId
-		const inews = iNewsDataCache.get(createdSegment.segmentExternalId)
-		let rank = assignedRanks.get(segmentId)
-		const cachedData = ingestCacheData.get(segmentId)
-		const untimed = untimedSegments.has(segmentId)
+	return coreCalls
+}
 
-		if (!inews) {
-			logger.error(`Could not process created segment ${segmentId}, iNews data could not be found`)
-			continue
-		}
-
-		if (rank == undefined) {
-			logger.error(`Could not assign rank to ${segmentId}, it will appear out of order`)
-			// Try to keep old position, otherwise send to top
-			rank = cachedData?.rank ?? 0
-		}
-
-		logger.debug(`Adding core call: Segment create (${segmentId})`)
-		const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed)
-		calls.push(
-			literal<CoreCallSegmentCreate>({
-				type: CoreCallType.dataSegmentCreate,
-				rundownExternalId: rundownId,
-				segmentExternalId: segment.externalId,
-				segment,
-			})
-		)
-	}
+function createSegmentMovedCoreCalls(
+	changes: PlaylistChange[],
+	assignedRanks: Map<SegmentId, number>,
+	ingestCacheData: Map<SegmentId, RundownSegment>
+): CoreCallSegmentRanksUpdate[] {
+	const playlistMovedSegments: PlaylistChangeSegmentMoved[] = changes.filter(
+		(playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeSegmentMoved
+	) as PlaylistChangeSegmentMoved[]
 
 	const updatedRanks: Map<RundownId, { [segmentId: string]: number }> = new Map()
 
@@ -253,9 +165,10 @@ export function GenerateCoreCalls(
 		updatedRanks.set(rundownId, rundownRanks)
 	}
 
+	const coreCalls: CoreCallSegmentRanksUpdate[] = []
 	for (let [rundownId, ranks] of updatedRanks) {
 		logger.debug(`Adding core call: Segment ranks update (${rundownId})`)
-		calls.push(
+		coreCalls.push(
 			literal<CoreCallSegmentRanksUpdate>({
 				type: CoreCallType.dataSegmentRanksUpdate,
 				rundownExternalId: rundownId,
@@ -264,42 +177,251 @@ export function GenerateCoreCalls(
 		)
 	}
 
-	for (const updatedRundown of playlistUpdatedRundownMetaData) {
-		const assignedRundown = playlistAssignments.find((r) => r.rundownId === updatedRundown.rundownExternalId)
+	return coreCalls
+}
 
-		if (!assignedRundown) {
-			logger.error(
-				`Tried to create rundown ${updatedRundown.rundownExternalId} but could not find the segments associated with this rundown.`
+function createDeletedRundownCoreCalls(changes: PlaylistChange[]): CoreCallRundownDelete[] {
+	return changes
+		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeRundownDeleted)
+		.map((playlistChange) => {
+			logger.debug(`Adding core call: Rundown delete (${playlistChange.rundownExternalId})`)
+			return literal<CoreCallRundownDelete>({
+				type: CoreCallType.dataRundownDelete,
+				rundownExternalId: playlistChange.rundownExternalId,
+			})
+		})
+}
+
+function createSegmentDeletedCoreCalls(changes: PlaylistChange[]): CoreCallSegmentDelete[] {
+	return changes
+		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeSegmentDeleted)
+		.map((playlistChange) => {
+			const playlistChangeSegmentDeleted: PlaylistChangeSegmentDeleted = playlistChange as PlaylistChangeSegmentDeleted
+			logger.debug(`Adding core call: Segment delete (${playlistChangeSegmentDeleted.segmentExternalId})`)
+			return literal<CoreCallSegmentDelete>({
+				type: CoreCallType.dataSegmentDelete,
+				rundownExternalId: playlistChangeSegmentDeleted.rundownExternalId,
+				segmentExternalId: playlistChangeSegmentDeleted.segmentExternalId,
+			})
+		})
+}
+
+function createRundownCreateCoreCalls(
+	changes: PlaylistChange[],
+	playlistAssignments: Array<ResolvedPlaylistRundown>,
+	playlistId: string,
+	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
+	assignedRanks: Map<SegmentId, number>,
+	untimedSegments: Set<SegmentId>
+): CoreCallRundownCreate[] {
+	return changes
+		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeRundownCreated)
+		.map((playlistChange) => {
+			logger.debug(`Creating rundown: ${playlistChange.rundownExternalId}`)
+			const assignedRundown = playlistAssignments.find(
+				(playlistAssignment) => playlistAssignment.rundownId === playlistChange.rundownExternalId
 			)
-			continue
-		}
 
-		const rundown = playlistRundownToIngestRundown(
-			playlistId,
-			assignedRundown.rundownId,
-			assignedRundown.segments,
-			iNewsDataCache,
-			assignedRanks,
-			untimedSegments
-		)
+			if (!assignedRundown) {
+				logger.error(
+					`Tried to create rundown ${playlistChange.rundownExternalId} but could not find the segments associated with this rundown.`
+				)
+				return undefined
+			}
 
-		logger.debug(`Adding core call: Rundown metadata update (${rundown.externalId})`)
-		calls.push(
-			literal<CoreCallRundownMetaDataUpdate>({
+			const rundown = playlistRundownToIngestRundown(
+				playlistId,
+				assignedRundown.rundownId,
+				assignedRundown.segments,
+				assignedRundown.payload,
+				iNewsDataCache,
+				assignedRanks,
+				untimedSegments
+			)
+
+			logger.debug(`Adding core call: Rundown create (${rundown.externalId})`)
+			return literal<CoreCallRundownCreate>({
+				type: CoreCallType.dataRundownCreate,
+				rundownExternalId: rundown.externalId,
+				rundown,
+			})
+		})
+		.filter((coreCall): coreCall is CoreCallRundownCreate => !!coreCall)
+}
+
+function createMetaDataUpdateCoreCalls(
+	changes: PlaylistChange[],
+	playlistAssignments: Array<ResolvedPlaylistRundown>,
+	playlistId: string,
+	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
+	assignedRanks: Map<SegmentId, number>,
+	untimedSegments: Set<SegmentId>
+): CoreCallRundownMetaDataUpdate[] {
+	return changes
+		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated)
+		.map((playlistChange) => {
+			const assignedRundown = playlistAssignments.find((r) => r.rundownId === playlistChange.rundownExternalId)
+
+			if (!assignedRundown) {
+				logger.error(
+					`Tried to create rundown ${playlistChange.rundownExternalId} but could not find the segments associated with this rundown.`
+				)
+				return undefined
+			}
+
+			const rundown = playlistRundownToIngestRundown(
+				playlistId,
+				assignedRundown.rundownId,
+				assignedRundown.segments,
+				assignedRundown.payload,
+				iNewsDataCache,
+				assignedRanks,
+				untimedSegments
+			)
+
+			logger.debug(`Adding core call: Rundown metadata update (${rundown.externalId})`)
+			return literal<CoreCallRundownMetaDataUpdate>({
 				type: CoreCallType.dataRundownMetaDataUpdate,
 				rundownExternalId: rundown.externalId,
 				rundown,
 			})
-		)
-	}
+		})
+		.filter((coreCall): coreCall is CoreCallRundownMetaDataUpdate => !!coreCall)
+}
 
-	return calls
+function createSegmentChangedCoreCalls(
+	changes: PlaylistChange[],
+	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
+	assignedRanks: Map<SegmentId, number>,
+	ingestCacheData: Map<SegmentId, RundownSegment>,
+	untimedSegments: Set<SegmentId>
+): CoreCallSegmentUpdate[] {
+	return changes
+		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeSegmentChanged)
+		.map((playlistChange) => {
+			const change:
+				| PlaylistChangeSegmentMoved
+				| PlaylistChangeSegmentCreated
+				| PlaylistChangeSegmentChanged = playlistChange as
+				| PlaylistChangeSegmentMoved
+				| PlaylistChangeSegmentCreated
+				| PlaylistChangeSegmentChanged
+			const segmentId = change.segmentExternalId
+			const rundownId = change.rundownExternalId
+			const inews = iNewsDataCache.get(change.segmentExternalId)
+			let rank = assignedRanks.get(segmentId)
+			const cachedData = ingestCacheData.get(segmentId)
+			const untimed = untimedSegments.has(segmentId)
+
+			if (!inews) {
+				logger.error(`Could not process segment change ${segmentId}, iNews data could not be found`)
+				return undefined
+			}
+
+			if (rank === undefined) {
+				logger.error(`Could not assign rank to ${segmentId}, it will appear out of order`)
+				// Try to keep old position, otherwise send to top
+				rank = cachedData?.rank ?? 0
+			}
+
+			logger.debug(`Adding core call: Segment update (${segmentId})`)
+			const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed)
+			return literal<CoreCallSegmentUpdate>({
+				type: CoreCallType.dataSegmentUpdate,
+				rundownExternalId: rundownId,
+				segmentExternalId: segmentId,
+				segment,
+			})
+		})
+		.filter((coreCall): coreCall is CoreCallSegmentUpdate => !!coreCall)
+}
+
+function createSegmentCreatedCoreCalls(
+	changes: PlaylistChange[],
+	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
+	assignedRanks: Map<SegmentId, number>,
+	ingestCacheData: Map<SegmentId, RundownSegment>,
+	untimedSegments: Set<SegmentId>
+): CoreCallSegmentCreate[] {
+	return changes
+		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeSegmentCreated)
+		.map((playlistChange) => {
+			const change: PlaylistChangeSegmentCreated = playlistChange as PlaylistChangeSegmentCreated
+			const segmentId = change.segmentExternalId
+			const rundownId = change.rundownExternalId
+			const inews = iNewsDataCache.get(change.segmentExternalId)
+			let rank = assignedRanks.get(segmentId)
+			const cachedData = ingestCacheData.get(segmentId)
+			const untimed = untimedSegments.has(segmentId)
+
+			if (!inews) {
+				logger.error(`Could not process created segment ${segmentId}, iNews data could not be found`)
+				return undefined
+			}
+
+			if (rank == undefined) {
+				logger.error(`Could not assign rank to ${segmentId}, it will appear out of order`)
+				// Try to keep old position, otherwise send to top
+				rank = cachedData?.rank ?? 0
+			}
+
+			logger.debug(`Adding core call: Segment create (${segmentId})`)
+			const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed)
+			return literal<CoreCallSegmentCreate>({
+				type: CoreCallType.dataSegmentCreate,
+				rundownExternalId: rundownId,
+				segmentExternalId: segment.externalId,
+				segment,
+			})
+		})
+		.filter((coreCall): coreCall is CoreCallSegmentCreate => !!coreCall)
+}
+
+function createRundownUpdatedCoreCalls(
+	changes: PlaylistChange[],
+	playlistAssignments: Array<ResolvedPlaylistRundown>,
+	playlistId: string,
+	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
+	assignedRanks: Map<SegmentId, number>,
+	untimedSegments: Set<SegmentId>
+): CoreCallRundownUpdate[] {
+	return changes
+		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeRundownUpdated)
+		.map((playlistChange) => {
+			const assignedRundown = playlistAssignments.find((r) => r.rundownId === playlistChange.rundownExternalId)
+
+			if (!assignedRundown) {
+				logger.error(
+					`Tried to create rundown ${playlistChange.rundownExternalId} but could not find the segments associated with this rundown.`
+				)
+				return undefined
+			}
+
+			const rundown = playlistRundownToIngestRundown(
+				playlistId,
+				assignedRundown.rundownId,
+				assignedRundown.segments,
+				assignedRundown.payload,
+				iNewsDataCache,
+				assignedRanks,
+				untimedSegments
+			)
+
+			logger.debug(`Adding core call: Rundown updated (${rundown.externalId})`)
+			return literal<CoreCallRundownUpdate>({
+				type: CoreCallType.dataRundownUpdate,
+				rundownExternalId: rundown.externalId,
+				rundown,
+			})
+		})
+		.filter((coreCall): coreCall is CoreCallRundownUpdate => !!coreCall)
 }
 
 function playlistRundownToIngestRundown(
 	playlistId: PlaylistId,
 	rundownId: RundownId,
 	segments: string[],
+	payload: object | undefined,
 	inewsCache: Map<SegmentId, UnrankedSegment>,
 	ranks: Map<SegmentId, number>,
 	untimedSegments: Set<SegmentId>
@@ -333,6 +455,7 @@ function playlistRundownToIngestRundown(
 		type: INGEST_RUNDOWN_TYPE,
 		segments: ingestSegments,
 		payload: {
+			...(payload ?? null),
 			playlistExternalId: playlistId,
 		},
 	})

@@ -53,6 +53,11 @@ export interface PlaylistChangeRundownCreated extends PlaylistChangeBase {
 	rundownExternalId: string
 }
 
+export interface PlaylistChangeRundownUpdated extends PlaylistChangeBase {
+	type: PlaylistChangeType.PlaylistChangeRundownUpdated
+	rundownExternalId: string
+}
+
 export interface PlaylistChangeRundownMetaDataUpdated extends PlaylistChangeBase {
 	type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated
 	rundownExternalId: string
@@ -66,18 +71,18 @@ export type PlaylistChange =
 	| PlaylistChangeRundownCreated
 	| PlaylistChangeRundownDeleted
 	| PlaylistChangeRundownMetaDataUpdated
+	| PlaylistChangeRundownUpdated
 
-export type SegmentChangesMap = Map<
-	RundownId,
-	{
-		// rundownId: changes
-		movedSegments: SegmentId[]
-		notMovedSegments: SegmentId[]
-		insertedSegments: SegmentId[]
-		deletedSegments: SegmentId[]
-		changedSegments: SegmentId[]
-	}
->
+export type SegmentChanges = {
+	// rundownId: changes
+	movedSegments: SegmentId[]
+	notMovedSegments: SegmentId[]
+	insertedSegments: SegmentId[]
+	deletedSegments: SegmentId[]
+	changedSegments: SegmentId[]
+}
+
+export type SegmentChangesMap = Map<RundownId, SegmentChanges>
 
 export function DiffPlaylist(
 	playlist: Array<INewsRundown>,
@@ -129,6 +134,16 @@ export function DiffPlaylist(
 				changedSegments: [],
 			})
 			continue
+		}
+
+		if (prevRundown.payload?.showstyleVariant !== rundown.payload?.showstyleVariant) {
+			changes.push(
+				literal<PlaylistChangeRundownUpdated>({
+					type: PlaylistChangeType.PlaylistChangeRundownUpdated,
+					rundownExternalId: rundown.externalId,
+				})
+			)
+			updatedRundownMetaData.add(rundown.externalId)
 		}
 
 		let { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(

@@ -5,8 +5,8 @@ import { RundownManager } from './RundownManager'
 import { RundownSegment, ISegment } from './datastructures/Segment'
 import { INewsQueue, InewsFTPHandler } from '../inewsHandler'
 import { INewsClient } from 'inews'
+import { StatusCode } from '@tv2media/shared-lib/dist/lib/status'
 import { CoreHandler } from '../coreHandler'
-import { PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
 import { SegmentRankings, SegmentRankingsInner } from './ParsedINewsToSegments'
 import { IngestPlaylist, IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
 import { ResolvedPlaylist, ResolveRundownIntoPlaylist } from '../helpers/ResolveRundownIntoPlaylist'
@@ -239,14 +239,14 @@ export class RundownWatcher extends EventEmitter {
 					}
 
 					if (this.handler.isConnected) {
-						await this.coreHandler.setStatus(P.StatusCode.GOOD, [])
+						await this.coreHandler.setStatus(StatusCode.GOOD, [])
 					}
 
 					this.rundownManager.emptyInewsFtpBuffer()
 				},
 				async (error) => {
 					this.logger.data(error).error('Something went wrong during check:')
-					await this.coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['INews rundowns check failed'])
+					await this.coreHandler.setStatus(StatusCode.WARNING_MAJOR, ['INews rundowns check failed'])
 				}
 			)
 			.catch(this._logger.error)

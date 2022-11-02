@@ -73,8 +73,9 @@
   "license": "MIT",
   "dependencies": {
     "@sofie-automation/blueprints-integration": "npm:@tv2media/blueprints-integration@1.37.0-rc12",
-    "@sofie-automation/server-core-integration": "npm:@tv2media/server-core-integration@42.0.0",
+    "@sofie-automation/server-core-integration": "npm:@tv2media/server-core-integration@46.0.1",
     "@tv2media/logger": "^1.2.4",
+    "@tv2media/shared-lib": "^46.0.0",
     "@types/dotenv": "^6.1.1",
     "@types/xml2js": "^0.4.4",
     "async-mutex": "^0.3.1",
@@ -116,7 +117,7 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.1.0",
     "typedoc": "^0.19.2",
-    "typescript": "^3.7.2",
+    "typescript": "~4.5.5",
     "typescript-tslint-plugin": "^0.5.5"
   },
   "standard-version": {

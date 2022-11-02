@@ -131,6 +131,6 @@ export class Connector {
 			addedChanged(id)
 		}
 
-		addedChanged(this.coreHandler.core.deviceId)
+		addedChanged(this.coreHandler.core.deviceId._protectedType)
 	}
 }

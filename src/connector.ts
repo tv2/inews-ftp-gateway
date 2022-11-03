@@ -5,6 +5,7 @@ import { Process } from './process'
 import { Observer } from '@sofie-automation/server-core-integration'
 import { ensureLogLevel, setLogLevel } from './logger'
 import { ILogger as Logger } from '@tv2media/logger'
+import { unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 
 export interface Config {
 	process: ProcessConfig
@@ -131,6 +132,6 @@ export class Connector {
 			addedChanged(id)
 		}
 
-		addedChanged(this.coreHandler.core.deviceId._protectedType)
+		addedChanged(unprotectString(this.coreHandler.core.deviceId))
 	}
 }

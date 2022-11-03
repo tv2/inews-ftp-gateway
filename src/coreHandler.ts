@@ -22,7 +22,7 @@ import { ReflectPromise } from './helpers'
 import { ReducedRundown } from './classes/RundownWatcher'
 import { VersionIsCompatible } from './version'
 import { RundownId, SegmentId } from './helpers/id'
-import { protectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
+import { protectString, unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 
 export interface PeripheralDeviceCommand {
 	_id: string
@@ -348,7 +348,7 @@ export class CoreHandler {
 			addedChanged(id)
 		}
 
-		addedChanged(this.core.deviceId._protectedType)
+		addedChanged(unprotectString(this.core.deviceId))
 	}
 	/**
 	 * Kills the gateway.

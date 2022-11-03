@@ -72,7 +72,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@sofie-automation/blueprints-integration": "npm:@tv2media/blueprints-integration@1.37.0-rc12",
+    "@sofie-automation/blueprints-integration": "npm:@tv2media/blueprints-integration@46.0.3",
     "@sofie-automation/server-core-integration": "npm:@tv2media/server-core-integration@46.0.1",
     "@tv2media/logger": "^1.2.4",
     "@tv2media/shared-lib": "^46.0.0",

@@ -7,8 +7,8 @@ import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { VERSION } from './version'
 import { ILogger as Logger } from '@tv2media/logger'
-import { StatusCode } from '@tv2media/shared-lib/dist/lib/status'
-import { PeripheralDeviceAPIMethods } from '@tv2media/shared-lib/dist/peripheralDevice/methodsAPI'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
+import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
 
 type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions

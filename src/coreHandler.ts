@@ -7,11 +7,11 @@ import {
 	PeripheralDeviceType,
 	PERIPHERAL_SUBTYPE_PROCESS,
 	StatusObject,
-} from '@tv2media/shared-lib/dist/peripheralDevice/peripheralDeviceAPI'
-import { PeripheralDeviceId } from '@tv2media/shared-lib/dist/core/model/Ids'
-import { StatusCode } from '@tv2media/shared-lib/dist/lib/status'
+} from '@sofie-automation/shared-lib/dist/peripheralDevice/peripheralDeviceAPI'
+import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import * as _ from 'underscore'
-import { PeripheralDeviceAPIMethods } from '@tv2media/shared-lib/dist/peripheralDevice/methodsAPI'
+import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
 import { IngestSegmentToRundownSegment } from './mutate'

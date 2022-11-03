@@ -414,7 +414,7 @@
     tslib "^2.4.0"
     underscore "^1.13.4"
 
-"@sofie-automation/shared-lib@npm:@tv2media/shared-lib@46.0.0", "@tv2media/shared-lib@^46.0.0":
+"@sofie-automation/shared-lib@npm:@tv2media/shared-lib@46.0.0":
   version "46.0.0"
   resolved "https://registry.yarnpkg.com/@tv2media/shared-lib/-/shared-lib-46.0.0.tgz#27ce22985d205b99dd5c06321dd68e0cd80536e4"
   integrity sha512-TYWB37qMCScqm8a12b2Uq3h4ZewUtLnIMEnThymkXMViMywGgzRTk44j7gAulFr1u8aPuIE6cJchbw9KeRZcYg==

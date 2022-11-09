@@ -131,7 +131,7 @@ export class CoreHandler {
 	 */
 	getCoreConnectionOptions(deviceOptions: DeviceConfig, name: string): CoreOptions {
 		let options: CoreOptions = {
-			deviceId: protectString(deviceOptions.deviceId + !deviceOptions.deviceToken ? name.replace(/\s/g,'') : ''),
+			deviceId: protectString(deviceOptions.deviceId + !deviceOptions.deviceToken ? name.replace(/\s/g, '') : ''),
 			deviceToken: deviceOptions.deviceToken,
 			deviceCategory: PeripheralDeviceCategory.INGEST,
 			deviceType: PeripheralDeviceType.INEWS,

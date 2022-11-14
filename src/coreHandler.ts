@@ -43,6 +43,8 @@ export interface CoreConfig {
 	watchdog: boolean
 }
 
+const DEVICE_NAME = 'iNews Gateway'
+
 /**
  * Represents a connection between mos-integration and Core
  */
@@ -62,7 +64,7 @@ export class CoreHandler {
 
 	constructor(logger: Logger, deviceOptions: DeviceConfig) {
 		this.logger = logger.tag(this.constructor.name)
-		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'iNews Gateway'))
+		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions))
 	}
 
 	async init(_deviceOptions: DeviceConfig, config: CoreConfig, process: Process): Promise<void> {
@@ -129,15 +131,16 @@ export class CoreHandler {
 	/**
 	 * Get options for connecting to core
 	 */
-	getCoreConnectionOptions(deviceOptions: DeviceConfig, name: string): CoreOptions {
+	getCoreConnectionOptions(deviceOptions: DeviceConfig): CoreOptions {
+		const deviceId = deviceOptions.deviceId ?? DEVICE_NAME.replace(/\s/g, '')
 		let options: CoreOptions = {
-			deviceId: protectString(deviceOptions.deviceId + !deviceOptions.deviceToken ? name.replace(/\s/g, '') : ''),
+			deviceId: protectString(deviceId),
 			deviceToken: deviceOptions.deviceToken,
 			deviceCategory: PeripheralDeviceCategory.INGEST,
 			deviceType: PeripheralDeviceType.INEWS,
 			deviceSubType: PERIPHERAL_SUBTYPE_PROCESS,
 
-			deviceName: name,
+			deviceName: DEVICE_NAME,
 			watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
 
 			configManifest: INEWS_DEVICE_CONFIG_MANIFEST,

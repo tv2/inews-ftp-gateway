@@ -132,7 +132,7 @@ export class CoreHandler {
 	 * Get options for connecting to core
 	 */
 	getCoreConnectionOptions(deviceOptions: DeviceConfig): CoreOptions {
-		const deviceId = deviceOptions.deviceId ?? DEVICE_NAME.replace(/\s/g, '')
+		const deviceId = deviceOptions.deviceId || DEVICE_NAME.replace(/\s/g, '')
 		let options: CoreOptions = {
 			deviceId: protectString(deviceId),
 			deviceToken: deviceOptions.deviceToken,

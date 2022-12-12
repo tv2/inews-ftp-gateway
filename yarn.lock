@@ -391,22 +391,22 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-4.6.0.tgz#3c7c9c46e678feefe7a2e5bb609d3dbd665ffb3f"
   integrity sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==
 
-"@sofie-automation/blueprints-integration@npm:@tv2media/blueprints-integration@46.0.3":
-  version "46.0.3"
-  resolved "https://registry.yarnpkg.com/@tv2media/blueprints-integration/-/blueprints-integration-46.0.3.tgz#523ff9f797cca2b33213d44c1e8111144272be5b"
-  integrity sha512-hXWo/+kb3u5/1YWYuasO1I+mkPD7VOVEspahe4N0vHcU6H3Tj7jBllufSCYVhuBB4FwN0LtqLoqz33wY9yzFtA==
+"@sofie-automation/blueprints-integration@npm:@tv2media/blueprints-integration@46.1.0":
+  version "46.1.0"
+  resolved "https://registry.yarnpkg.com/@tv2media/blueprints-integration/-/blueprints-integration-46.1.0.tgz#9b2b6f776ecdcd1d0009853bc300452a771a36d5"
+  integrity sha512-y02lVzd0rNpxyRVUF3FJcnW0uF56Zjc2rsKugZzimd7+XjWSZfFx0Ic35n1Vm2S1+rvb4oSVEh9pvPbpWrCiFg==
   dependencies:
-    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.0.0"
-    timeline-state-resolver-types "npm:@tv2media/timeline-state-resolver-types@2.2.3"
+    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.1.0"
+    timeline-state-resolver-types "npm:@tv2media/timeline-state-resolver-types@2.3.1"
     tslib "^2.4.0"
     type-fest "^2.19.0"
 
-"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@46.0.1":
-  version "46.0.1"
-  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-46.0.1.tgz#f756239973d790de1fa4f9b4acb2f82144712352"
-  integrity sha512-TSgb4e5wtUZVocaipwJL+kdGmv3OaM53tW+iCjH6pIHFcDE0W8lAV23CKl1bD7Y8/LWY53Ovl7M06h/PGmoZ0Q==
+"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@46.1.0":
+  version "46.1.0"
+  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-46.1.0.tgz#db6f60a3c3a9bc11744817c6925d7b4c0ace96e6"
+  integrity sha512-aVshobktfV5C8B82RjJlMDiv/pxcc7Fxpj6P6rNOeySkGGxrYnuqr5nodUw78fELSeVSwnnizBQ1WphG06WNiQ==
   dependencies:
-    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.0.0"
+    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.1.0"
     ejson "^2.2.3"
     eventemitter3 "^4.0.7"
     faye-websocket "^0.11.4"
@@ -418,6 +418,14 @@
   version "46.0.0"
   resolved "https://registry.yarnpkg.com/@tv2media/shared-lib/-/shared-lib-46.0.0.tgz#27ce22985d205b99dd5c06321dd68e0cd80536e4"
   integrity sha512-TYWB37qMCScqm8a12b2Uq3h4ZewUtLnIMEnThymkXMViMywGgzRTk44j7gAulFr1u8aPuIE6cJchbw9KeRZcYg==
+  dependencies:
+    tslib "^2.4.0"
+    type-fest "^2.19.0"
+
+"@sofie-automation/shared-lib@npm:@tv2media/shared-lib@46.1.0":
+  version "46.1.0"
+  resolved "https://registry.yarnpkg.com/@tv2media/shared-lib/-/shared-lib-46.1.0.tgz#ea13b33b0be2feb5cc3d821a6fe992c865f73c5f"
+  integrity sha512-87h3/w/9vuP6fafH3If8S5j6PlLDSwZGJ1vghpXHHSMtqMV5pm5KZPuT80hGITxXO5GNF1JizaX52Lvb3L6iWw==
   dependencies:
     tslib "^2.4.0"
     type-fest "^2.19.0"
@@ -5675,10 +5683,10 @@ through@2, "through@>=2.2.7 <3":
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
   integrity sha1-DdTJ/6q8NXlgsbckEV1+Doai4fU=
 
-"timeline-state-resolver-types@npm:@tv2media/timeline-state-resolver-types@2.2.3":
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/@tv2media/timeline-state-resolver-types/-/timeline-state-resolver-types-2.2.3.tgz#4b40293b564d1c774e98dab193e719ba0cf3854c"
-  integrity sha512-Dj+hXIYrl6OCozBfK5ZkRQkyXPwmZKjRY+wwLw04+sJdnCqTT2W+42ZvH+pVu3MKd/GFGeF9N+7aWa02ITaDRg==
+"timeline-state-resolver-types@npm:@tv2media/timeline-state-resolver-types@2.3.1":
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/@tv2media/timeline-state-resolver-types/-/timeline-state-resolver-types-2.3.1.tgz#8c29069c84ea086d9eb9e48e5f2f244cc5f1e823"
+  integrity sha512-T78ObNn8pd4we4fCdX4VcUDeSRV+X0L//tdmLFEaHqrAMY3TBAS36oTsLHvU+az5m1wqns7EBXFbu9FystVQFQ==
   dependencies:
     tslib "^2.3.1"
 

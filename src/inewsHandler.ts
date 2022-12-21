@@ -1,5 +1,5 @@
 import * as _ from 'underscore'
-import { CollectionObj, PeripheralDeviceAPI as P } from '@sofie-automation/server-core-integration'
+import { CollectionObj } from '@sofie-automation/server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
 import * as inews from 'inews'
@@ -7,6 +7,8 @@ import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { VERSION } from './version'
 import { ILogger as Logger } from '@tv2media/logger'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
+import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
 
 type INewsClient = inews.INewsClient
 type INewsOptions = inews.INewsOptions
@@ -101,12 +103,12 @@ export class InewsFTPHandler {
 				if (this._isConnected) {
 					this._isConnected = false
 					this._reconnectAttempts = 0
-					await this._coreHandler.setStatus(P.StatusCode.WARNING_MAJOR, ['Attempting to reconnect'])
+					await this._coreHandler.setStatus(StatusCode.WARNING_MAJOR, ['Attempting to reconnect'])
 					this._logger.warn(`Disconnected from iNews at ${status.host}`)
 				} else {
 					this._reconnectAttempts++
 					if (this._reconnectAttempts >= (this._settings?.hosts ?? []).length) {
-						await this._coreHandler.setStatus(P.StatusCode.BAD, ['No servers available'])
+						await this._coreHandler.setStatus(StatusCode.BAD, ['No servers available'])
 						this._logger.warn(`Cannot connect to any of the iNews hosts`)
 					}
 				}
@@ -125,7 +127,7 @@ export class InewsFTPHandler {
 		if (!this.iNewsWatcher) {
 			let peripheralDevice = this.getThisPeripheralDevice()
 			if (peripheralDevice) {
-				await this._coreHandler.setStatus(P.StatusCode.UNKNOWN, ['Initializing..'])
+				await this._coreHandler.setStatus(StatusCode.UNKNOWN, ['Initializing..'])
 				const queues = (this._settings.queues ?? []).filter((q) => !!q && !!q.queues).map((q) => q.queues)
 				this.iNewsWatcher = new RundownWatcher(
 					this._logger,
@@ -195,34 +197,45 @@ export class InewsFTPHandler {
 				this._logger.error(warning)
 			})
 			.on('rundown_delete', (rundownExternalId) => {
-				this._coreHandler.core.callMethod(P.methods.dataRundownDelete, [rundownExternalId]).catch(this._logger.error)
+				this._coreHandler.core
+					.callMethod(PeripheralDeviceAPIMethods.dataRundownDelete, [rundownExternalId])
+					.catch(this._logger.error)
 			})
 			.on('rundown_create', (_rundownExternalId, rundown) => {
-				this._coreHandler.core.callMethod(P.methods.dataRundownCreate, [rundown]).catch(this._logger.error)
+				this._coreHandler.core
+					.callMethod(PeripheralDeviceAPIMethods.dataRundownCreate, [rundown])
+					.catch(this._logger.error)
 			})
 			.on('rundown_update', (_rundownExternalId, rundown) => {
-				this._coreHandler.core.callMethod(P.methods.dataRundownUpdate, [rundown]).catch(this._logger.error)
+				this._coreHandler.core
+					.callMethod(PeripheralDeviceAPIMethods.dataRundownUpdate, [rundown])
+					.catch(this._logger.error)
 			})
 			.on('rundown_metadata_update', (_rundownExternalId, rundown) => {
-				this._coreHandler.core.callMethod(P.methods.dataRundownMetaDataUpdate, [rundown]).catch(this._logger.error)
+				this._coreHandler.core
+					.callMethod(PeripheralDeviceAPIMethods.dataRundownMetaDataUpdate, [rundown])
+					.catch(this._logger.error)
 			})
 			.on('segment_delete', (rundownExternalId, segmentId) => {
 				this._coreHandler.core
-					.callMethod(P.methods.dataSegmentDelete, [rundownExternalId, segmentId])
+					.callMethod(PeripheralDeviceAPIMethods.dataSegmentDelete, [rundownExternalId, segmentId])
 					.catch(this._logger.error)
 			})
 			.on('segment_create', (rundownExternalId, _segmentId, newSegment) => {
 				this._coreHandler.core
-					.callMethod(P.methods.dataSegmentCreate, [rundownExternalId, newSegment])
+					.callMethod(PeripheralDeviceAPIMethods.dataSegmentCreate, [rundownExternalId, newSegment])
 					.catch(this._logger.error)
 			})
 			.on('segment_update', (rundownExternalId, _segmentId, newSegment) => {
 				this._coreHandler.core
-					.callMethod(P.methods.dataSegmentUpdate, [rundownExternalId, newSegment])
+					.callMethod(PeripheralDeviceAPIMethods.dataSegmentUpdate, [rundownExternalId, newSegment])
 					.catch(this._logger.error)
 			})
 			.on('segment_ranks_update', (rundownExteralId, newRanks) => {
-				this._coreHandler.core.callMethod(P.methods.dataSegmentRanksUpdate, [rundownExteralId, newRanks])
+				this._coreHandler.core.callMethod(PeripheralDeviceAPIMethods.dataSegmentRanksUpdate, [
+					rundownExteralId,
+					newRanks,
+				])
 			})
 	}
 

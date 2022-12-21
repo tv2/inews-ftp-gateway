@@ -1,16 +1,17 @@
-import {
-	CoreConnection,
-	CoreOptions,
-	PeripheralDeviceAPI as P,
-	DDPConnectorOptions,
-	Observer,
-} from '@sofie-automation/server-core-integration'
+import { CoreConnection, CoreOptions, DDPConnectorOptions, Observer } from '@sofie-automation/server-core-integration'
 import { ILogger as Logger } from '@tv2media/logger'
 import * as fs from 'fs'
 import { Process } from './process'
-
+import {
+	PeripheralDeviceCategory,
+	PeripheralDeviceType,
+	PERIPHERAL_SUBTYPE_PROCESS,
+	StatusObject,
+} from '@sofie-automation/shared-lib/dist/peripheralDevice/peripheralDeviceAPI'
+import { PeripheralDeviceId } from '@sofie-automation/shared-lib/dist/core/model/Ids'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import * as _ from 'underscore'
-
+import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
 import { DeviceConfig } from './connector'
 import { InewsFTPHandler } from './inewsHandler'
 import { IngestSegmentToRundownSegment } from './mutate'
@@ -21,11 +22,12 @@ import { ReflectPromise } from './helpers'
 import { ReducedRundown } from './classes/RundownWatcher'
 import { VersionIsCompatible } from './version'
 import { RundownId, SegmentId } from './helpers/id'
+import { protectString, unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
 
 export interface PeripheralDeviceCommand {
 	_id: string
 
-	deviceId: string
+	deviceId: PeripheralDeviceId
 	functionName: string
 	args: Array<any>
 
@@ -40,6 +42,8 @@ export interface CoreConfig {
 	port: number
 	watchdog: boolean
 }
+
+const DEVICE_NAME = 'iNews Gateway'
 
 /**
  * Represents a connection between mos-integration and Core
@@ -60,7 +64,7 @@ export class CoreHandler {
 
 	constructor(logger: Logger, deviceOptions: DeviceConfig) {
 		this.logger = logger.tag(this.constructor.name)
-		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions, 'iNews Gateway'))
+		this.core = new CoreConnection(this.getCoreConnectionOptions(deviceOptions))
 	}
 
 	async init(_deviceOptions: DeviceConfig, config: CoreConfig, process: Process): Promise<void> {
@@ -78,7 +82,7 @@ export class CoreHandler {
 		})
 		this.core.onError((error) => {
 			this.logger.data(error).error('Core Error:')
-			this.setStatus(P.StatusCode.BAD, ['Core error'])
+			this.setStatus(StatusCode.BAD, ['Core error'])
 		})
 
 		let ddpConfig: DDPConnectorOptions = {
@@ -92,7 +96,7 @@ export class CoreHandler {
 		}
 		await this.core.init(ddpConfig)
 
-		await this.setStatus(P.StatusCode.UNKNOWN, ['Starting up'])
+		await this.setStatus(StatusCode.UNKNOWN, ['Starting up'])
 		await this.setupSubscriptionsAndObservers()
 
 		this._isInitialized = true
@@ -102,7 +106,7 @@ export class CoreHandler {
 	 */
 	async dispose(): Promise<void> {
 		await this.core.setStatus({
-			statusCode: P.StatusCode.FATAL,
+			statusCode: StatusCode.FATAL,
 			messages: ['Shutting down'],
 		})
 		await this.core.destroy()
@@ -110,7 +114,7 @@ export class CoreHandler {
 	/**
 	 * Report gateway status to core
 	 */
-	async setStatus(statusCode: P.StatusCode, messages: string[]): Promise<P.StatusObject> {
+	async setStatus(statusCode: StatusCode, messages: string[]): Promise<StatusObject> {
 		try {
 			return this.core.setStatus({
 				statusCode: statusCode,
@@ -119,7 +123,7 @@ export class CoreHandler {
 		} catch (error) {
 			this.logger.data(error).warn('Error when setting status:')
 			return {
-				statusCode: P.StatusCode.WARNING_MAJOR,
+				statusCode: StatusCode.WARNING_MAJOR,
 				messages: ['Error when setting status', error as string],
 			}
 		}
@@ -127,38 +131,26 @@ export class CoreHandler {
 	/**
 	 * Get options for connecting to core
 	 */
-	getCoreConnectionOptions(deviceOptions: DeviceConfig, name: string): CoreOptions {
-		let credentials: {
-			deviceId: string
-			deviceToken: string
-		}
-
-		if (deviceOptions.deviceId && deviceOptions.deviceToken) {
-			credentials = {
-				deviceId: deviceOptions.deviceId,
-				deviceToken: deviceOptions.deviceToken,
-			}
-		} else if (deviceOptions.deviceId) {
-			this.logger.warn('Token not set, only id! This might be unsecure!')
-			credentials = {
-				deviceId: deviceOptions.deviceId + name,
-				deviceToken: 'unsecureToken',
-			}
-		} else {
-			credentials = CoreConnection.getCredentials(name.replace(/ /g, ''))
-		}
+	getCoreConnectionOptions(deviceOptions: DeviceConfig): CoreOptions {
+		const deviceId = deviceOptions.deviceId || DEVICE_NAME.replace(/\s/g, '')
 		let options: CoreOptions = {
-			...credentials,
+			deviceId: protectString(deviceId),
+			deviceToken: deviceOptions.deviceToken,
+			deviceCategory: PeripheralDeviceCategory.INGEST,
+			deviceType: PeripheralDeviceType.INEWS,
+			deviceSubType: PERIPHERAL_SUBTYPE_PROCESS,
 
-			deviceCategory: P.DeviceCategory.INGEST,
-			deviceType: P.DeviceType.INEWS,
-			deviceSubType: P.SUBTYPE_PROCESS,
-
-			deviceName: name,
+			deviceName: DEVICE_NAME,
 			watchDog: this._coreConfig ? this._coreConfig.watchdog : true,
 
 			configManifest: INEWS_DEVICE_CONFIG_MANIFEST,
 		}
+
+		if (!options.deviceToken) {
+			this.logger.warn('Token not set, only id! This might be unsecure!')
+			options.deviceToken = 'unsecureToken'
+		}
+
 		options.versions = this._getVersions()
 		return options
 	}
@@ -225,27 +217,35 @@ export class CoreHandler {
 					case 'triggerReloadRundown':
 						const reloadRundownResult = await Promise.resolve(this.triggerReloadRundown(cmd.args[0]))
 						success = true
-						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, reloadRundownResult])
+						await this.core.callMethod(PeripheralDeviceAPIMethods.functionReply, [cmd._id, null, reloadRundownResult])
 						break
 					case 'pingResponse':
 						let pingResponseResult = await Promise.resolve(this.pingResponse(cmd.args[0]))
 						success = true
-						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, pingResponseResult])
+						await this.core.callMethod(PeripheralDeviceAPIMethods.functionReply, [cmd._id, null, pingResponseResult])
 						break
 					case 'retireExecuteFunction':
 						let retireExecuteFunctionResult = await Promise.resolve(this.retireExecuteFunction(cmd.args[0]))
 						success = true
-						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, retireExecuteFunctionResult])
+						await this.core.callMethod(PeripheralDeviceAPIMethods.functionReply, [
+							cmd._id,
+							null,
+							retireExecuteFunctionResult,
+						])
 						break
 					case 'killProcess':
 						let killProcessFunctionResult = await Promise.resolve(this.killProcess(cmd.args[0]))
 						success = true
-						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, killProcessFunctionResult])
+						await this.core.callMethod(PeripheralDeviceAPIMethods.functionReply, [
+							cmd._id,
+							null,
+							killProcessFunctionResult,
+						])
 						break
 					case 'getSnapshot':
 						let getSnapshotResult = await Promise.resolve(this.getSnapshot())
 						success = true
-						await this.core.callMethod(P.methods.functionReply, [cmd._id, null, getSnapshotResult])
+						await this.core.callMethod(PeripheralDeviceAPIMethods.functionReply, [cmd._id, null, getSnapshotResult])
 						break
 					default:
 						throw Error('Function "' + cmd.functionName + '" not found!')
@@ -254,7 +254,7 @@ export class CoreHandler {
 				this.logger.data(error).error(`executeFunction error ${success ? 'during execution' : 'on reply'}:`)
 				if (!success) {
 					await this.core
-						.callMethod(P.methods.functionReply, [cmd._id, (error as any).toString(), null])
+						.callMethod(PeripheralDeviceAPIMethods.functionReply, [cmd._id, (error as any).toString(), null])
 						.catch((e) => this.logger.data(e).error('executeFunction reply error after execution failure:'))
 				}
 			}
@@ -351,7 +351,7 @@ export class CoreHandler {
 			addedChanged(id)
 		}
 
-		addedChanged(this.core.deviceId)
+		addedChanged(unprotectString(this.core.deviceId))
 	}
 	/**
 	 * Kills the gateway.
@@ -444,7 +444,7 @@ export class CoreHandler {
 		const ps: Array<Promise<IngestPlaylist>> = []
 		for (let id of playlistExternalIds) {
 			this.logger.debug(`Getting cache for playlist ${id}`)
-			ps.push(this.core.callMethod(P.methods.dataPlaylistGet, [id]))
+			ps.push(this.core.callMethod(PeripheralDeviceAPIMethods.dataPlaylistGet, [id]))
 		}
 
 		const results = await Promise.all(ps.map(ReflectPromise))
@@ -469,7 +469,7 @@ export class CoreHandler {
 		const ps: Array<Promise<IngestRundown>> = []
 		for (let id of rundownExternalIds) {
 			this.logger.debug(`Getting cache for rundown ${id}`)
-			ps.push(this.core.callMethod(P.methods.dataRundownGet, [id]))
+			ps.push(this.core.callMethod(PeripheralDeviceAPIMethods.dataRundownGet, [id]))
 		}
 
 		const results = await Promise.all(ps.map(ReflectPromise))
@@ -500,7 +500,7 @@ export class CoreHandler {
 		const cachedSegments: IngestSegment[] = []
 		const ps: Array<Promise<IngestSegment>> = []
 		for (let id of segmentExternalIds) {
-			ps.push(this.core.callMethod(P.methods.dataSegmentGet, [rundownExternalId, id]))
+			ps.push(this.core.callMethod(PeripheralDeviceAPIMethods.dataSegmentGet, [rundownExternalId, id]))
 		}
 
 		const results = await Promise.all(ps.map(ReflectPromise))

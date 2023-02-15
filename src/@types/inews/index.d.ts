@@ -28,6 +28,7 @@ declare module 'inews' {
 			cumeTime?: string // number
 			backTime?: string // @number (seconds since midnight)
 			layout?: string
+			vType?: string
 		}
 
 		interface INewsMetaData {

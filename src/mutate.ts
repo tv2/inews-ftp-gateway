@@ -50,7 +50,8 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 		ingestSegment.externalId,
 		ingestSegment.rank,
 		ingestSegment.name,
-		ingestSegment.payload?.untimed
+		ingestSegment.payload?.untimed,
+		ingestSegment.payload?.iNewsStory.fields.vType
 	)
 }
 

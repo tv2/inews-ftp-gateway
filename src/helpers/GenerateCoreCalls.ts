@@ -480,6 +480,7 @@ function inewsToIngestSegment(
 			iNewsStory: inews.iNewsStory,
 			float: !!inews.iNewsStory.meta.float,
 			untimed: untimed,
+			segmentType: inews.segmentType,
 		}),
 	})
 }

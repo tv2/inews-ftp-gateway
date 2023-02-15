@@ -75,11 +75,16 @@ export class RundownManager {
 		}
 
 		const results = await Promise.all(ps.map(ReflectPromise))
+		let currentSegmentType: string | undefined
 
 		results.forEach((result) => {
 			if (result.status === 'fulfilled') {
 				const rawSegment = result.value
 				if (rawSegment) {
+					if (rawSegment.fields.vType) {
+						currentSegmentType = rawSegment.fields.vType
+					}
+
 					const segment: UnrankedSegment = {
 						externalId: rawSegment.identifier,
 						name: rawSegment.fields.title ?? '',
@@ -87,6 +92,7 @@ export class RundownManager {
 						locator: rawSegment.locator,
 						rundownId: queueName,
 						iNewsStory: rawSegment,
+						segmentType: currentSegmentType,
 					}
 					stories.set(rawSegment.identifier, segment)
 				}

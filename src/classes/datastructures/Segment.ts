@@ -17,7 +17,7 @@ export interface ISegment {
 	 * Not every story from iNews will specify a segmentType.
 	 * In that case, we apply the last-known segmentType.
 	 * It is technically possible for a malformed iNews rundown to not always provide a calculable value for this,
-	 * so we mark it as optional to account for that possibility.
+	 * so we allow undefined to account for that possibility.
 	 */
 	segmentType: string | undefined
 }

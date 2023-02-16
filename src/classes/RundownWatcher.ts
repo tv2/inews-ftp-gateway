@@ -461,7 +461,8 @@ export class RundownWatcher extends EventEmitter {
 					0,
 					iNewsData?.name,
 					untimedSegments.has(segmentId),
-					iNewsData.segmentType
+					iNewsData.segmentType,
+					iNewsData.isStartOfNewSegmentType
 				)
 				rundownSegments.push(rundownSegment)
 			}

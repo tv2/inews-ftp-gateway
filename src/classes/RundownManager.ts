@@ -77,26 +77,45 @@ export class RundownManager {
 		const results = await Promise.all(ps.map(ReflectPromise))
 		let currentSegmentType: string | undefined
 
-		results.forEach((result) => {
-			if (result.status === 'fulfilled') {
-				const rawSegment = result.value
-				if (rawSegment) {
-					if (rawSegment.fields.vType) {
-						currentSegmentType = rawSegment.fields.vType
-					}
-
-					const segment: UnrankedSegment = {
-						externalId: rawSegment.identifier,
-						name: rawSegment.fields.title ?? '',
-						modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
-						locator: rawSegment.locator,
-						rundownId: queueName,
-						iNewsStory: rawSegment,
-						segmentType: currentSegmentType,
-					}
-					stories.set(rawSegment.identifier, segment)
-				}
+		results.forEach((result, index) => {
+			if (result.status !== 'fulfilled') {
+				return
 			}
+
+			const rawSegment = result.value
+			if (!rawSegment) {
+				return
+			}
+
+			let isStartOfNewSegmentType = false
+			if (rawSegment.fields.vType) {
+				currentSegmentType = rawSegment.fields.vType
+
+				// Look at previous results in reverse order to figure out if this segment represents a change in segment type.
+				results
+					.slice(0, index)
+					.reverse()
+					.find((result) => {
+						if (result.status === 'fulfilled' && result.value) {
+							isStartOfNewSegmentType = result.value.fields.vType !== currentSegmentType
+							return true
+						}
+
+						return false
+					})
+			}
+
+			const segment: UnrankedSegment = {
+				externalId: rawSegment.identifier,
+				name: rawSegment.fields.title ?? '',
+				modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
+				locator: rawSegment.locator,
+				rundownId: queueName,
+				iNewsStory: rawSegment,
+				segmentType: currentSegmentType,
+				isStartOfNewSegmentType,
+			}
+			stories.set(rawSegment.identifier, segment)
 		})
 
 		return stories

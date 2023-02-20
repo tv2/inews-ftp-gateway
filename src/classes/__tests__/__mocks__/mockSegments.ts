@@ -87,7 +87,8 @@ export function RundownSegmentFromMockSegment(
 		0,
 		segmentGW.fields.title ?? '',
 		untimed,
-		segmentGW.fields.vType
+		segmentGW.fields.vType,
+		!!segmentGW.fields.vType // TODO: this isn't correct but this function seems to be unused?
 	)
 }
 

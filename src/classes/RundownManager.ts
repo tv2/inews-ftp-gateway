@@ -75,9 +75,7 @@ export class RundownManager {
 		}
 
 		const results = await Promise.all(ps.map(ReflectPromise))
-		let currentSegmentType: string | undefined
-
-		results.forEach((result, index) => {
+		results.forEach((result) => {
 			if (result.status !== 'fulfilled') {
 				return
 			}
@@ -87,24 +85,6 @@ export class RundownManager {
 				return
 			}
 
-			let isStartOfNewSegmentType = false
-			if (rawSegment.fields.vType) {
-				currentSegmentType = rawSegment.fields.vType
-
-				// Look at previous results in reverse order to figure out if this segment represents a change in segment type.
-				results
-					.slice(0, index)
-					.reverse()
-					.find((result) => {
-						if (result.status === 'fulfilled' && result.value) {
-							isStartOfNewSegmentType = result.value.fields.vType !== currentSegmentType
-							return true
-						}
-
-						return false
-					})
-			}
-
 			const segment: UnrankedSegment = {
 				externalId: rawSegment.identifier,
 				name: rawSegment.fields.title ?? '',
@@ -112,8 +92,6 @@ export class RundownManager {
 				locator: rawSegment.locator,
 				rundownId: queueName,
 				iNewsStory: rawSegment,
-				segmentType: currentSegmentType,
-				isStartOfNewSegmentType,
 			}
 			stories.set(rawSegment.identifier, segment)
 		})

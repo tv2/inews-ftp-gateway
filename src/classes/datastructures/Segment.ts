@@ -14,7 +14,7 @@ export interface ISegment {
 	float: boolean
 	untimed: boolean
 	/**
-	 * Not every story from iNews will specify a segmentType.
+	 * Not every story from iNews will specify a segmentType (aka a "v-type" field).
 	 * In that case, we apply the last-known segmentType.
 	 * It is technically possible for a malformed iNews rundown to not always provide a calculable value for this,
 	 * so we allow undefined to account for that possibility.

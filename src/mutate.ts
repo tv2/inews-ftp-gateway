@@ -51,8 +51,8 @@ export function IngestSegmentToRundownSegment(ingestSegment: IngestSegment): Run
 		ingestSegment.rank,
 		ingestSegment.name,
 		ingestSegment.payload?.untimed,
-		ingestSegment.payload?.iNewsStory.fields.vType, // updated later
-		false // updated later
+		ingestSegment.payload?.segmentType ?? '',
+		ingestSegment.payload?.isStartOfNewSegmentType ?? false
 	)
 }
 

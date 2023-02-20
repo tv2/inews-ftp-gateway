@@ -677,7 +677,7 @@ describe('RundownWatcher', () => {
 				expect(emitFake).toHaveBeenNthCalledWith(4, 'segment_ranks_update', expect.any(String), expect.any(Object))
 			})
 
-			it('updates vTypes when a segment is deleted', async () => {
+			it('updates segmentTypes when a segment is deleted', async () => {
 				// Simulate changes to the mock data
 				const indexToDelete = 8
 				const deletedIdentifier = mockData.segmentExternalIds[indexToDelete]

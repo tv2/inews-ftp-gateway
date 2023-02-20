@@ -230,10 +230,5 @@ export function DiffPlaylist(
 		)
 	}
 
-	// TODO: possibly do post processing on changes here
-	// account for changes across rundowns
-	// if entering a new rundown with a blank v-type, look for previous one
-	// filter out floats fist!!!!!
-
 	return { changes, segmentChanges }
 }

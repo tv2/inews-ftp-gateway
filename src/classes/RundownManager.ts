@@ -75,25 +75,22 @@ export class RundownManager {
 		}
 
 		const results = await Promise.all(ps.map(ReflectPromise))
+
 		results.forEach((result) => {
-			if (result.status !== 'fulfilled') {
-				return
+			if (result.status === 'fulfilled') {
+				const rawSegment = result.value
+				if (rawSegment) {
+					const segment: UnrankedSegment = {
+						externalId: rawSegment.identifier,
+						name: rawSegment.fields.title ?? '',
+						modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
+						locator: rawSegment.locator,
+						rundownId: queueName,
+						iNewsStory: rawSegment,
+					}
+					stories.set(rawSegment.identifier, segment)
+				}
 			}
-
-			const rawSegment = result.value
-			if (!rawSegment) {
-				return
-			}
-
-			const segment: UnrankedSegment = {
-				externalId: rawSegment.identifier,
-				name: rawSegment.fields.title ?? '',
-				modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
-				locator: rawSegment.locator,
-				rundownId: queueName,
-				iNewsStory: rawSegment,
-			}
-			stories.set(rawSegment.identifier, segment)
 		})
 
 		return stories

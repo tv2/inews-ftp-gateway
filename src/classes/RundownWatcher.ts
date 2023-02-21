@@ -120,7 +120,7 @@ export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gateway
 	segments: ReducedSegment[]
 }
 export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name' | 'locator'>
-export type UnrankedSegment = Omit<ISegment, 'rank' | 'float' | 'untimed'>
+export type UnrankedSegment = Omit<ISegment, 'rank' | 'float' | 'untimed' | 'segmentType' | 'isStartOfNewSegmentType'>
 
 export type PlaylistMap = Map<PlaylistId, { externalId: string; rundowns: RundownId[] }>
 export type RundownMap = Map<RundownId, ReducedRundown>
@@ -128,6 +128,8 @@ export type RundownMap = Map<RundownId, ReducedRundown>
 export type PlaylistCache = Map<PlaylistId, RundownId[]>
 export type RundownCache = Map<RundownId, SegmentId[]>
 export type SegmentCache = Map<SegmentId, ReducedSegment>
+
+export type vTypeMap = Map<SegmentId, { segmentType: string; isStartOfNewSegmentType: boolean }>
 
 export function IsReducedSegment(segment: any): segment is ReducedSegment {
 	return Object.keys(segment).includes('locator') && !Object.keys(segment).includes('iNewsStory')
@@ -438,6 +440,8 @@ export class RundownWatcher extends EventEmitter {
 		}
 
 		const assignedRundowns: INewsRundown[] = []
+		const vTypes: vTypeMap = new Map()
+		let currentSegmentType: string | undefined
 
 		for (const playlistRundown of playlistAssignments) {
 			const rundownSegments: RundownSegment[] = []
@@ -452,6 +456,17 @@ export class RundownWatcher extends EventEmitter {
 					continue
 				}
 
+				// The vType field is not guaranteed to be populated.
+				// In that scenario, we must apply the last-seen vType to this segment.
+				// If a story is floated, then ignore its vType.
+				let isStartOfNewSegmentType = false
+				if (iNewsData.iNewsStory.fields.vType && !iNewsData.iNewsStory.meta.float) {
+					if (iNewsData.iNewsStory.fields.vType !== currentSegmentType) {
+						isStartOfNewSegmentType = true
+					}
+					currentSegmentType = iNewsData.iNewsStory.fields.vType
+				}
+
 				const rundownSegment = new RundownSegment(
 					playlistRundown.rundownId,
 					iNewsData.iNewsStory,
@@ -460,9 +475,12 @@ export class RundownWatcher extends EventEmitter {
 					segmentId,
 					0,
 					iNewsData?.name,
-					untimedSegments.has(segmentId)
+					untimedSegments.has(segmentId),
+					currentSegmentType,
+					isStartOfNewSegmentType
 				)
 				rundownSegments.push(rundownSegment)
+				vTypes.set(segmentId, { segmentType: currentSegmentType ?? '', isStartOfNewSegmentType })
 			}
 
 			const iNewsRundown: INewsRundown = new INewsRundown(
@@ -521,7 +539,8 @@ export class RundownWatcher extends EventEmitter {
 			assignedRanks,
 			this.cachedINewsData,
 			ingestCacheData,
-			untimedSegments
+			untimedSegments,
+			vTypes
 		)
 
 		for (const call of coreCalls) {

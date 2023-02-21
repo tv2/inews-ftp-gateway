@@ -13,6 +13,17 @@ export interface ISegment {
 	name: string
 	float: boolean
 	untimed: boolean
+	/**
+	 * Not every story from iNews will specify a segmentType (aka a "v-type" field).
+	 * In that case, we apply the last-known segmentType.
+	 * It is technically possible for a malformed iNews rundown to not always provide a calculable value for this,
+	 * so we allow undefined to account for that possibility.
+	 */
+	segmentType: string | undefined
+	/**
+	 * If true, this segment is the first of its type in this block.
+	 */
+	isStartOfNewSegmentType: boolean
 }
 
 export class RundownSegment implements ISegment {
@@ -26,7 +37,9 @@ export class RundownSegment implements ISegment {
 		public externalId: string,
 		public rank: number,
 		public name: string,
-		public untimed: boolean
+		public untimed: boolean,
+		public segmentType: string | undefined,
+		public isStartOfNewSegmentType: boolean
 	) {
 		this.float = iNewsStory.meta.float === 'float'
 	}
@@ -45,6 +58,8 @@ export class RundownSegment implements ISegment {
 			name: this.name,
 			float: this.float,
 			untimed: this.untimed,
+			segmentType: this.segmentType,
+			isStartOfNewSegmentType: this.isStartOfNewSegmentType,
 		}
 	}
 }

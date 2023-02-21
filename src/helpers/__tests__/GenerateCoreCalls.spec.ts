@@ -49,7 +49,8 @@ describe('GenerateCoreCalls', () => {
 			assignedRanks,
 			iNewsDataCache,
 			new Map(),
-			new Set()
+			new Set(),
+			new Map()
 		)
 
 		expect(result).toHaveLength(2)

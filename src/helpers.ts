@@ -15,7 +15,7 @@ function isValidDate(d: Date) {
 
 export function parseModifiedDateFromInewsStoryWithFallbackToNow(story: INewsStory): Date {
 	if (story?.fields?.modifyDate) {
-		const modifyDate = new Date(story?.fields?.modifyDate)
+		const modifyDate = new Date(parseInt(story?.fields?.modifyDate, 10) * 1000)
 		if (isValidDate(modifyDate)) {
 			return modifyDate
 		}

@@ -30,7 +30,9 @@ function makeINewsRundown(
 				segment._id,
 				i,
 				segment._id,
-				false
+				false,
+				'fakeSegmentType',
+				true
 			)
 	)
 

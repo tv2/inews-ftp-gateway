@@ -1,6 +1,6 @@
 import { IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
 import { INGEST_RUNDOWN_TYPE, MutatedSegment } from '../mutate'
-import { UnrankedSegment } from '../classes/RundownWatcher'
+import { UnrankedSegment, vTypeMap } from '../classes/RundownWatcher'
 import { literal } from '../helpers'
 import { logger } from '../logger'
 import {
@@ -90,7 +90,8 @@ export function GenerateCoreCalls(
 	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
 	// TODO: This should probably just be a map of the previous known ranks
 	ingestCacheData: Map<SegmentId, RundownSegment>,
-	untimedSegments: Set<SegmentId>
+	untimedSegments: Set<SegmentId>,
+	vTypes: vTypeMap
 ): CoreCall[] {
 	const coreCalls: CoreCall[] = []
 
@@ -117,10 +118,10 @@ export function GenerateCoreCalls(
 		)
 	)
 	coreCalls.push(
-		...createSegmentChangedCoreCalls(changes, iNewsDataCache, assignedRanks, ingestCacheData, untimedSegments)
+		...createSegmentChangedCoreCalls(changes, iNewsDataCache, assignedRanks, ingestCacheData, untimedSegments, vTypes)
 	)
 	coreCalls.push(
-		...createSegmentCreatedCoreCalls(changes, iNewsDataCache, assignedRanks, ingestCacheData, untimedSegments)
+		...createSegmentCreatedCoreCalls(changes, iNewsDataCache, assignedRanks, ingestCacheData, untimedSegments, vTypes)
 	)
 	coreCalls.push(...createSegmentMovedCoreCalls(changes, assignedRanks, ingestCacheData))
 	coreCalls.push(
@@ -294,7 +295,8 @@ function createSegmentChangedCoreCalls(
 	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
 	assignedRanks: Map<SegmentId, number>,
 	ingestCacheData: Map<SegmentId, RundownSegment>,
-	untimedSegments: Set<SegmentId>
+	untimedSegments: Set<SegmentId>,
+	vTypes: vTypeMap
 ): CoreCallSegmentUpdate[] {
 	return changes
 		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeSegmentChanged)
@@ -325,7 +327,15 @@ function createSegmentChangedCoreCalls(
 			}
 
 			logger.debug(`Adding core call: Segment update (${segmentId})`)
-			const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed)
+			const segment = inewsToIngestSegment(
+				rundownId,
+				segmentId,
+				inews,
+				rank,
+				untimed,
+				vTypes.get(segmentId)?.segmentType ?? '',
+				vTypes.get(segmentId)?.isStartOfNewSegmentType ?? false
+			)
 			return literal<CoreCallSegmentUpdate>({
 				type: CoreCallType.dataSegmentUpdate,
 				rundownExternalId: rundownId,
@@ -341,7 +351,8 @@ function createSegmentCreatedCoreCalls(
 	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
 	assignedRanks: Map<SegmentId, number>,
 	ingestCacheData: Map<SegmentId, RundownSegment>,
-	untimedSegments: Set<SegmentId>
+	untimedSegments: Set<SegmentId>,
+	vTypes: vTypeMap
 ): CoreCallSegmentCreate[] {
 	return changes
 		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeSegmentCreated)
@@ -366,7 +377,15 @@ function createSegmentCreatedCoreCalls(
 			}
 
 			logger.debug(`Adding core call: Segment create (${segmentId})`)
-			const segment = inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed)
+			const segment = inewsToIngestSegment(
+				rundownId,
+				segmentId,
+				inews,
+				rank,
+				untimed,
+				vTypes.get(segmentId)?.segmentType ?? '',
+				vTypes.get(segmentId)?.isStartOfNewSegmentType ?? false
+			)
 			return literal<CoreCallSegmentCreate>({
 				type: CoreCallType.dataSegmentCreate,
 				rundownExternalId: rundownId,
@@ -427,6 +446,7 @@ function playlistRundownToIngestRundown(
 	untimedSegments: Set<SegmentId>
 ): IngestRundown {
 	let ingestSegments: IngestSegment[] = []
+	let currentSegmentType: string | undefined
 
 	for (let segmentId of segments) {
 		const inews = inewsCache.get(segmentId)
@@ -446,7 +466,28 @@ function playlistRundownToIngestRundown(
 			continue
 		}
 
-		ingestSegments.push(inewsToIngestSegment(rundownId, segmentId, inews, rank, untimed))
+		// The vType field is not guaranteed to be populated.
+		// In that scenario, we must apply the last-seen vType to this segment.
+		// If a story is floated, then ignore its vType.
+		let isStartOfNewSegmentType = false
+		if (inews.iNewsStory.fields.vType && !inews.iNewsStory.meta.float) {
+			if (inews.iNewsStory.fields.vType !== currentSegmentType) {
+				isStartOfNewSegmentType = true
+			}
+			currentSegmentType = inews.iNewsStory.fields.vType
+		}
+
+		ingestSegments.push(
+			inewsToIngestSegment(
+				rundownId,
+				segmentId,
+				inews,
+				rank,
+				untimed,
+				currentSegmentType ?? '',
+				isStartOfNewSegmentType
+			)
+		)
 	}
 
 	return literal<IngestRundown>({
@@ -466,7 +507,9 @@ function inewsToIngestSegment(
 	segmentId: SegmentId,
 	inews: UnrankedSegment,
 	rank: number,
-	untimed: boolean
+	untimed: boolean,
+	segmentType: string,
+	isStartOfNewSegmentType: boolean
 ): IngestSegment {
 	return literal<IngestSegment>({
 		externalId: segmentId,
@@ -480,6 +523,8 @@ function inewsToIngestSegment(
 			iNewsStory: inews.iNewsStory,
 			float: !!inews.iNewsStory.meta.float,
 			untimed: untimed,
+			segmentType,
+			isStartOfNewSegmentType,
 		}),
 	})
 }

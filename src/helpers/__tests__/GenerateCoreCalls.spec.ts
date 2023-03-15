@@ -4,7 +4,7 @@ import { PlaylistId, SegmentId } from '../id'
 import { ResolvedPlaylist } from '../ResolveRundownIntoPlaylist'
 import { UnrankedSegment } from '../../classes/RundownWatcher'
 import { literal } from '../../helpers'
-import { INewsFields, INewsStory } from 'inews'
+import { INewsFields, INewsStory } from '@tv2media/inews'
 
 describe('GenerateCoreCalls', () => {
 	it('generates metaData calls before segment updated calls', () => {
@@ -64,13 +64,16 @@ function makeINewsStory(id: string, backTime?: string) {
 		identifier: id,
 		locator: '',
 		fields: literal<INewsFields>({
-			title: '',
-			modifyDate: '',
-			tapeTime: '',
-			audioTime: '',
-			totalTime: '',
-			cumeTime: '',
-			backTime,
+			title: { value: '' },
+			modifyDate: { value: '' },
+			tapeTime: { value: '' },
+			audioTime: { value: '' },
+			totalTime: { value: '' },
+			cumeTime: { value: '' },
+			backTime: { value: backTime },
+			pageNumber: { value: '' },
+			layout: { value: '' },
+			runsTime: { value: '' },
 		}),
 		meta: {},
 		cues: [],

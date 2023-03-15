@@ -1,4 +1,4 @@
-import { INewsClient, INewsDirItem, INewsFile, INewsStory } from 'inews'
+import { INewsClient, INewsDirItem, INewsFile, INewsStory } from '@tv2media/inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
 import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
@@ -17,8 +17,9 @@ export class RundownManager {
 
 	constructor(private _logger?: Logger, private inewsConnection?: INewsClient) {
 		if (this.inewsConnection) {
-			this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
-			this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
+			// TODO: fix this as any
+			this._listStories = promisify(this.inewsConnection.list as any).bind(this.inewsConnection)
+			this._getStory = promisify(this.inewsConnection.story as any).bind(this.inewsConnection)
 		}
 	}
 
@@ -82,7 +83,7 @@ export class RundownManager {
 				if (rawSegment) {
 					const segment: UnrankedSegment = {
 						externalId: rawSegment.identifier,
-						name: rawSegment.fields.title ?? '',
+						name: rawSegment.fields.title.value ?? '',
 						modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),
 						locator: rawSegment.locator,
 						rundownId: queueName,
@@ -116,7 +117,7 @@ export class RundownManager {
 
 		this._logger?.debug('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
 		/* Add fileId and update modifyDate to ftp reference in storyFile */
-		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
+		story.fields.modifyDate.value = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
 
 		this._logger?.debug(`Queue: ${queueName} Story: ${isFile(storyFile) ? storyFile.storyName : storyFile.file}`)
 
@@ -125,7 +126,7 @@ export class RundownManager {
 	}
 
 	public generateCuesFromLayoutField(story: INewsStory): void {
-		if (!story.fields.layout) {
+		if (!story.fields.layout.value) {
 			return
 		}
 		this.addDesignLayoutCueToStory(story)
@@ -169,7 +170,7 @@ export class RundownManager {
 	 * Adds a cue to the story. Returns the index of the newly added cue.
 	 */
 	private addCueToStory(story: INewsStory, cueKey: string): number {
-		story.cues.push([`${cueKey}=${story.fields.layout!.toUpperCase()}`])
+		story.cues.push([`${cueKey}=${story.fields.layout!.value!.toUpperCase()}`])
 		return story.cues.length - 1
 	}
 

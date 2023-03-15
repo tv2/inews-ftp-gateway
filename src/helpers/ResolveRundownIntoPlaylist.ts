@@ -1,4 +1,4 @@
-import { UnparsedCue } from 'inews'
+import { UnparsedCue } from '@tv2media/inews'
 import { UnrankedSegment } from '../classes/RundownWatcher'
 import { SegmentId } from './id'
 
@@ -72,8 +72,8 @@ export function ResolveRundownIntoPlaylist(
 		// TODO: Not relevant for breaks
 		if (!continuityStoryFound && segment.name?.match(/^\s*continuity\s*$/i)) {
 			continuityStoryFound = true
-			if (segment.iNewsStory.fields.backTime?.match(/^@\d+$/)) {
-				currentRundown.backTime = segment.iNewsStory.fields.backTime
+			if (segment.iNewsStory.fields.backTime?.value?.match(/^@\d+$/)) {
+				currentRundown.backTime = segment.iNewsStory.fields.backTime.value
 			}
 		}
 		if (continuityStoryFound) {

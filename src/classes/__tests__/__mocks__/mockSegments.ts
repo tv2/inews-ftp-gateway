@@ -85,7 +85,7 @@ export function RundownSegmentFromMockSegment(
 		segmentGW.locator,
 		segmentGW.identifier,
 		0,
-		segmentGW.fields.title ?? '',
+		segmentGW.fields.title.value ?? '',
 		untimed
 	)
 }

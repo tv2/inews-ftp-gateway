@@ -13,7 +13,7 @@ import { INewsRundown } from '../../classes/datastructures/Rundown'
 import { SegmentId } from '../id'
 import { RundownSegment } from '../../classes/datastructures/Segment'
 import { literal } from '../../helpers'
-import { INewsStory, INewsFields } from 'inews'
+import { INewsStory, INewsFields } from '@tv2media/inews'
 
 function makeINewsRundown(
 	rundownId: string,
@@ -45,13 +45,16 @@ function makeINewsStory(id: string, backTime?: string) {
 		identifier: id,
 		locator: '',
 		fields: literal<INewsFields>({
-			title: '',
-			modifyDate: '',
-			tapeTime: '',
-			audioTime: '',
-			totalTime: '',
-			cumeTime: '',
-			backTime,
+			title: { value: '' },
+			modifyDate: { value: '' },
+			tapeTime: { value: '' },
+			audioTime: { value: '' },
+			totalTime: { value: '' },
+			cumeTime: { value: '' },
+			backTime: { value: backTime },
+			pageNumber: {value: ''},
+			layout: {value: ''},
+			runsTime: {value: ''},
 		}),
 		meta: {},
 		cues: [],

@@ -1,6 +1,6 @@
 {
   "name": "@tv2media/inews-gateway",
-  "version": "46.1.0",
+  "version": "46.2.0",
   "description": "",
   "main": "dist/index.js",
   "contributors": [
@@ -16,7 +16,7 @@
   ],
   "engines": {
     "npm": ">=6.14.4",
-    "node": ">=14.0.0"
+    "node": ">=14.19.0"
   },
   "author": "SuperFly.tv",
   "scripts": {
@@ -72,10 +72,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@sofie-automation/blueprints-integration": "npm:@tv2media/blueprints-integration@46.1.0",
-    "@sofie-automation/server-core-integration": "npm:@tv2media/server-core-integration@46.1.0",
+    "@sofie-automation/blueprints-integration": "npm:@tv2media/blueprints-integration@46.2.0",
+    "@sofie-automation/server-core-integration": "npm:@tv2media/server-core-integration@46.2.0",
     "@tv2media/logger": "^1.2.4",
-    "@sofie-automation/shared-lib": "npm:@tv2media/shared-lib@46.0.0",
+    "@sofie-automation/shared-lib": "npm:@tv2media/shared-lib@46.2.0",
     "@types/dotenv": "^6.1.1",
     "@types/xml2js": "^0.4.4",
     "async-mutex": "^0.3.1",

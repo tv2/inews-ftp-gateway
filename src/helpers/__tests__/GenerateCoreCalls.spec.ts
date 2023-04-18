@@ -40,6 +40,7 @@ describe('GenerateCoreCalls', () => {
 			name: '',
 			modified: new Date(),
 			iNewsStory: makeINewsStory(segmentExternalId),
+			untimed: false
 		})
 
 		const result: CoreCall[] = GenerateCoreCalls(
@@ -48,8 +49,7 @@ describe('GenerateCoreCalls', () => {
 			playlistAssignments,
 			assignedRanks,
 			iNewsDataCache,
-			new Map(),
-			new Set()
+			new Map()
 		)
 
 		expect(result).toHaveLength(2)

@@ -120,7 +120,8 @@ export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gateway
 	segments: ReducedSegment[]
 }
 export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name' | 'locator'>
-export type UnrankedSegment = Omit<ISegment, 'rank' | 'float' | 'untimed'>
+export type UnrankedSegment = Omit<ISegment, 'rank' | 'float' >
+export type UnrankedSegmentX = Omit<UnrankedSegment, 'untimed'>
 
 export type PlaylistMap = Map<PlaylistId, { externalId: string; rundowns: RundownId[] }>
 export type RundownMap = Map<RundownId, ReducedRundown>
@@ -371,21 +372,22 @@ export class RundownWatcher extends EventEmitter {
 			}
 		}
 
-		const iNewsDataPs: Promise<Map<SegmentId, UnrankedSegment>> = this.rundownManager.fetchINewsStoriesById(
+		const iNewsDataPs: Promise<Map<SegmentId, UnrankedSegmentX>> = this.rundownManager.fetchINewsStoriesById(
 			playlistId,
 			Array.from(uncachedINewsData)
 		)
 
 		const iNewsData = await iNewsDataPs
 
+		const tmpCache = new Map<SegmentId, UnrankedSegmentX>()
 		for (let [externalId, data] of iNewsData.entries()) {
-			this.cachedINewsData.set(externalId, data)
+			tmpCache.set(externalId, data)
 		}
 
-		const segmentsToResolve: Array<UnrankedSegment> = []
+		const segmentsToResolve: Array<UnrankedSegmentX> = []
 
 		playlist.segments.forEach((s) => {
-			const cachedData = this.cachedINewsData.get(s.externalId)
+			const cachedData = tmpCache.get(s.externalId) ?? this.cachedINewsData.get(s.externalId)
 
 			if (!cachedData) {
 				// Shouldn't be possible.
@@ -397,10 +399,15 @@ export class RundownWatcher extends EventEmitter {
 			}
 		})
 
-		const { resolvedPlaylist: playlistAssignments, untimedSegments } = ResolveRundownIntoPlaylist(
+		const { resolvedPlaylist: playlistAssignments, resolvedSegments } = ResolveRundownIntoPlaylist(
 			playlistId,
 			segmentsToResolve
 		)
+
+		for (let segment of resolvedSegments) {
+			this.cachedINewsData.set(segment.externalId, segment)
+		}
+
 		if (!playlistAssignments.length) {
 			playlistAssignments.push({
 				rundownId: `${playlistId}_1`,
@@ -460,7 +467,7 @@ export class RundownWatcher extends EventEmitter {
 					segmentId,
 					0,
 					iNewsData?.name,
-					untimedSegments.has(segmentId)
+					iNewsData.untimed
 				)
 				rundownSegments.push(rundownSegment)
 			}
@@ -520,8 +527,7 @@ export class RundownWatcher extends EventEmitter {
 			playlistAssignments,
 			assignedRanks,
 			this.cachedINewsData,
-			ingestCacheData,
-			untimedSegments
+			ingestCacheData
 		)
 
 		for (const call of coreCalls) {

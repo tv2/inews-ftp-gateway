@@ -1,6 +1,6 @@
 import { literal } from '../../helpers'
 import { ResolvedPlaylist, ResolveRundownIntoPlaylist } from '../ResolveRundownIntoPlaylist'
-import { UnrankedSegment } from '../../classes/RundownWatcher'
+import { UnrankedSegmentX } from '../../classes/RundownWatcher'
 import { INewsStory, INewsFields } from 'inews'
 
 type SegmentOptions = {
@@ -8,14 +8,15 @@ type SegmentOptions = {
 	cues?: (string[] | null)[]
 	meta?: object
 	body?: string
+	untimed?: boolean
 }
 
-function createUnrankedSegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
+function createUnrankedSegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegmentX {
 	let id = num.toString().padStart(2, '0')
-	return literal<UnrankedSegment>({
+	return {
 		externalId: `segment-${id}`,
 		name: `Segment ${id}`,
-		modified: new Date(),
+		modified: new Date("2022-12-12T12:12:12"),
 		locator: '',
 		rundownId: 'test-rundown',
 		iNewsStory: literal<INewsStory>({
@@ -34,16 +35,16 @@ function createUnrankedSegment(num: number, { backTime, cues, meta, body }: Segm
 			meta: meta ?? {},
 			cues: cues ?? [],
 			body: body ?? '',
-		}),
-	})
+		})
+	}
 }
 
-function createContinuitySegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
+function createContinuitySegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegmentX {
 	let id = num.toString().padStart(2, '0')
-	return literal<UnrankedSegment>({
+	return {
 		externalId: `segment-${id}`,
 		name: `CONTINUITY`,
-		modified: new Date(),
+		modified: new Date("2022-12-12T12:12:12"),
 		locator: '',
 		rundownId: 'test-rundown',
 		iNewsStory: literal<INewsStory>({
@@ -63,15 +64,15 @@ function createContinuitySegment(num: number, { backTime, cues, meta, body }: Se
 			cues: cues ?? [],
 			body: body ?? '',
 		}),
-	})
+	}
 }
 
-function createKlarOnAirSegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegment {
+function createKlarOnAirSegment(num: number, { backTime, cues, meta, body }: SegmentOptions = {}): UnrankedSegmentX {
 	let id = num.toString().padStart(2, '0')
-	return literal<UnrankedSegment>({
+	return {
 		externalId: `segment-${id}`,
 		name: `Klar on air`,
-		modified: new Date(),
+		modified: new Date("2022-12-12T12:12:12"),
 		locator: '',
 		rundownId: 'test-rundown',
 		iNewsStory: literal<INewsStory>({
@@ -91,16 +92,16 @@ function createKlarOnAirSegment(num: number, { backTime, cues, meta, body }: Seg
 			cues: cues ?? [],
 			body: body ?? '',
 		}),
-	})
+	}
 }
 
 function createUnnamedSegment(
 	num: number,
 	segmentName: any,
 	{ cues, meta, body }: SegmentOptions = {}
-): UnrankedSegment {
+): UnrankedSegmentX {
 	let id = num.toString().padStart(2, '0')
-	return literal<UnrankedSegment>({
+	return {
 		externalId: `segment-${id}`,
 		name: segmentName,
 		modified: new Date(),
@@ -122,12 +123,12 @@ function createUnnamedSegment(
 			cues: cues ?? [],
 			body: body ?? '',
 		}),
-	})
+	}
 }
 
 describe('Resolve Rundown Into Playlist', () => {
 	it('Creates a playlist with one rundown when no back-time is present', () => {
-		let segments: Array<UnrankedSegment> = [
+		let segments: Array<UnrankedSegmentX> = [
 			createUnrankedSegment(1),
 			createUnrankedSegment(2),
 			createUnrankedSegment(3),
@@ -143,12 +144,16 @@ describe('Resolve Rundown Into Playlist', () => {
 					payload: { rank: 0 },
 				},
 			]),
-			untimedSegments: new Set(),
+			resolvedSegments: [
+				{ ...createUnrankedSegment(1), untimed: false },
+				{ ...createUnrankedSegment(2), untimed: false },
+				{ ...createUnrankedSegment(3), untimed: false },
+			]
 		})
 	})
 
 	it('Sets the back time when a continuity story with back time is present', () => {
-		let segments: Array<UnrankedSegment> = [
+		let segments: Array<UnrankedSegmentX> = [
 			createUnrankedSegment(1),
 			createUnrankedSegment(2),
 			createUnrankedSegment(3),
@@ -166,12 +171,17 @@ describe('Resolve Rundown Into Playlist', () => {
 					payload: { rank: 0 },
 				},
 			]),
-			untimedSegments: new Set(['segment-04']),
+			resolvedSegments: [
+				{ ...createUnrankedSegment(1), untimed: false },
+				{ ...createUnrankedSegment(2), untimed: false },
+				{ ...createUnrankedSegment(3), untimed: false },
+				{ ...createContinuitySegment(4, { backTime: '@1234' }), untimed: true },
+			],
 		})
 	})
 
 	it('Sets the back time when continuity story is not last', () => {
-		let segments: Array<UnrankedSegment> = [
+		let segments: Array<UnrankedSegmentX> = [
 			createUnrankedSegment(1),
 			createUnrankedSegment(2),
 			createUnrankedSegment(3),
@@ -190,12 +200,18 @@ describe('Resolve Rundown Into Playlist', () => {
 					payload: { rank: 0 },
 				},
 			]),
-			untimedSegments: new Set(['segment-04', 'segment-05']),
+			resolvedSegments: [
+				{ ...createUnrankedSegment(1), untimed: false },
+				{ ...createUnrankedSegment(2), untimed: false },
+				{ ...createUnrankedSegment(3), untimed: false },
+				{ ...createContinuitySegment(4, { backTime: '@1234' }), untimed: true },
+				{ ...createUnrankedSegment(5), untimed: true }
+			]
 		})
 	})
 
 	it('Sets the back time to the first continuity story', () => {
-		let segments: Array<UnrankedSegment> = [
+		let segments: Array<UnrankedSegmentX> = [
 			createUnrankedSegment(1),
 			createUnrankedSegment(2),
 			createUnrankedSegment(3),
@@ -220,7 +236,7 @@ describe('Resolve Rundown Into Playlist', () => {
 	})
 
 	it('Setsno back time if continuity story does not have back time', () => {
-		let segments: Array<UnrankedSegment> = [
+		let segments: Array<UnrankedSegmentX> = [
 			createUnrankedSegment(1),
 			createUnrankedSegment(2),
 			createUnrankedSegment(3),
@@ -244,7 +260,7 @@ describe('Resolve Rundown Into Playlist', () => {
 	})
 
 	it('Untimes only the first Klar-on-air segment', () => {
-		let segments: Array<UnrankedSegment> = [
+		let segments: Array<UnrankedSegmentX> = [
 			createUnrankedSegment(1),
 			createKlarOnAirSegment(2),
 			createUnrankedSegment(3),
@@ -267,7 +283,7 @@ describe('Resolve Rundown Into Playlist', () => {
 	})
 
 	it('tests that a segment with blank name does not break the parser', () => {
-		let segments: Array<UnrankedSegment> = [createUnnamedSegment(1, '')]
+		let segments: Array<UnrankedSegmentX> = [createUnnamedSegment(1, '')]
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
 
@@ -284,7 +300,7 @@ describe('Resolve Rundown Into Playlist', () => {
 	})
 
 	it('tests that a segment with undefined name does not break the parser', () => {
-		let segments: Array<UnrankedSegment> = [createUnnamedSegment(1, undefined)]
+		let segments: Array<UnrankedSegmentX> = [createUnnamedSegment(1, undefined)]
 
 		const result = ResolveRundownIntoPlaylist('test-playlist', segments)
 

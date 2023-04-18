@@ -1,7 +1,7 @@
 import { INewsClient, INewsDirItem, INewsFile, INewsStory } from 'inews'
 import { promisify } from 'util'
 import { INewsStoryGW } from './datastructures/Segment'
-import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatcher'
+import { ReducedRundown, ReducedSegment, UnrankedSegmentX } from './RundownWatcher'
 import { literal, parseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromise } from '../helpers'
 import { VERSION } from '../version'
 import { SegmentId } from '../helpers/id'
@@ -65,8 +65,8 @@ export class RundownManager {
 	public async fetchINewsStoriesById(
 		queueName: string,
 		segmentExternalIds: SegmentId[]
-	): Promise<Map<SegmentId, UnrankedSegment>> {
-		const stories = new Map<SegmentId, UnrankedSegment>()
+	): Promise<Map<SegmentId, UnrankedSegmentX>> {
+		const stories = new Map<SegmentId, UnrankedSegmentX>()
 		const dirList = await this._listStories(queueName)
 		const ps: Array<Promise<INewsStoryGW | undefined>> = []
 
@@ -80,7 +80,7 @@ export class RundownManager {
 			if (result.status === 'fulfilled') {
 				const rawSegment = result.value
 				if (rawSegment) {
-					const segment: UnrankedSegment = {
+					const segment: UnrankedSegmentX = {
 						externalId: rawSegment.identifier,
 						name: rawSegment.fields.title ?? '',
 						modified: parseModifiedDateFromInewsStoryWithFallbackToNow(rawSegment),

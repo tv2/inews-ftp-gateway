@@ -1,6 +1,5 @@
 import { UnparsedCue } from 'inews'
-import { UnrankedSegment } from '../classes/RundownWatcher'
-import { SegmentId } from './id'
+import { UnrankedSegment, UnrankedSegmentX } from '../classes/RundownWatcher'
 
 export type ResolvedPlaylist = Array<ResolvedPlaylistRundown>
 export type ResolvedPlaylistRundown = {
@@ -12,10 +11,9 @@ export type ResolvedPlaylistRundown = {
 
 export function ResolveRundownIntoPlaylist(
 	playlistExternalId: string,
-	segments: Array<UnrankedSegment>
-): { resolvedPlaylist: ResolvedPlaylist; untimedSegments: Set<SegmentId> } {
+	segments: Array<UnrankedSegmentX>
+): { resolvedPlaylist: ResolvedPlaylist; resolvedSegments: UnrankedSegment[] } {
 	const resolvedPlaylist: ResolvedPlaylist = []
-	const untimedSegments: Set<SegmentId> = new Set()
 
 	let rundownIndex = 0
 	let currentRundown: ResolvedPlaylistRundown = {
@@ -51,9 +49,12 @@ export function ResolveRundownIntoPlaylist(
 	let continuityStoryFound = false
 	let klarOnAirStoryFound = false
 
+	const resolvedSegments: UnrankedSegment[] = []
 	for (const segment of segments) {
-		if (shouldLookForShowstyleVariant(segment, currentRundown)) {
-			const showstyleVariants = getOrderedShowstyleVariants(segment)
+		const resolvedSegment: UnrankedSegment = {...segment, untimed: false }
+		resolvedSegments.push(resolvedSegment)
+		if (shouldLookForShowstyleVariant(resolvedSegment, currentRundown)) {
+			const showstyleVariants = getOrderedShowstyleVariants(resolvedSegment)
 			if (showstyleVariants.length > 0) {
 				splitRundown()
 				const showstyleVariant = showstyleVariants[0]
@@ -64,9 +65,9 @@ export function ResolveRundownIntoPlaylist(
 		currentRundown.segments.push(segment.externalId)
 
 		const isFloated = segment.iNewsStory.meta.float ?? false
-		if (!isFloated && !klarOnAirStoryFound && isKlarOnAir(segment)) {
+		if (!isFloated && !klarOnAirStoryFound && isKlarOnAir(resolvedSegment)) {
 			klarOnAirStoryFound = true
-			untimedSegments.add(segment.externalId)
+			resolvedSegment.untimed = true
 		}
 
 		// TODO: Not relevant for breaks
@@ -77,7 +78,7 @@ export function ResolveRundownIntoPlaylist(
 			}
 		}
 		if (continuityStoryFound) {
-			untimedSegments.add(segment.externalId)
+			resolvedSegment.untimed = true
 		}
 	}
 
@@ -85,23 +86,23 @@ export function ResolveRundownIntoPlaylist(
 		resolvedPlaylist.push(currentRundown)
 	}
 
-	return { resolvedPlaylist, untimedSegments }
+	return { resolvedPlaylist, resolvedSegments }
 }
 
-function isSegment(segment: UnrankedSegment | undefined): segment is UnrankedSegment {
+function isSegment(segment: UnrankedSegmentX | undefined): segment is UnrankedSegmentX {
 	return segment !== undefined
 }
 
-function isSegmentFloated(segment: UnrankedSegment): boolean {
+function isSegmentFloated(segment: UnrankedSegmentX): boolean {
 	return segment.iNewsStory.meta.float === 'float'
 }
 
-function isSegmentEmpty(segment: UnrankedSegment): boolean {
+function isSegmentEmpty(segment: UnrankedSegmentX): boolean {
 	const isCuesEmpty = segment.iNewsStory.cues.length === 0
 	return isCuesEmpty && isSegmentBodyEmpty(segment)
 }
 
-function isSegmentBodyEmpty(segment: UnrankedSegment): boolean {
+function isSegmentBodyEmpty(segment: UnrankedSegmentX): boolean {
 	if (segment.iNewsStory.body === undefined) {
 		return true
 	}

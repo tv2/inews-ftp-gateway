@@ -1,4 +1,4 @@
-import { INewsStory } from 'inews'
+import { INewsStory } from '@tv2media/inews'
 
 export type INewsStoryGW = INewsStory
 
@@ -36,7 +36,7 @@ export class RundownSegment implements ISegment {
 			rundownId: this.rundownId,
 			iNewsStory: {
 				...this.iNewsStory,
-				fields: { ...this.iNewsStory.fields, modifyDate: '' },
+				fields: { ...this.iNewsStory.fields, modifyDate: { value: '' } },
 				identifier: '',
 				id: '',
 				locator: '',

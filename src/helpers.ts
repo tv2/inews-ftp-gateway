@@ -1,4 +1,4 @@
-import { INewsStory } from 'inews'
+import { INewsStory } from '@tv2media/inews'
 import { IngestSegment } from '@sofie-automation/blueprints-integration'
 
 export function literal<T>(o: T) {
@@ -14,8 +14,8 @@ function isValidDate(d: Date) {
 }
 
 export function parseModifiedDateFromInewsStoryWithFallbackToNow(story: INewsStory): Date {
-	if (story?.fields?.modifyDate) {
-		const modifyDate = new Date(story?.fields?.modifyDate)
+	if (story?.fields?.modifyDate?.value) {
+		const modifyDate = new Date(story?.fields?.modifyDate.value)
 		if (isValidDate(modifyDate)) {
 			return modifyDate
 		}

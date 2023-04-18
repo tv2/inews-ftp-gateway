@@ -2,16 +2,13 @@ import * as _ from 'underscore'
 import { CollectionObj } from '@sofie-automation/server-core-integration'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
-import * as inews from 'inews'
+import * as inews from '@tv2media/inews'
 import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { VERSION } from './version'
 import { ILogger as Logger } from '@tv2media/logger'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
-
-type INewsClient = inews.INewsClient
-type INewsOptions = inews.INewsOptions
 
 export interface INewsDeviceSettings {
 	hosts?: Array<INewsHost>
@@ -33,7 +30,7 @@ export interface INewsQueue {
 }
 
 export class InewsFTPHandler {
-	public iNewsConnection?: INewsClient
+	public iNewsConnection?: inews.INewsClient
 	public userName?: string
 	public passWord?: string
 	public debugLogging: boolean = false
@@ -91,12 +88,12 @@ export class InewsFTPHandler {
 		if (!this._settings) return
 		if (!this._settings.hosts) throw new Error('No hosts available')
 		if (!this._settings.queues) throw new Error('No queues set')
-		this.iNewsConnection = inews({
+		this.iNewsConnection = new inews.INewsClient({
 			hosts: this._settings.hosts.map((host) => host.host) ?? [],
 			user: this._settings.user,
 			password: this._settings.password,
 			timeout: 10000,
-		} as INewsOptions)
+		})
 
 		this.iNewsConnection.on('status', async (status) => {
 			if (status.name === 'disconnected') {

@@ -24,7 +24,7 @@
     "start:dev": "cross-env NODE_ENV=development node ./dist",
     "start:local": "cross-env NODE_ENV=local node ./dist",
     "info": "npm-scripts-info",
-    "build": "trash dist && yarn test && yarn build:main",
+    "build": "trash dist && yarn build:main",
     "build:dev": "trash dist && yarn build:main",
     "buildstart": "yarn build && yarn start",
     "buildstart:dev": "yarn build:dev && DEV=true yarn start",

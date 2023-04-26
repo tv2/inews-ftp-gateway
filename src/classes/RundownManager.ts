@@ -121,6 +121,7 @@ export class RundownManager {
 		this._logger?.debug(`Queue: ${queueName} Story: ${isFile(storyFile) ? storyFile.storyName : storyFile.file}`)
 
 		this.generateCuesFromLayoutField(story)
+		this.generateCueFromSchemaField(story)
 		return story
 	}
 
@@ -133,7 +134,7 @@ export class RundownManager {
 	}
 
 	private addDesignLayoutCueToStory(story: INewsStory): void {
-		const cueIndex = this.addCueToStory(story, 'DESIGN_LAYOUT')
+		const cueIndex = this.addCueToStory(story, 'DESIGN_LAYOUT', story.fields.layout!)
 		this.addLinkToStory(story, cueIndex)
 	}
 
@@ -168,13 +169,22 @@ export class RundownManager {
 	/**
 	 * Adds a cue to the story. Returns the index of the newly added cue.
 	 */
-	private addCueToStory(story: INewsStory, cueKey: string): number {
-		story.cues.push([`${cueKey}=${story.fields.layout!.toUpperCase()}`])
+	private addCueToStory(story: INewsStory, cueKey: string, cueValue: string): number {
+		story.cues.push([`${cueKey}=${cueValue.toUpperCase()}`])
 		return story.cues.length - 1
 	}
 
 	private addDesignBgCueToStory(story: INewsStory): void {
-		const cueIndex = this.addCueToStory(story, 'DESIGN_BG')
+		const cueIndex = this.addCueToStory(story, 'DESIGN_BG', story.fields.layout!)
+		this.addLinkToStory(story, cueIndex)
+	}
+
+	public generateCueFromSchemaField(story: INewsStory): void {
+		if (!story.fields.skema) {
+			return
+		}
+
+		const cueIndex = this.addCueToStory(story, 'SCHEMA_FIELD', story.fields.skema!)
 		this.addLinkToStory(story, cueIndex)
 	}
 

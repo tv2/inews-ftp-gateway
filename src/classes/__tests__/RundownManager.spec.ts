@@ -26,9 +26,9 @@ describe('RundownManager', () => {
 		it('has a layout, designLayout cue is added', () => {
 			const story = createStory(FIELD_WITH_LAYOUT)
 
-			expect(story.cues.some((cue) => cue!.some((line) => line.match(/DESIGN_LAYOUT=/i)))).toBeFalsy()
+			expect(story.cues.some((cue) => cue!.some((line) => line.match(/DESIGN_FIELD=/i)))).toBeFalsy()
 			testee.generateCuesFromLayoutField(story)
-			expect(story.cues.some((cue) => cue!.some((line) => line.match(/DESIGN_LAYOUT=/i)))).toBeTruthy()
+			expect(story.cues.some((cue) => cue!.some((line) => line.match(/DESIGN_FIELD=/i)))).toBeTruthy()
 		})
 
 		it('has the upper cased layout value in the design cue', () => {
@@ -36,7 +36,7 @@ describe('RundownManager', () => {
 
 			testee.generateCuesFromLayoutField(story)
 
-			expect(story.cues[0]![0]).toBe(`DESIGN_LAYOUT=${LAYOUT.toUpperCase()}`)
+			expect(story.cues[0]![0]).toBe(`DESIGN_FIELD=${LAYOUT.toUpperCase()}`)
 		})
 
 		it('has a layout, link to cue is generated in body', () => {

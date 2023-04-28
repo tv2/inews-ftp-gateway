@@ -129,12 +129,12 @@ export class RundownManager {
 		if (!story.fields.layout) {
 			return
 		}
-		this.addDesignLayoutCueToStory(story)
+		this.addDesignFieldCueToStory(story)
 		this.addDesignBgCueToStory(story)
 	}
 
-	private addDesignLayoutCueToStory(story: INewsStory): void {
-		const cueIndex = this.addCueToStory(story, 'DESIGN_LAYOUT', story.fields.layout!)
+	private addDesignFieldCueToStory(story: INewsStory): void {
+		const cueIndex = this.addCueToStory(story, 'DESIGN_FIELD', story.fields.layout!)
 		this.addLinkToStory(story, cueIndex)
 	}
 
@@ -150,12 +150,12 @@ export class RundownManager {
 				: story.body!.concat(`<p><\a idref="${cueIndex}"></a></p>`)
 	}
 
-	private insertLinkAfterFirstPrimaryCue(lines: string[], typeIndex: number, layoutCueIndex: number): string {
+	private insertLinkAfterFirstPrimaryCue(lines: string[], typeIndex: number, cueIndex: number): string {
 		const throughPrimaryCueHalf = lines.slice(0, typeIndex + 1)
 		const afterPrimaryCueHalf = lines.slice(typeIndex + 1, lines.length)
 		return this.reassembleBody([
 			...throughPrimaryCueHalf,
-			`<\a idref="${layoutCueIndex}"></a></p>\r\n`,
+			`<\a idref="${cueIndex}"></a></p>\r\n`,
 			...afterPrimaryCueHalf,
 		])
 	}

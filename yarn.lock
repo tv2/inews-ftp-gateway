@@ -396,22 +396,22 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-4.6.0.tgz#3c7c9c46e678feefe7a2e5bb609d3dbd665ffb3f"
   integrity sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==
 
-"@sofie-automation/blueprints-integration@npm:@tv2media/blueprints-integration@46.2.0":
-  version "46.2.0"
-  resolved "https://registry.yarnpkg.com/@tv2media/blueprints-integration/-/blueprints-integration-46.2.0.tgz#ff2cf16e6350510b8083e7b2781a17d1b1141c4d"
-  integrity sha512-hWKDVEQo1stlMNtxkumEy+PwM99ZAffBWkgSzBMJyIneb5pR/Dkm/3vl5f3LHWnFVZGuwISq5LvpPkNEdv+Nvg==
+"@sofie-automation/blueprints-integration@npm:@tv2media/blueprints-integration@46.3.0-staging":
+  version "46.3.0-staging"
+  resolved "https://registry.yarnpkg.com/@tv2media/blueprints-integration/-/blueprints-integration-46.3.0-staging.tgz#2aaf96cae9876e051016fb5c6f386d35fbfc1e99"
+  integrity sha512-VC+/iM8QKq95rGMsb4kQU3MVPnt9R3wxgll/Ni5KtWeZ+qgfJPz4d6Cqj16ADYiHppUyBehEyU27Z8euMG1f6Q==
   dependencies:
-    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.2.0"
-    timeline-state-resolver-types "npm:@tv2media/timeline-state-resolver-types@3.3.0"
+    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.3.0-staging"
+    timeline-state-resolver-types "npm:@tv2media/timeline-state-resolver-types@3.5.1"
     tslib "^2.4.0"
     type-fest "^2.19.0"
 
-"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@46.2.0":
-  version "46.2.0"
-  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-46.2.0.tgz#43c1af09ecaabd89fc5a7b792c1d72665b29b767"
-  integrity sha512-AOnhhHvYozI60iJTn6OTH4iXKdfjNDXRwUyw8swzHzl/xf1DN8tBe+mQNVlKHhwzT+9vMGv8Pynyg70gDFaeig==
+"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@46.3.0-staging":
+  version "46.3.0-staging"
+  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-46.3.0-staging.tgz#60470710a502c3df97fec6d57bf0a4a75418685c"
+  integrity sha512-PbzanyozU8SKm4k4LA03Ojpb0Vk54FsIy7T1Ah1JwigTyN5BeN8/wGwElga42FrOtLArQujtem9VObLhOs/4Hw==
   dependencies:
-    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.2.0"
+    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.3.0-staging"
     ejson "^2.2.3"
     eventemitter3 "^4.0.7"
     faye-websocket "^0.11.4"
@@ -419,10 +419,10 @@
     tslib "^2.4.0"
     underscore "^1.13.4"
 
-"@sofie-automation/shared-lib@npm:@tv2media/shared-lib@46.2.0":
-  version "46.2.0"
-  resolved "https://registry.yarnpkg.com/@tv2media/shared-lib/-/shared-lib-46.2.0.tgz#934f14339330bd0064d7a0c3046dae10e2754099"
-  integrity sha512-ojW4qHQ+dfQDzFotqq4kEJNb6nVSDk/KU2u1S2fzXkZzgXW4Xq2hNUyk5lfUMcd7nBsiRVnPzmVSqxbRfUd1MQ==
+"@sofie-automation/shared-lib@npm:@tv2media/shared-lib@46.3.0-staging":
+  version "46.3.0-staging"
+  resolved "https://registry.yarnpkg.com/@tv2media/shared-lib/-/shared-lib-46.3.0-staging.tgz#405ddd324e7f66f472635258915eb026054b8406"
+  integrity sha512-LYPJEXNO4NNiCxB/PsqW1BedtLjvBFntIUfVKwfuizkZJkYnJ8JZQdrUcxgyCJg5/SYeSccUrhorI4YKDqcx8w==
   dependencies:
     tslib "^2.4.0"
     type-fest "^2.19.0"
@@ -5630,10 +5630,10 @@ through@2, "through@>=2.2.7 <3":
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
   integrity sha1-DdTJ/6q8NXlgsbckEV1+Doai4fU=
 
-"timeline-state-resolver-types@npm:@tv2media/timeline-state-resolver-types@3.3.0":
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/@tv2media/timeline-state-resolver-types/-/timeline-state-resolver-types-3.3.0.tgz#08e5b700d59a92855f27e80e98830307f0e50ead"
-  integrity sha512-2fnXgtg3H1mZwQNz1ax7kHPXhcMmp3ak7qVf8WIPysodtBXExP4LoRypv6fgOzX15og+gmgR3YYQGLrqiw14QA==
+"timeline-state-resolver-types@npm:@tv2media/timeline-state-resolver-types@3.5.1":
+  version "3.5.1"
+  resolved "https://registry.yarnpkg.com/@tv2media/timeline-state-resolver-types/-/timeline-state-resolver-types-3.5.1.tgz#9362ec90183babb8183914a7e36664218e2eb5e1"
+  integrity sha512-yBAI2d7cnWPuDtFsYkbFB/GBkN4p0Q7Ne4TqKCDl4haqFU4PNtIzI1shH9AOEMOcsmNh0ZxHTzgAG85zrGGXpQ==
   dependencies:
     tslib "^2.3.1"
 

@@ -12,7 +12,7 @@ import {
 	PlaylistChangeType,
 } from './DiffPlaylist'
 import { PlaylistId, RundownId, SegmentId } from './id'
-import { ResolvedPlaylist, ResolvedPlaylistRundown } from './ResolveRundownIntoPlaylist'
+import { ResolvedPlaylistRundown } from './ResolveRundownIntoPlaylist'
 import { RundownSegment } from '../classes/datastructures/Segment'
 
 export enum CoreCallType {
@@ -85,7 +85,7 @@ export type CoreCall =
 export function GenerateCoreCalls(
 	playlistId: PlaylistId,
 	changes: PlaylistChange[],
-	playlistAssignments: ResolvedPlaylist,
+	resolvedRundown: ResolvedPlaylistRundown,
 	assignedRanks: Map<SegmentId, number>,
 	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
 	// TODO: This should probably just be a map of the previous known ranks
@@ -94,12 +94,11 @@ export function GenerateCoreCalls(
 ): CoreCall[] {
 	const coreCalls: CoreCall[] = []
 
-	coreCalls.push(...createDeletedRundownCoreCalls(changes))
 	coreCalls.push(...createSegmentDeletedCoreCalls(changes))
 	coreCalls.push(
 		...createRundownCreateCoreCalls(
 			changes,
-			playlistAssignments,
+			resolvedRundown,
 			playlistId,
 			iNewsDataCache,
 			assignedRanks,
@@ -109,7 +108,7 @@ export function GenerateCoreCalls(
 	coreCalls.push(
 		...createMetaDataUpdateCoreCalls(
 			changes,
-			playlistAssignments,
+			resolvedRundown,
 			playlistId,
 			iNewsDataCache,
 			assignedRanks,
@@ -126,7 +125,7 @@ export function GenerateCoreCalls(
 	coreCalls.push(
 		...createRundownUpdatedCoreCalls(
 			changes,
-			playlistAssignments,
+			resolvedRundown,
 			playlistId,
 			iNewsDataCache,
 			assignedRanks,
@@ -180,18 +179,6 @@ function createSegmentMovedCoreCalls(
 	return coreCalls
 }
 
-function createDeletedRundownCoreCalls(changes: PlaylistChange[]): CoreCallRundownDelete[] {
-	return changes
-		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeRundownDeleted)
-		.map((playlistChange) => {
-			logger.debug(`Adding core call: Rundown delete (${playlistChange.rundownExternalId})`)
-			return literal<CoreCallRundownDelete>({
-				type: CoreCallType.dataRundownDelete,
-				rundownExternalId: playlistChange.rundownExternalId,
-			})
-		})
-}
-
 function createSegmentDeletedCoreCalls(changes: PlaylistChange[]): CoreCallSegmentDelete[] {
 	return changes
 		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeSegmentDeleted)
@@ -208,7 +195,7 @@ function createSegmentDeletedCoreCalls(changes: PlaylistChange[]): CoreCallSegme
 
 function createRundownCreateCoreCalls(
 	changes: PlaylistChange[],
-	playlistAssignments: Array<ResolvedPlaylistRundown>,
+	resolvedRundown: ResolvedPlaylistRundown,
 	playlistId: string,
 	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
 	assignedRanks: Map<SegmentId, number>,
@@ -218,22 +205,12 @@ function createRundownCreateCoreCalls(
 		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeRundownCreated)
 		.map((playlistChange) => {
 			logger.debug(`Creating rundown: ${playlistChange.rundownExternalId}`)
-			const assignedRundown = playlistAssignments.find(
-				(playlistAssignment) => playlistAssignment.rundownId === playlistChange.rundownExternalId
-			)
-
-			if (!assignedRundown) {
-				logger.error(
-					`Tried to create rundown ${playlistChange.rundownExternalId} but could not find the segments associated with this rundown.`
-				)
-				return undefined
-			}
 
 			const rundown = playlistRundownToIngestRundown(
 				playlistId,
-				assignedRundown.rundownId,
-				assignedRundown.segments,
-				assignedRundown.payload,
+				resolvedRundown.rundownId,
+				resolvedRundown.segments,
+				resolvedRundown.payload,
 				iNewsDataCache,
 				assignedRanks,
 				untimedSegments
@@ -251,7 +228,7 @@ function createRundownCreateCoreCalls(
 
 function createMetaDataUpdateCoreCalls(
 	changes: PlaylistChange[],
-	playlistAssignments: Array<ResolvedPlaylistRundown>,
+	resolvedRundown: ResolvedPlaylistRundown,
 	playlistId: string,
 	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
 	assignedRanks: Map<SegmentId, number>,
@@ -259,21 +236,12 @@ function createMetaDataUpdateCoreCalls(
 ): CoreCallRundownMetaDataUpdate[] {
 	return changes
 		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated)
-		.map((playlistChange) => {
-			const assignedRundown = playlistAssignments.find((r) => r.rundownId === playlistChange.rundownExternalId)
-
-			if (!assignedRundown) {
-				logger.error(
-					`Tried to create rundown ${playlistChange.rundownExternalId} but could not find the segments associated with this rundown.`
-				)
-				return undefined
-			}
-
+		.map(() => {
 			const rundown = playlistRundownToIngestRundown(
 				playlistId,
-				assignedRundown.rundownId,
-				assignedRundown.segments,
-				assignedRundown.payload,
+				resolvedRundown.rundownId,
+				resolvedRundown.segments,
+				resolvedRundown.payload,
 				iNewsDataCache,
 				assignedRanks,
 				untimedSegments
@@ -379,7 +347,7 @@ function createSegmentCreatedCoreCalls(
 
 function createRundownUpdatedCoreCalls(
 	changes: PlaylistChange[],
-	playlistAssignments: Array<ResolvedPlaylistRundown>,
+	resolvedRundown: ResolvedPlaylistRundown,
 	playlistId: string,
 	iNewsDataCache: Map<SegmentId, UnrankedSegment>,
 	assignedRanks: Map<SegmentId, number>,
@@ -387,21 +355,12 @@ function createRundownUpdatedCoreCalls(
 ): CoreCallRundownUpdate[] {
 	return changes
 		.filter((playlistChange) => playlistChange.type === PlaylistChangeType.PlaylistChangeRundownUpdated)
-		.map((playlistChange) => {
-			const assignedRundown = playlistAssignments.find((r) => r.rundownId === playlistChange.rundownExternalId)
-
-			if (!assignedRundown) {
-				logger.error(
-					`Tried to create rundown ${playlistChange.rundownExternalId} but could not find the segments associated with this rundown.`
-				)
-				return undefined
-			}
-
+		.map(() => {
 			const rundown = playlistRundownToIngestRundown(
 				playlistId,
-				assignedRundown.rundownId,
-				assignedRundown.segments,
-				assignedRundown.payload,
+				resolvedRundown.rundownId,
+				resolvedRundown.segments,
+				resolvedRundown.payload,
 				iNewsDataCache,
 				assignedRanks,
 				untimedSegments

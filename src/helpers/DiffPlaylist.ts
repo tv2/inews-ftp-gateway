@@ -2,7 +2,7 @@ import { logger } from '../logger'
 import { INewsRundown } from '../classes/datastructures/Rundown'
 import { literal } from '../helpers'
 import { GetMovedSegments } from './GetMovedSegments'
-import { RundownId, SegmentId } from './id'
+import { SegmentId } from './id'
 
 export enum PlaylistChangeType {
 	PlaylistChangeSegmentDeleted = 'segment_deleted',
@@ -43,11 +43,6 @@ export interface PlaylistChangeSegmentMoved extends PlaylistChangeBase {
 	segmentExternalId: string
 }
 
-export interface PlaylistChangeRundownDeleted extends PlaylistChangeBase {
-	type: PlaylistChangeType.PlaylistChangeRundownDeleted
-	rundownExternalId: string
-}
-
 export interface PlaylistChangeRundownCreated extends PlaylistChangeBase {
 	type: PlaylistChangeType.PlaylistChangeRundownCreated
 	rundownExternalId: string
@@ -69,7 +64,6 @@ export type PlaylistChange =
 	| PlaylistChangeSegmentChanged
 	| PlaylistChangeSegmentMoved
 	| PlaylistChangeRundownCreated
-	| PlaylistChangeRundownDeleted
 	| PlaylistChangeRundownMetaDataUpdated
 	| PlaylistChangeRundownUpdated
 
@@ -82,153 +76,114 @@ export type SegmentChanges = {
 	changedSegments: SegmentId[]
 }
 
-export type SegmentChangesMap = Map<RundownId, SegmentChanges>
-
 export function DiffPlaylist(
-	playlist: Array<INewsRundown>,
-	previous: Array<INewsRundown>
+	rundown: INewsRundown,
+	previous: INewsRundown | undefined
 ): {
-	changes: PlaylistChange[]
-	segmentChanges: SegmentChangesMap
+	playlistChanges: PlaylistChange[]
+	segmentChanges: SegmentChanges
 } {
-	let changes: PlaylistChange[] = []
-	let segmentChanges: SegmentChangesMap = new Map()
-	let updatedRundownMetaData: Set<RundownId> = new Set()
+	const changes: PlaylistChange[] = []
 
-	for (let rundown of previous) {
-		let newRundown = playlist.find((p) => p.externalId === rundown.externalId)
-		if (!newRundown) {
-			logger.debug(`Diff: Rundown ${rundown.externalId} deleted`)
-			changes.push(
-				literal<PlaylistChangeRundownDeleted>({
-					type: PlaylistChangeType.PlaylistChangeRundownDeleted,
-					rundownExternalId: rundown.externalId,
-				})
-			)
-			segmentChanges.set(rundown.externalId, {
-				movedSegments: [],
-				notMovedSegments: [],
-				insertedSegments: [],
-				deletedSegments: rundown.segments.map((s) => s.externalId),
-				changedSegments: [],
+	if (!previous) {
+		logger.debug(`Diff: Rundown ${rundown.externalId} created`)
+		changes.push(
+			literal<PlaylistChangeRundownCreated>({
+				type: PlaylistChangeType.PlaylistChangeRundownCreated,
+				rundownExternalId: rundown.externalId,
 			})
-			continue
-		}
-	}
-
-	for (let rundown of playlist) {
-		const prevRundown = previous.find((p) => p.externalId === rundown.externalId)
-		if (!prevRundown) {
-			logger.debug(`Diff: Rundown ${rundown.externalId} created`)
-			changes.push(
-				literal<PlaylistChangeRundownCreated>({
-					type: PlaylistChangeType.PlaylistChangeRundownCreated,
-					rundownExternalId: rundown.externalId,
-				})
-			)
-			segmentChanges.set(rundown.externalId, {
+		)
+		return {
+			playlistChanges: changes,
+			segmentChanges: {
 				movedSegments: [],
 				notMovedSegments: [],
 				insertedSegments: rundown.segments.map((s) => s.externalId),
 				deletedSegments: [],
 				changedSegments: [],
+			},
+		}
+	}
+
+	let { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
+		previous.segments.map((s) => s.externalId),
+		rundown.segments.map((s) => s.externalId)
+	)
+	let changedSegments: SegmentId[] = []
+
+	movedSegments.forEach((s) => {
+		logger.debug(`Diff: Segment ${s} moved`)
+		changes.push(
+			literal<PlaylistChangeSegmentMoved>({
+				type: PlaylistChangeType.PlaylistChangeSegmentMoved,
+				rundownExternalId: rundown.externalId,
+				segmentExternalId: s,
 			})
-			continue
-		}
-
-		if (prevRundown.payload?.showstyleVariant !== rundown.payload?.showstyleVariant) {
-			changes.push(
-				literal<PlaylistChangeRundownUpdated>({
-					type: PlaylistChangeType.PlaylistChangeRundownUpdated,
-					rundownExternalId: rundown.externalId,
-				})
-			)
-			updatedRundownMetaData.add(rundown.externalId)
-		}
-
-		let { movedSegments, notMovedSegments, insertedSegments, deletedSegments } = GetMovedSegments(
-			prevRundown.segments.map((s) => s.externalId),
-			rundown.segments.map((s) => s.externalId)
 		)
-		let changedSegments: SegmentId[] = []
+	})
 
-		movedSegments.forEach((s) => {
-			logger.debug(`Diff: Segment ${s} moved`)
-			changes.push(
-				literal<PlaylistChangeSegmentMoved>({
-					type: PlaylistChangeType.PlaylistChangeSegmentMoved,
-					rundownExternalId: rundown.externalId,
-					segmentExternalId: s,
-				})
-			)
-			updatedRundownMetaData.add(rundown.externalId)
-		})
+	insertedSegments.forEach((s) => {
+		logger.debug(`Diff: Segment ${s} inserted`)
+		changes.push(
+			literal<PlaylistChangeSegmentCreated>({
+				type: PlaylistChangeType.PlaylistChangeSegmentCreated,
+				rundownExternalId: rundown.externalId,
+				segmentExternalId: s,
+			})
+		)
+	})
 
-		insertedSegments.forEach((s) => {
-			logger.debug(`Diff: Segment ${s} inserted`)
-			changes.push(
-				literal<PlaylistChangeSegmentCreated>({
-					type: PlaylistChangeType.PlaylistChangeSegmentCreated,
-					rundownExternalId: rundown.externalId,
-					segmentExternalId: s,
-				})
-			)
-			updatedRundownMetaData.add(rundown.externalId)
-		})
+	deletedSegments.forEach((s) => {
+		logger.debug(`Diff: Segment ${s} deleted`)
+		changes.push(
+			literal<PlaylistChangeSegmentDeleted>({
+				type: PlaylistChangeType.PlaylistChangeSegmentDeleted,
+				rundownExternalId: rundown.externalId,
+				segmentExternalId: s,
+			})
+		)
+	})
 
-		deletedSegments.forEach((s) => {
-			logger.debug(`Diff: Segment ${s} deleted`)
-			changes.push(
-				literal<PlaylistChangeSegmentDeleted>({
-					type: PlaylistChangeType.PlaylistChangeSegmentDeleted,
-					rundownExternalId: rundown.externalId,
-					segmentExternalId: s,
-				})
-			)
-			updatedRundownMetaData.add(rundown.externalId)
-		})
+	// Find segments that have changed, rather than staying put / just being moved
+	const segmentsToCheckForChanges = [...movedSegments, ...notMovedSegments]
+	for (const segmentId of segmentsToCheckForChanges) {
+		const current = rundown.segments.find((s) => s.externalId === segmentId)
+		const prev = previous.segments.find((s) => s.externalId === segmentId)
 
-		// Find segments that have changed, rather than staying put / just being moved
-		const segmentsToCheckForChanges = [...movedSegments, ...notMovedSegments]
-		for (const segmentId of segmentsToCheckForChanges) {
-			const current = rundown.segments.find((s) => s.externalId === segmentId)
-			const prev = prevRundown.segments.find((s) => s.externalId === segmentId)
+		if (!current || !prev) continue
 
-			if (!current || !prev) continue
-
-			if (JSON.stringify(prev.serialize()) !== JSON.stringify(current.serialize())) {
-				if (!changedSegments.includes(segmentId)) {
-					changedSegments.push(segmentId)
-				}
-				logger.debug(`Diff: Segment ${segmentId} changed`)
-				changes.push(
-					literal<PlaylistChangeSegmentChanged>({
-						type: PlaylistChangeType.PlaylistChangeSegmentChanged,
-						rundownExternalId: rundown.externalId,
-						segmentExternalId: segmentId,
-					})
-				)
-				updatedRundownMetaData.add(rundown.externalId)
+		if (JSON.stringify(prev.serialize()) !== JSON.stringify(current.serialize())) {
+			if (!changedSegments.includes(segmentId)) {
+				changedSegments.push(segmentId)
 			}
+			logger.debug(`Diff: Segment ${segmentId} changed`)
+			changes.push(
+				literal<PlaylistChangeSegmentChanged>({
+					type: PlaylistChangeType.PlaylistChangeSegmentChanged,
+					rundownExternalId: rundown.externalId,
+					segmentExternalId: segmentId,
+				})
+			)
 		}
+	}
 
-		segmentChanges.set(rundown.externalId, {
+	if (changes.length) {
+		changes.push(
+			literal<PlaylistChangeRundownMetaDataUpdated>({
+				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
+				rundownExternalId: rundown.externalId,
+			})
+		)
+	}
+
+	return {
+		playlistChanges: changes,
+		segmentChanges: {
 			movedSegments,
 			notMovedSegments,
 			insertedSegments,
 			deletedSegments,
 			changedSegments,
-		})
+		},
 	}
-
-	for (const rundownId of updatedRundownMetaData) {
-		changes.push(
-			literal<PlaylistChangeRundownMetaDataUpdated>({
-				type: PlaylistChangeType.PlaylistChangeRundownMetaDataUpdated,
-				rundownExternalId: rundownId,
-			})
-		)
-	}
-
-	return { changes, segmentChanges }
 }

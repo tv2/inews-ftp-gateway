@@ -393,6 +393,9 @@ export class RundownWatcher extends EventEmitter {
 					`Could not find iNews data for segment ${s.externalId} in rundown ${playlistId}. Segment will appear out of order.`
 				)
 			} else {
+				if (cachedData.iNewsStory.meta.float) {
+					return
+				}
 				segmentsToResolve.push(cachedData)
 			}
 		})

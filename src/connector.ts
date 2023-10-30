@@ -6,6 +6,8 @@ import { Observer } from '@sofie-automation/server-core-integration'
 import { ensureLogLevel, setLogLevel } from './logger'
 import { ILogger as Logger } from '@tv2media/logger'
 import { unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
+import * as  Koa from 'koa'
+import * as KoaRouter from 'koa-router'
 
 export interface Config {
 	process: ProcessConfig
@@ -31,6 +33,9 @@ export class Connector {
 	private _process: Process
 	private _settings?: INewsDeviceSettings
 	private _debug: boolean
+	private koaApp: Koa
+	private koaRouter: KoaRouter
+
 
 	constructor(logger: Logger, config: Config, debug: boolean) {
 		this._logger = logger.tag(this.constructor.name)
@@ -40,6 +45,8 @@ export class Connector {
 		this.coreHandler = new CoreHandler(this._logger, this._config.device)
 		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this.coreHandler)
 		this.coreHandler.iNewsHandler = this.iNewsFTPHandler
+		this.koaApp = new Koa()
+		this.koaRouter = new KoaRouter()
 	}
 
 	async init(): Promise<void> {
@@ -52,6 +59,7 @@ export class Connector {
 			this._logger.info('Core is initialized')
 			this.setupObserver()
 			this._logger.info('Initialization of FTP-monitor done')
+			this.setupReloadDataKoaEndpoint()
 		} catch (err) {
 			this._logger.data(err).error(`Error during initialization:`)
 
@@ -133,5 +141,21 @@ export class Connector {
 		}
 
 		addedChanged(unprotectString(this.coreHandler.core.deviceId))
+	}
+
+	private setupReloadDataKoaEndpoint(): void {
+		this.koaRouter.get('/reloadData/:rundownName', async (ctx, next): Promise<void> => {
+			const RUNDOWN_EXTERNAL_ID_SUFFIX = '_1'
+			if (!this.iNewsFTPHandler.iNewsWatcher) {
+				return
+			}
+			this.iNewsFTPHandler.iNewsWatcher?.ResyncRundown(ctx.params.rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
+
+			await next()
+		})
+
+		this.koaApp.use(this.koaRouter.routes()).use(this.koaRouter.allowedMethods())
+
+		this.koaApp.listen(3007, () => {})
 	}
 }

@@ -155,6 +155,7 @@ export class Connector {
 			}
 			try {
 				await this.iNewsFTPHandler.iNewsWatcher.ResyncRundown(context.params.rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
+				context.body = 'Rundown reloaded!'
 				await next()
 			} catch (error) {
 				context.status = 500

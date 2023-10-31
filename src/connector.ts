@@ -148,22 +148,24 @@ export class Connector {
 		const RUNDOWN_EXTERNAL_ID_SUFFIX: string = '_1'
 
 		this.koaRouter.post('/reloadData/:rundownName', async (context, next): Promise<void> => {
+			const rundownName: string = context.params.rundownName
 			if (!this.iNewsFTPHandler.iNewsWatcher) {
 				context.status = 503
 				context.response.body = 'Error: iNewsWatcher is undefined'
 				return
 			}
+
 			try {
-				await this.iNewsFTPHandler.iNewsWatcher.ResyncRundown(context.params.rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
+				context.response.body = `Attempting to reload rundown with name ${rundownName}`
+				await this.iNewsFTPHandler.iNewsWatcher.ResyncRundown( rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
 				await next()
 			} catch (error) {
 				context.status = 500
-				context.response.body = 'Error: ' + error
+				context.response.body = `Error: ${error}`
 			}
 		})
 
 		this.koaApp.use(this.koaRouter.routes()).use(this.koaRouter.allowedMethods())
-
 		this.koaApp.listen(KOA_PORT, () => {})
 	}
 }

@@ -144,18 +144,20 @@ export class Connector {
 	}
 
 	private setupReloadDataKoaEndpoint(): void {
+		const KOA_PORT: number = 3007
+		const RUNDOWN_EXTERNAL_ID_SUFFIX: string = '_1'
+
 		this.koaRouter.get('/reloadData/:rundownName', async (ctx, next): Promise<void> => {
-			const RUNDOWN_EXTERNAL_ID_SUFFIX = '_1'
 			if (!this.iNewsFTPHandler.iNewsWatcher) {
 				return
 			}
-			this.iNewsFTPHandler.iNewsWatcher?.ResyncRundown(ctx.params.rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
+			await this.iNewsFTPHandler.iNewsWatcher.ResyncRundown(ctx.params.rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
 
 			await next()
 		})
 
 		this.koaApp.use(this.koaRouter.routes()).use(this.koaRouter.allowedMethods())
 
-		this.koaApp.listen(3007, () => {})
+		this.koaApp.listen(KOA_PORT, () => {})
 	}
 }

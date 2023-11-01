@@ -6,7 +6,7 @@ import { Observer } from '@sofie-automation/server-core-integration'
 import { ensureLogLevel, setLogLevel } from './logger'
 import { ILogger as Logger } from '@tv2media/logger'
 import { unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
-import * as  Koa from 'koa'
+import * as Koa from 'koa'
 import * as KoaRouter from 'koa-router'
 
 export interface Config {
@@ -35,7 +35,6 @@ export class Connector {
 	private _debug: boolean
 	private koaApp: Koa
 	private koaRouter: KoaRouter
-
 
 	constructor(logger: Logger, config: Config, debug: boolean) {
 		this._logger = logger.tag(this.constructor.name)
@@ -147,23 +146,26 @@ export class Connector {
 		const KOA_PORT: number = 3007
 		const RUNDOWN_EXTERNAL_ID_SUFFIX: string = '_1'
 
-		this.koaRouter.post('/reloadData/:rundownName', async (context, next): Promise<void> => {
-			const rundownName: string = context.params.rundownName
-			if (!this.iNewsFTPHandler.iNewsWatcher) {
-				context.status = 503
-				context.response.body = 'Error: iNewsWatcher is undefined'
-				return
-			}
+		this.koaRouter.post(
+			'/reloadData/:rundownName',
+			async (context, next): Promise<void> => {
+				const rundownName: string = context.params.rundownName
+				if (!this.iNewsFTPHandler.iNewsWatcher) {
+					context.status = 503
+					context.response.body = 'Error: iNewsWatcher is undefined'
+					return
+				}
 
-			try {
-				context.response.body = `Attempting to reload rundown with name ${rundownName}`
-				await this.iNewsFTPHandler.iNewsWatcher.ResyncRundown( rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
-				await next()
-			} catch (error) {
-				context.status = 500
-				context.response.body = `Error: ${error}`
+				try {
+					context.response.body = `Attempting to reload rundown with name ${rundownName}`
+					await this.iNewsFTPHandler.iNewsWatcher.ResyncRundown(rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
+					await next()
+				} catch (error) {
+					context.status = 500
+					context.response.body = `Error: ${error}`
+				}
 			}
-		})
+		)
 
 		this.koaApp.use(this.koaRouter.routes()).use(this.koaRouter.allowedMethods())
 		this.koaApp.listen(KOA_PORT, () => {})

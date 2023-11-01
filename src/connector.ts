@@ -147,7 +147,7 @@ export class Connector {
 		const RUNDOWN_EXTERNAL_ID_SUFFIX: string = '_1'
 
 		this.koaRouter.post(
-			'/reloadData/:rundownName',
+			'/reloadData/rundowns/:rundownName',
 			async (context, next): Promise<void> => {
 				const rundownName: string = context.params.rundownName
 				if (!this.iNewsFTPHandler.iNewsWatcher) {

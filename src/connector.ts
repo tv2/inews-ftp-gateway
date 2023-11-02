@@ -24,6 +24,15 @@ export interface DeviceConfig {
 	deviceId: string
 	deviceToken: string
 }
+
+interface KoaContext {
+	params: Record<string, string>
+	status: number
+	response: {
+		body: string
+	}
+}
+
 export class Connector {
 	private iNewsFTPHandler: InewsFTPHandler
 	private _observers: Array<Observer> = []
@@ -147,8 +156,8 @@ export class Connector {
 		const RUNDOWN_EXTERNAL_ID_SUFFIX: string = '_1'
 
 		this.koaRouter.post(
-			'/reloadData/rundowns/:rundownName',
-			async (context, next): Promise<void> => {
+			'/rundowns/:rundownName/reingest-data',
+			async (context: KoaContext ): Promise<void> => {
 				const rundownName: string = context.params.rundownName
 				if (!this.iNewsFTPHandler.iNewsWatcher) {
 					context.status = 503
@@ -157,9 +166,8 @@ export class Connector {
 				}
 
 				try {
-					context.response.body = `Attempting to reload rundown with name ${rundownName}`
 					await this.iNewsFTPHandler.iNewsWatcher.ResyncRundown(rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
-					await next()
+					context.response.body = `Reingested data for rundown with name ${rundownName}`
 				} catch (error) {
 					context.status = 500
 					context.response.body = `Error: ${error}`

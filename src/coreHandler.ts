@@ -401,6 +401,7 @@ export class CoreHandler {
 		this.logger.info(`Reloading rundown: ${rundownId}`)
 		if (this.iNewsHandler?.iNewsWatcher) {
 			await this.iNewsHandler.iNewsWatcher.ResyncRundown(rundownId)
+				.catch(error => this.logger.data(error).error(`Failed reloading rundown with rundown id '${rundownId}'.`))
 		}
 		return null
 	}

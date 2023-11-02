@@ -282,9 +282,8 @@ export class RundownWatcher extends EventEmitter {
 		const rundown = this.rundowns.get(rundownExternalId)
 
 		if (!playlist || !rundown) {
-			this.logger.error(`Rundown ${rundownExternalId} does not exist in playlist ${playlistExternalId}`)
 			release()
-			return
+			throw new Error(`Rundown ${rundownExternalId} does not exist in playlist ${playlistExternalId}`)
 		}
 
 		// Delete cached data for this rundown

@@ -6,6 +6,8 @@ import { Observer } from '@sofie-automation/server-core-integration'
 import { ensureLogLevel, setLogLevel } from './logger'
 import { ILogger as Logger } from '@tv2media/logger'
 import { unprotectString } from '@sofie-automation/shared-lib/dist/lib/protectedString'
+import * as Koa from 'koa'
+import * as KoaRouter from 'koa-router'
 
 export interface Config {
 	process: ProcessConfig
@@ -22,6 +24,15 @@ export interface DeviceConfig {
 	deviceId: string
 	deviceToken: string
 }
+
+interface KoaContext {
+	params: Record<string, string>
+	status: number
+	response: {
+		body: string
+	}
+}
+
 export class Connector {
 	private iNewsFTPHandler: InewsFTPHandler
 	private _observers: Array<Observer> = []
@@ -31,6 +42,8 @@ export class Connector {
 	private _process: Process
 	private _settings?: INewsDeviceSettings
 	private _debug: boolean
+	private koaApp: Koa
+	private koaRouter: KoaRouter
 
 	constructor(logger: Logger, config: Config, debug: boolean) {
 		this._logger = logger.tag(this.constructor.name)
@@ -40,6 +53,8 @@ export class Connector {
 		this.coreHandler = new CoreHandler(this._logger, this._config.device)
 		this.iNewsFTPHandler = new InewsFTPHandler(this._logger, this.coreHandler)
 		this.coreHandler.iNewsHandler = this.iNewsFTPHandler
+		this.koaApp = new Koa()
+		this.koaRouter = new KoaRouter()
 	}
 
 	async init(): Promise<void> {
@@ -52,6 +67,7 @@ export class Connector {
 			this._logger.info('Core is initialized')
 			this.setupObserver()
 			this._logger.info('Initialization of FTP-monitor done')
+			this.setupReloadDataKoaEndpoint()
 		} catch (err) {
 			this._logger.data(err).error(`Error during initialization:`)
 
@@ -133,5 +149,33 @@ export class Connector {
 		}
 
 		addedChanged(unprotectString(this.coreHandler.core.deviceId))
+	}
+
+	private setupReloadDataKoaEndpoint(): void {
+		const KOA_PORT: number = 3007
+		const RUNDOWN_EXTERNAL_ID_SUFFIX: string = '_1'
+
+		this.koaRouter.post(
+			'/rundowns/:rundownName/reingest',
+			async (context: KoaContext ): Promise<void> => {
+				const rundownName: string = context.params.rundownName
+				if (!this.iNewsFTPHandler.iNewsWatcher) {
+					context.status = 503
+					context.response.body = 'Error: iNewsWatcher is undefined'
+					return
+				}
+
+				try {
+					await this.iNewsFTPHandler.iNewsWatcher.ResyncRundown(rundownName + RUNDOWN_EXTERNAL_ID_SUFFIX)
+					context.response.body = `Reingested data for rundown with name ${rundownName}`
+				} catch (error) {
+					context.status = 500
+					context.response.body = `Error: ${error}`
+				}
+			}
+		)
+
+		this.koaApp.use(this.koaRouter.routes()).use(this.koaRouter.allowedMethods())
+		this.koaApp.listen(KOA_PORT, () => {})
 	}
 }

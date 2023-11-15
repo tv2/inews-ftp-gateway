@@ -5,7 +5,9 @@ import { ReducedRundown, ReducedSegment, UnrankedSegment } from './RundownWatche
 import { literal, parseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromise } from '../helpers'
 import { VERSION } from '../version'
 import { SegmentId } from '../helpers/id'
-import { ILogger as Logger } from '@tv2media/logger'
+import { ILogger } from '@tv2media/logger'
+import { CoreHandler } from "../coreHandler";
+import { StatusCode } from "@sofie-automation/shared-lib/dist/lib/status";
 
 function isFile(f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -15,11 +17,9 @@ export class RundownManager {
 	private _listStories!: (queueName: string) => Promise<Array<INewsDirItem>>
 	private _getStory!: (queueName: string, story: string) => Promise<INewsStory>
 
-	constructor(private _logger?: Logger, private inewsConnection?: INewsClient) {
-		if (this.inewsConnection) {
-			this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
-			this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
-		}
+	constructor(private _logger: ILogger, private inewsConnection: INewsClient, private coreHandler: CoreHandler) {
+		this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
+		this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
 	}
 
 	/**
@@ -57,7 +57,8 @@ export class RundownManager {
 				}
 			})
 		} catch (error) {
-			this._logger?.data(error).error('Error downloading iNews rundown:')
+			this._logger.data(error).error('Error downloading iNews rundown:')
+			await this.coreHandler.setStatus(StatusCode.FATAL, ['Error downloading iNews rundown', (error as Error).message])
 		}
 		return rundown
 	}
@@ -110,15 +111,15 @@ export class RundownManager {
 				locator: (storyFile as INewsFile).locator,
 			}
 		} catch (err) {
-			this._logger?.error(`Error downloading iNews story: ${err}`)
+			this._logger.error(`Error downloading iNews story: ${err}`)
 			return undefined
 		}
 
-		this._logger?.debug('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
+		this._logger.debug('Downloaded : ' + queueName + ' : ' + (storyFile as INewsFile).identifier)
 		/* Add fileId and update modifyDate to ftp reference in storyFile */
 		story.fields.modifyDate = `${storyFile.modified ? storyFile.modified.getTime() / 1000 : 0}`
 
-		this._logger?.debug(`Queue: ${queueName} Story: ${isFile(storyFile) ? storyFile.storyName : storyFile.file}`)
+		this._logger.debug(`Queue: ${queueName} Story: ${isFile(storyFile) ? storyFile.storyName : storyFile.file}`)
 
 		return story
 	}

@@ -157,7 +157,7 @@ export class Connector {
 
 		this.koaRouter.post(
 			'/rundowns/:rundownName/reingest',
-			async (context: KoaContext ): Promise<void> => {
+			async (context: KoaContext): Promise<void> => {
 				const rundownName: string = context.params.rundownName
 				if (!this.iNewsFTPHandler.iNewsWatcher) {
 					context.status = 503

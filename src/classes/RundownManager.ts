@@ -6,8 +6,8 @@ import { literal, parseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromi
 import { VERSION } from '../version'
 import { SegmentId } from '../helpers/id'
 import { ILogger } from '@tv2media/logger'
-import { CoreHandler } from "../coreHandler";
-import { StatusCode } from "@sofie-automation/shared-lib/dist/lib/status";
+import { CoreHandler } from '../coreHandler'
+import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 
 function isFile(f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'

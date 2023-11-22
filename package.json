@@ -1,6 +1,6 @@
 {
   "name": "@tv2media/inews-gateway",
-  "version": "46.3.0-staging",
+  "version": "46.3.1-staging",
   "description": "",
   "main": "dist/index.js",
   "contributors": [

@@ -6,23 +6,20 @@ const segmentId0 = 'segment0'
 const segmentId1 = 'segment1'
 const segmentId2 = 'segment2'
 function makePlaylistAssignments() {
-	return [
-		{
-			rundownId: rundownId,
-			segments: [segmentId0, segmentId1, segmentId2],
-		},
-	]
+	return {
+		rundownId: rundownId,
+		segments: [segmentId0, segmentId1, segmentId2],
+	}
 }
 
 function makeSegmentChangesMap() {
-	const segmentChanges = {
+	return {
 		movedSegments: [],
 		notMovedSegments: [segmentId0, segmentId1, segmentId2],
 		insertedSegments: [],
 		deletedSegments: [],
 		changedSegments: [],
 	}
-	return new Map([[rundownId, segmentChanges]])
 }
 
 describe('Assign Ranks To Segments', () => {
@@ -41,7 +38,7 @@ describe('Assign Ranks To Segments', () => {
 			new Map([[rundownId, Date.now() - 60 * 1000]]) // 1 minute ago
 		)
 		expect(playlistChanges.length).toEqual(0)
-		expect(newRanks[0].assignedRanks).toEqual(
+		expect(newRanks.assignedRanks).toEqual(
 			new Map([
 				[segmentId0, 1000],
 				[segmentId1, 1001.1],
@@ -64,7 +61,7 @@ describe('Assign Ranks To Segments', () => {
 			new Map([[rundownId, Date.now() - 60 * 1000]]) // 1 minute ago
 		)
 		expect(playlistChanges.length).toEqual(2)
-		expect(newRanks[0].assignedRanks).toEqual(
+		expect(newRanks.assignedRanks).toEqual(
 			new Map([
 				[segmentId0, 1000],
 				[segmentId1, 2000],
@@ -87,7 +84,7 @@ describe('Assign Ranks To Segments', () => {
 			new Map([[rundownId, Date.now() - 61 * 60 * 1000]]) // 61 minutes ago
 		)
 		expect(playlistChanges.length).toEqual(2)
-		expect(newRanks[0].assignedRanks).toEqual(
+		expect(newRanks.assignedRanks).toEqual(
 			new Map([
 				[segmentId0, 1000],
 				[segmentId1, 2000],

@@ -9,7 +9,7 @@ import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { CoreHandler } from '../coreHandler'
 import { SegmentRankings, SegmentRankingsInner } from './ParsedINewsToSegments'
 import { IngestPlaylist, IngestRundown, IngestSegment } from '@sofie-automation/blueprints-integration'
-import { ResolvedPlaylist, ResolveRundownIntoPlaylist } from '../helpers/ResolveRundownIntoPlaylist'
+import { ResolvedPlaylistRundown, ResolveRundownIntoPlaylist } from '../helpers/ResolveRundownIntoPlaylist'
 import { DiffPlaylist } from '../helpers/DiffPlaylist'
 import { PlaylistId, RundownId, SegmentId } from '../helpers/id'
 import { Mutex } from 'async-mutex'
@@ -122,10 +122,9 @@ export type ReducedRundown = Pick<INewsRundown, 'externalId' | 'name' | 'gateway
 export type ReducedSegment = Pick<ISegment, 'externalId' | 'modified' | 'rank' | 'name' | 'locator'>
 export type UnrankedSegment = Omit<ISegment, 'rank' | 'float' | 'untimed'>
 
-export type PlaylistMap = Map<PlaylistId, { externalId: string; rundowns: RundownId[] }>
 export type RundownMap = Map<RundownId, ReducedRundown>
 
-export type PlaylistCache = Map<PlaylistId, RundownId[]>
+export type PlaylistCache = Map<PlaylistId, RundownId>
 export type RundownCache = Map<RundownId, SegmentId[]>
 export type SegmentCache = Map<SegmentId, ReducedSegment>
 
@@ -176,15 +175,15 @@ export class RundownWatcher extends EventEmitter {
 	private lastForcedRankRecalculation: Map<RundownId, number> = new Map()
 
 	private cachedINewsData: Map<SegmentId, UnrankedSegment> = new Map()
-	private cachedPlaylistAssignments: Map<PlaylistId, ResolvedPlaylist> = new Map()
-	private cachedAssignedRundowns: Map<PlaylistId, Array<INewsRundown>> = new Map()
+	private cachedPlaylistAssignments: Map<PlaylistId, ResolvedPlaylistRundown> = new Map()
+	private cachedAssignedRundowns: Map<PlaylistId, INewsRundown> = new Map()
 	private skipCacheForRundown: Set<RundownId> = new Set()
 
 	public playlists: PlaylistCache = new Map()
 	public rundowns: RundownCache = new Map()
 	public segments: SegmentCache = new Map()
 
-	private processingRundown: Mutex = new Mutex()
+	private processingRundownMutex: Mutex = new Mutex()
 
 	/**
 	 * A Rundown watcher which will poll iNews FTP server for changes and emit events
@@ -206,7 +205,7 @@ export class RundownWatcher extends EventEmitter {
 		super()
 		this._logger = this.logger.tag(this.constructor.name)
 
-		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
+		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection, this.coreHandler)
 
 		if (!delayStart) {
 			this.startWatcher()
@@ -277,15 +276,14 @@ export class RundownWatcher extends EventEmitter {
 	}
 
 	public async ResyncRundown(rundownExternalId: string) {
-		const release = await this.processingRundown.acquire()
+		const release = await this.processingRundownMutex.acquire()
 		const playlistExternalId = rundownExternalId.replace(/_\d+$/, '')
 		const playlist = this.playlists.get(playlistExternalId)
 		const rundown = this.rundowns.get(rundownExternalId)
 
 		if (!playlist || !rundown) {
-			this.logger.error(`Rundown ${rundownExternalId} does not exist in playlist ${playlistExternalId}`)
 			release()
-			return
+			throw new Error(`Rundown ${rundownExternalId} does not exist in playlist ${playlistExternalId}`)
 		}
 
 		// Delete cached data for this rundown
@@ -294,25 +292,11 @@ export class RundownWatcher extends EventEmitter {
 			this.cachedINewsData.delete(segmentId)
 		}
 		this.rundowns.delete(rundownExternalId)
-		this.playlists.set(
-			playlistExternalId,
-			playlist.filter((r) => r !== rundownExternalId)
-		)
+		this.playlists.delete(playlistExternalId)
 
-		const cachedPlaylist = this.cachedPlaylistAssignments.get(playlistExternalId)
-		if (cachedPlaylist) {
-			this.cachedPlaylistAssignments.set(
-				playlistExternalId,
-				cachedPlaylist.filter((p) => p.rundownId !== rundownExternalId)
-			)
-		}
-		const cachedAssignedRundown = this.cachedAssignedRundowns.get(playlistExternalId)
-		if (cachedAssignedRundown) {
-			this.cachedAssignedRundowns.set(
-				playlistExternalId,
-				cachedAssignedRundown.filter((p) => p.externalId !== rundownExternalId)
-			)
-		}
+		this.cachedPlaylistAssignments.delete(playlistExternalId)
+		this.cachedAssignedRundowns.delete(playlistExternalId)
+
 		this.lastForcedRankRecalculation.delete(rundownExternalId)
 		this.skipCacheForRundown.add(rundownExternalId)
 		release()
@@ -327,7 +311,7 @@ export class RundownWatcher extends EventEmitter {
 	async checkINewsRundownById(rundownId: string): Promise<ReducedRundown> {
 		const rundown = await this.rundownManager.downloadRundown(rundownId)
 		if (rundown.gatewayVersion === this.gatewayVersion) {
-			const release = await this.processingRundown.acquire()
+			const release = await this.processingRundownMutex.acquire()
 			try {
 				await this.processUpdatedRundown(rundown.externalId, rundown)
 			} catch (e) {
@@ -349,13 +333,6 @@ export class RundownWatcher extends EventEmitter {
 		const cachedPlaylist = this.playlists.get(playlistId)
 
 		if (cachedPlaylist) {
-			const cachedRundowns: Array<{ externalId: RundownId; segmentIds: SegmentId[] }> = []
-			for (const rundownId of cachedPlaylist) {
-				let cachedRundown = this.rundowns.get(rundownId)
-				if (!cachedRundown) continue
-				cachedRundowns.push({ externalId: rundownId, segmentIds: cachedRundown })
-			}
-
 			// Fetch any segments that may have changed
 			for (const segment of playlist.segments) {
 				const cachedSegment = this.segments.get(segment.externalId)
@@ -393,131 +370,105 @@ export class RundownWatcher extends EventEmitter {
 					`Could not find iNews data for segment ${s.externalId} in rundown ${playlistId}. Segment will appear out of order.`
 				)
 			} else {
+				if (cachedData.iNewsStory.meta.float) {
+					return
+				}
 				segmentsToResolve.push(cachedData)
 			}
 		})
 
-		const { resolvedPlaylist: playlistAssignments, untimedSegments } = ResolveRundownIntoPlaylist(
-			playlistId,
-			segmentsToResolve
-		)
-		if (!playlistAssignments.length) {
-			playlistAssignments.push({
-				rundownId: `${playlistId}_1`,
-				segments: [],
-			})
-		}
+		const { resolvedRundown, untimedSegments } = ResolveRundownIntoPlaylist(playlistId, segmentsToResolve)
 
 		// Fetch ingestDataCache for segments that have been modified
-		const ingestDataPromises: Array<Promise<Map<SegmentId, RundownSegment>>> = []
+		let ingestDataPromise: Promise<Map<SegmentId, RundownSegment>> | undefined = undefined
 
-		for (const rundown of playlistAssignments) {
-			if (this.skipCacheForRundown.has(rundown.rundownId)) {
-				this.skipCacheForRundown.delete(rundown.rundownId)
-				continue
-			}
-
+		if (this.skipCacheForRundown.has(resolvedRundown.rundownId)) {
+			this.skipCacheForRundown.delete(resolvedRundown.rundownId)
+		} else {
 			const segmentsToFetch: SegmentId[] = []
-			for (const segmentId of rundown.segments) {
+			for (const segmentId of resolvedRundown.segments) {
 				if (uncachedINewsData.has(segmentId)) {
 					segmentsToFetch.push(segmentId)
 				}
 			}
 
-			ingestDataPromises.push(this.coreHandler.GetSegmentsCacheById(rundown.rundownId, segmentsToFetch))
+			ingestDataPromise = this.coreHandler.GetSegmentsCacheById(resolvedRundown.rundownId, segmentsToFetch)
 		}
 
-		const ingestCacheList = await Promise.all(ingestDataPromises)
-
-		const ingestCacheData: Map<SegmentId, RundownSegment> = new Map()
-
-		for (let cache of ingestCacheList) {
-			for (let [segmentId, data] of cache) {
-				ingestCacheData.set(segmentId, data)
-			}
-		}
+		const ingestCacheData: Map<SegmentId, RundownSegment> = (await ingestDataPromise) ?? new Map()
 
 		const assignedRundowns: INewsRundown[] = []
 
-		for (const playlistRundown of playlistAssignments) {
-			const rundownSegments: RundownSegment[] = []
+		const rundownSegments: RundownSegment[] = []
 
-			for (const segmentId of playlistRundown.segments) {
-				const iNewsData = this.cachedINewsData.get(segmentId)
+		for (const segmentId of resolvedRundown.segments) {
+			const iNewsData = this.cachedINewsData.get(segmentId)
 
-				if (!iNewsData) {
-					this.logger.error(
-						`Failed to assign segment ${segmentId} to rundown ${playlistRundown.rundownId}. Could not find cached iNews data`
-					)
-					continue
-				}
-
-				const rundownSegment = new RundownSegment(
-					playlistRundown.rundownId,
-					iNewsData.iNewsStory,
-					iNewsData.modified,
-					iNewsData.locator,
-					segmentId,
-					0,
-					iNewsData?.name,
-					untimedSegments.has(segmentId)
+			if (!iNewsData) {
+				this.logger.error(
+					`Failed to assign segment ${segmentId} to rundown ${resolvedRundown.rundownId}. Could not find cached iNews data`
 				)
-				rundownSegments.push(rundownSegment)
+				continue
 			}
 
-			const iNewsRundown: INewsRundown = new INewsRundown(
-				playlistRundown.rundownId,
-				playlistRundown.rundownId,
-				this.gatewayVersion,
-				rundownSegments,
-				playlistRundown.payload
+			const rundownSegment = new RundownSegment(
+				resolvedRundown.rundownId,
+				iNewsData.iNewsStory,
+				iNewsData.modified,
+				iNewsData.locator,
+				segmentId,
+				0,
+				iNewsData?.name,
+				untimedSegments.has(segmentId)
 			)
-
-			assignedRundowns.push(iNewsRundown)
+			rundownSegments.push(rundownSegment)
 		}
 
-		const { changes, segmentChanges } = DiffPlaylist(
-			assignedRundowns,
-			this.cachedAssignedRundowns.get(playlistId) ?? []
+		const iNewsRundown: INewsRundown = new INewsRundown(
+			resolvedRundown.rundownId,
+			resolvedRundown.rundownId,
+			this.gatewayVersion,
+			rundownSegments,
+			resolvedRundown.payload
 		)
 
-		this.cachedPlaylistAssignments.set(playlistId, playlistAssignments)
-		this.cachedAssignedRundowns.set(playlistId, assignedRundowns)
+		assignedRundowns.push(iNewsRundown)
 
-		let segmentRanks = AssignRanksToSegments(
-			playlistAssignments,
+		const { playlistChanges: changes, segmentChanges } = DiffPlaylist(
+			iNewsRundown,
+			this.cachedAssignedRundowns.get(playlistId)
+		)
+
+		this.cachedPlaylistAssignments.set(playlistId, resolvedRundown)
+		this.cachedAssignedRundowns.set(playlistId, iNewsRundown)
+
+		let { assignedRanks, recalculatedAsIntegers } = AssignRanksToSegments(
+			resolvedRundown,
 			changes,
 			segmentChanges,
 			this.previousRanks,
 			this.lastForcedRankRecalculation
 		)
-		const assignedRanks: Map<SegmentId, number> = new Map()
-		for (const rundown of segmentRanks) {
-			if (rundown.recalculatedAsIntegers) {
-				this.lastForcedRankRecalculation.set(rundown.rundownId, Date.now())
-			}
-
-			for (const [segmentId, rank] of rundown.assignedRanks) {
-				assignedRanks.set(segmentId, rank)
-			}
-			this.updatePreviousRanks(rundown.rundownId, rundown.assignedRanks)
+		if (recalculatedAsIntegers) {
+			this.lastForcedRankRecalculation.set(resolvedRundown.rundownId, Date.now())
 		}
+
+		for (const [segmentId, rank] of assignedRanks) {
+			assignedRanks.set(segmentId, rank)
+		}
+		this.updatePreviousRanks(resolvedRundown.rundownId, assignedRanks)
 
 		for (const segment of playlist.segments) {
 			this.segments.set(segment.externalId, segment)
 		}
-		for (const rundown of playlistAssignments) {
-			this.rundowns.set(rundown.rundownId, rundown.segments)
-		}
-		this.playlists.set(
-			playlistId,
-			playlistAssignments.map((r) => r.rundownId)
-		)
+		this.rundowns.set(resolvedRundown.rundownId, resolvedRundown.segments)
+
+		this.playlists.set(playlistId, resolvedRundown.rundownId)
 
 		const coreCalls = GenerateCoreCalls(
 			playlistId,
 			changes,
-			playlistAssignments,
+			resolvedRundown,
 			assignedRanks,
 			this.cachedINewsData,
 			ingestCacheData,

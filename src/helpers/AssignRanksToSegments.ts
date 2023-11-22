@@ -1,79 +1,59 @@
 import { literal } from '../helpers'
 import { ParsedINewsIntoSegments, SegmentRankings, SegmentRankingsInner } from '../classes/ParsedINewsToSegments'
 import { logger } from '../logger'
-import { PlaylistChange, PlaylistChangeSegmentMoved, PlaylistChangeType, SegmentChangesMap } from './DiffPlaylist'
+import { PlaylistChange, PlaylistChangeSegmentMoved, PlaylistChangeType, SegmentChanges } from './DiffPlaylist'
 import { RundownId, SegmentId } from './id'
-import { ResolvedPlaylist, ResolvedPlaylistRundown } from './ResolveRundownIntoPlaylist'
+import { ResolvedPlaylistRundown } from './ResolveRundownIntoPlaylist'
 
 const RECALCULATE_RANKS_CHANGE_THRESHOLD = 50
 const MAX_TIME_BEFORE_RECALCULATE_RANKS = 60 * 60 * 1000 // One hour
 const MINIMUM_ALLOWED_RANK = Math.pow(1 / 2, 30)
 
 export function AssignRanksToSegments(
-	playlistAssignments: ResolvedPlaylist,
+	rundown: ResolvedPlaylistRundown,
 	changes: PlaylistChange[],
-	segmentChanges: SegmentChangesMap,
+	segmentChanges: SegmentChanges,
 	previousRanks: SegmentRankings,
 	lastRankRecalculation: Map<RundownId, number>
-): Array<{ rundownId: RundownId; assignedRanks: Map<SegmentId, number>; recalculatedAsIntegers: boolean }> {
-	const ranks: Array<{
-		rundownId: RundownId
-		assignedRanks: Map<SegmentId, number>
-		recalculatedAsIntegers: boolean
-	}> = []
+): { assignedRanks: Map<SegmentId, number>; recalculatedAsIntegers: boolean } {
+	let assignedRanks: Map<SegmentId, number> = new Map()
 
-	for (let rundown of playlistAssignments) {
-		let assignedRanks: Map<SegmentId, number> = new Map()
-		let recalculated: boolean = false
-
-		const changesToSegments = segmentChanges.get(rundown.rundownId)
-
-		if (!changesToSegments) {
-			// Shouldn't be possible.
-			logger.error(`Could not find segment changes for rundown ${rundown.rundownId}.`)
-			continue
-		}
-
-		if (changesToSegments.movedSegments.length) {
-			logger.debug(`Moved Segments: ${Array.from(changesToSegments.movedSegments.values()).join(',')}`)
-		}
-
-		logger.debug(`Getting ranks for ${rundown.rundownId}`)
-		let { segmentRanks, recalculatedAsIntegers } = ParsedINewsIntoSegments.GetRanks(
-			rundown.rundownId,
-			rundown.segments,
-			previousRanks,
-			changesToSegments,
-			logger
-		)
-
-		// Check if we should recalculate ranks to integer values from scratch.
-		if (!recalculatedAsIntegers && shouldRecalculateRanks(changes, lastRankRecalculation, rundown, segmentRanks)) {
-			logger.debug(`Recalculating ranks as integers for ${rundown.rundownId}`)
-			segmentRanks = ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundown.segments).segmentRanks
-
-			const rundownPreviousRanks = previousRanks.get(rundown.rundownId)
-
-			if (rundownPreviousRanks) {
-				generateMoveChanges(segmentRanks, rundownPreviousRanks, changes, rundown)
-			}
-
-			recalculated = true
-		}
-
-		// Store ranks
-		for (let [segmentId, rank] of segmentRanks) {
-			assignedRanks.set(segmentId, rank)
-		}
-
-		ranks.push({
-			rundownId: rundown.rundownId,
-			assignedRanks,
-			recalculatedAsIntegers: recalculated,
-		})
+	if (segmentChanges.movedSegments.length) {
+		logger.debug(`Moved Segments: ${Array.from(segmentChanges.movedSegments.values()).join(',')}`)
 	}
 
-	return ranks
+	logger.debug(`Getting ranks for ${rundown.rundownId}`)
+	let { segmentRanks, recalculatedAsIntegers } = ParsedINewsIntoSegments.GetRanks(
+		rundown.rundownId,
+		rundown.segments,
+		previousRanks,
+		segmentChanges,
+		logger
+	)
+
+	// Check if we should recalculate ranks to integer values from scratch.
+	if (!recalculatedAsIntegers && shouldRecalculateRanks(changes, lastRankRecalculation, rundown, segmentRanks)) {
+		logger.debug(`Recalculating ranks as integers for ${rundown.rundownId}`)
+		segmentRanks = ParsedINewsIntoSegments.RecalculateRanksAsIntegerValues(rundown.segments).segmentRanks
+
+		const rundownPreviousRanks = previousRanks.get(rundown.rundownId)
+
+		if (rundownPreviousRanks) {
+			generateMoveChanges(segmentRanks, rundownPreviousRanks, changes, rundown)
+		}
+
+		recalculatedAsIntegers = true
+	}
+
+	// Store ranks
+	for (let [segmentId, rank] of segmentRanks) {
+		assignedRanks.set(segmentId, rank)
+	}
+
+	return {
+		assignedRanks,
+		recalculatedAsIntegers,
+	}
 }
 
 function shouldRecalculateRanks(

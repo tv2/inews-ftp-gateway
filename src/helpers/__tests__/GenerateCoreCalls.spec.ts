@@ -1,7 +1,7 @@
 import { PlaylistChange, PlaylistChangeType } from '../DiffPlaylist'
 import { CoreCall, CoreCallType, GenerateCoreCalls } from '../GenerateCoreCalls'
 import { PlaylistId, SegmentId } from '../id'
-import { ResolvedPlaylist } from '../ResolveRundownIntoPlaylist'
+import { ResolvedPlaylistRundown } from '../ResolveRundownIntoPlaylist'
 import { UnrankedSegment } from '../../classes/RundownWatcher'
 import { literal } from '../../helpers'
 import { INewsFields, INewsStory } from 'inews'
@@ -22,12 +22,10 @@ describe('GenerateCoreCalls', () => {
 			},
 		]
 		const playlistId: PlaylistId = 'playlistId'
-		const playlistAssignments: ResolvedPlaylist = [
-			{
-				rundownId: rundownExternalId,
-				segments: [],
-			},
-		]
+		const resolvedRundown: ResolvedPlaylistRundown = {
+			rundownId: rundownExternalId,
+			segments: [],
+		}
 
 		const assignedRanks: Map<SegmentId, number> = new Map()
 		assignedRanks.set(segmentExternalId, 1)
@@ -45,7 +43,7 @@ describe('GenerateCoreCalls', () => {
 		const result: CoreCall[] = GenerateCoreCalls(
 			playlistId,
 			changes,
-			playlistAssignments,
+			resolvedRundown,
 			assignedRanks,
 			iNewsDataCache,
 			new Map(),

@@ -396,22 +396,22 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-4.6.0.tgz#3c7c9c46e678feefe7a2e5bb609d3dbd665ffb3f"
   integrity sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==
 
-"@sofie-automation/blueprints-integration@npm:@tv2media/blueprints-integration@46.3.0-staging":
-  version "46.3.0-staging"
-  resolved "https://registry.yarnpkg.com/@tv2media/blueprints-integration/-/blueprints-integration-46.3.0-staging.tgz#2aaf96cae9876e051016fb5c6f386d35fbfc1e99"
-  integrity sha512-VC+/iM8QKq95rGMsb4kQU3MVPnt9R3wxgll/Ni5KtWeZ+qgfJPz4d6Cqj16ADYiHppUyBehEyU27Z8euMG1f6Q==
+"@sofie-automation/blueprints-integration@npm:@tv2media/blueprints-integration@46.3.0":
+  version "46.3.0"
+  resolved "https://registry.yarnpkg.com/@tv2media/blueprints-integration/-/blueprints-integration-46.3.0.tgz#19165c15a33769361dd0d2c81acdf9f3532bb49a"
+  integrity sha512-RQ98ExTQIeZTD88Ul6ycXDNshny2MaCOfputu2mKRs8GbV6dxEs8PkZDCX5NN+1awAY4ywmm5biTORqYWA3QSw==
   dependencies:
-    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.3.0-staging"
+    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.3.0"
     timeline-state-resolver-types "npm:@tv2media/timeline-state-resolver-types@3.5.1"
     tslib "^2.4.0"
     type-fest "^2.19.0"
 
-"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@46.3.0-staging":
-  version "46.3.0-staging"
-  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-46.3.0-staging.tgz#60470710a502c3df97fec6d57bf0a4a75418685c"
-  integrity sha512-PbzanyozU8SKm4k4LA03Ojpb0Vk54FsIy7T1Ah1JwigTyN5BeN8/wGwElga42FrOtLArQujtem9VObLhOs/4Hw==
+"@sofie-automation/server-core-integration@npm:@tv2media/server-core-integration@46.3.0":
+  version "46.3.0"
+  resolved "https://registry.yarnpkg.com/@tv2media/server-core-integration/-/server-core-integration-46.3.0.tgz#9f54205de87868afeb413778c9f4cc96b4ca9f42"
+  integrity sha512-iZJpGofPVM/f4BJ/ZPG3l79oJseHgfzGkmmI+UwNpB4YwXNwE93IQlzWcbHi1mrcr6jVuS7CYbzTdcKJLFq1Mw==
   dependencies:
-    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.3.0-staging"
+    "@sofie-automation/shared-lib" "npm:@tv2media/shared-lib@46.3.0"
     ejson "^2.2.3"
     eventemitter3 "^4.0.7"
     faye-websocket "^0.11.4"
@@ -419,10 +419,10 @@
     tslib "^2.4.0"
     underscore "^1.13.4"
 
-"@sofie-automation/shared-lib@npm:@tv2media/shared-lib@46.3.0-staging":
-  version "46.3.0-staging"
-  resolved "https://registry.yarnpkg.com/@tv2media/shared-lib/-/shared-lib-46.3.0-staging.tgz#405ddd324e7f66f472635258915eb026054b8406"
-  integrity sha512-LYPJEXNO4NNiCxB/PsqW1BedtLjvBFntIUfVKwfuizkZJkYnJ8JZQdrUcxgyCJg5/SYeSccUrhorI4YKDqcx8w==
+"@sofie-automation/shared-lib@npm:@tv2media/shared-lib@46.3.0":
+  version "46.3.0"
+  resolved "https://registry.yarnpkg.com/@tv2media/shared-lib/-/shared-lib-46.3.0.tgz#06e4ccceb70658a43e1b4a61abc7ef6e87f40d0d"
+  integrity sha512-gZMNuTP4SEgOpRX4oOqOq6FYANEu7xQaukN4KQ2V8JCwZEwIzvsdcb5yLmsxM/kWlT0zlQeS3EpR0h+Q07BkSw==
   dependencies:
     tslib "^2.4.0"
     type-fest "^2.19.0"

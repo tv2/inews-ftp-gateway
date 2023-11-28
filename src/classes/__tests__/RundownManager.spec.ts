@@ -1,5 +1,6 @@
 import { RundownManager } from '../RundownManager'
 import { INewsStoryGW } from '../datastructures/Segment'
+import { CoreHandler } from '../../coreHandler'
 
 const LAYOUT: string = 'n'
 
@@ -7,7 +8,7 @@ let testee: RundownManager
 
 describe('RundownManager', () => {
 	beforeEach(() => {
-		testee = new RundownManager()
+		testee = new RundownManager(({} as unknown) as CoreHandler)
 	})
 
 	describe('generateCuesFromLayoutField', () => {

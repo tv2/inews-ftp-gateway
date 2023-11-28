@@ -6,6 +6,9 @@ import { literal, parseModifiedDateFromInewsStoryWithFallbackToNow, ReflectPromi
 import { VERSION } from '../version'
 import { SegmentId } from '../helpers/id'
 import { ILogger as Logger } from '@tv2media/logger'
+import { CoreHandler } from '../coreHandler'
+import { PeripheralDeviceAPI } from '@sofie-automation/server-core-integration'
+import StatusCode = PeripheralDeviceAPI.StatusCode
 
 function isFile(f: INewsDirItem): f is INewsFile {
 	return f.filetype === 'file'
@@ -15,7 +18,7 @@ export class RundownManager {
 	private _listStories!: (queueName: string) => Promise<Array<INewsDirItem>>
 	private _getStory!: (queueName: string, story: string) => Promise<INewsStory>
 
-	constructor(private _logger?: Logger, private inewsConnection?: INewsClient) {
+	constructor(private coreHandler: CoreHandler, private _logger?: Logger, private inewsConnection?: INewsClient) {
 		if (this.inewsConnection) {
 			this._listStories = promisify(this.inewsConnection.list).bind(this.inewsConnection)
 			this._getStory = promisify(this.inewsConnection.story).bind(this.inewsConnection)
@@ -58,6 +61,7 @@ export class RundownManager {
 			})
 		} catch (error) {
 			this._logger?.data(error).error('Error downloading iNews rundown:')
+			await this.coreHandler.setStatus(StatusCode.FATAL, ['Error downloading iNews rundown', (error as Error).message])
 		}
 		return rundown
 	}

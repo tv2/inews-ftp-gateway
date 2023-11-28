@@ -206,7 +206,7 @@ export class RundownWatcher extends EventEmitter {
 		super()
 		this._logger = this.logger.tag(this.constructor.name)
 
-		this.rundownManager = new RundownManager(this._logger, this.iNewsConnection)
+		this.rundownManager = new RundownManager(this.coreHandler, this._logger, this.iNewsConnection)
 
 		if (!delayStart) {
 			this.startWatcher()

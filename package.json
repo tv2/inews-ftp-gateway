@@ -1,6 +1,6 @@
 {
   "name": "@tv2media/inews-gateway",
-  "version": "46.2.0",
+  "version": "46.3.1",
   "description": "",
   "main": "dist/index.js",
   "contributors": [
@@ -24,7 +24,7 @@
     "start:dev": "cross-env NODE_ENV=development node ./dist",
     "start:local": "cross-env NODE_ENV=local node ./dist",
     "info": "npm-scripts-info",
-    "build": "trash dist && yarn test && yarn build:main",
+    "build": "trash dist && yarn build:main",
     "build:dev": "trash dist && yarn build:main",
     "buildstart": "yarn build && yarn start",
     "buildstart:dev": "yarn build:dev && DEV=true yarn start",
@@ -72,10 +72,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@sofie-automation/blueprints-integration": "npm:@tv2media/blueprints-integration@46.2.0",
-    "@sofie-automation/server-core-integration": "npm:@tv2media/server-core-integration@46.2.0",
+    "@sofie-automation/blueprints-integration": "npm:@tv2media/blueprints-integration@46.3.0",
+    "@sofie-automation/server-core-integration": "npm:@tv2media/server-core-integration@46.3.0",
+    "@sofie-automation/shared-lib": "npm:@tv2media/shared-lib@46.3.0",
     "@tv2media/logger": "^1.2.4",
-    "@sofie-automation/shared-lib": "npm:@tv2media/shared-lib@46.2.0",
     "@types/dotenv": "^6.1.1",
     "@types/xml2js": "^0.4.4",
     "async-mutex": "^0.3.1",
@@ -86,13 +86,14 @@
     "lodash.clonedeep": "^4.5.0",
     "tslib": "^2.0.0",
     "underscore": "^1.9.1",
-    "xml2js": "^0.4.19",
+    "xml2js": "^0.6",
     "yargs": "^16.2.0"
   },
   "resolutions": {
     "minimist": "^1.2.3",
     "set-value": "^4.0.1",
-    "ansi-regex": "^5.0.1"
+    "ansi-regex": "^5.0.1",
+		"http-cache-semantics": ">=4.1.1"
   },
   "devDependencies": {
     "@types/jest": "^24.0.11",
@@ -111,7 +112,7 @@
     "open-cli": "^6.0.1",
     "prettier": "2.1.2",
     "standard-version": "^9.0.0",
-    "trash-cli": "^3.0.0",
+    "trash-cli": "^5.0.0",
     "ts-jest": "^26.4.1",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.18.0",

@@ -47,10 +47,11 @@
     "changelog": "standard-version",
     "inspect": "node --inspect dist/index.js",
     "release": "yarn reset && yarn test && yarn changelog",
+	"clean": "trash dist",
     "reset": "git clean -dfx && git reset --hard && yarn",
     "ci": "yarn test",
     "validate:dependencies": "yarn audit --groups dependencies",
-    "license-validate": "node-license-validator -p -d --allow-licenses MIT MIT/X11 BSD BSD-3-Clause BSD-2-Clause ISC Apache Apache-2.0 Unlicense --allow-packages cycle",
+    "validate": "node-license-validator -p -d --allow-licenses MIT MIT/X11 BSD BSD-3-Clause BSD-2-Clause ISC Apache Apache-2.0 Unlicense --allow-packages cycle",
     "unlinkall": "yarn unlink @sofie-automation/server-core-integration && yarn --check-files"
   },
   "scripts-info": {

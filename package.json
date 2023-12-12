@@ -37,6 +37,7 @@
     "test": "yarn lint && yarn unit",
     "test:integration": "yarn lint && jest --config=jest-integration.config.js",
     "watch": "yarn build && cross-env NODE_ENV=development node --watch ./dist ",
+    "watch-test": "jest --watch",
     "cov": "jest; open-cli coverage/lcov-report/index.html",
     "cov-open": "open-cli coverage/lcov-report/index.html",
     "send-coverage": "jest && codecov",

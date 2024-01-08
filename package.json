@@ -36,7 +36,7 @@
     "unit": "jest --coverage",
     "test": "yarn lint && yarn unit",
     "test:integration": "yarn lint && jest --config=jest-integration.config.js",
-    "watch": "yarn build && cross-env NODE_ENV=development node --watch ./dist ",
+    "watch": "NODE_ENV=development npx nodemon .",
     "test-watch": "jest --watch",
     "cov": "jest; open-cli coverage/lcov-report/index.html",
     "cov-open": "open-cli coverage/lcov-report/index.html",
@@ -118,12 +118,14 @@
     "jest-haste-map": "^24.5.0",
     "jest-resolve": "^24.5.0",
     "license-checker": "^25.0.1",
+    "nodemon": "^3.0.2",
     "npm-scripts-info": "^0.3.9",
     "open-cli": "^6.0.1",
     "prettier": "2.1.2",
     "standard-version": "^9.0.0",
     "trash-cli": "^5.0.0",
     "ts-jest": "^26.4.1",
+    "ts-node": "^10.9.2",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.1.0",
@@ -134,5 +136,11 @@
   "standard-version": {
     "message": "chore(release): %s [skip ci]",
     "tagPrefix": ""
-  }
+  },
+	"nodemonConfig": {
+		"execMap": {
+			"ts": "ts-node"
+		},
+		"ext": "ts,js,mjs,cjs,json"
+	}
 }

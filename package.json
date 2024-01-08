@@ -137,10 +137,10 @@
     "message": "chore(release): %s [skip ci]",
     "tagPrefix": ""
   },
-	"nodemonConfig": {
-		"execMap": {
-			"ts": "ts-node"
-		},
-		"ext": "ts,js,mjs,cjs,json"
-	}
+  "nodemonConfig": {
+    "execMap": {
+      "ts": "ts-node"
+    },
+    "ext": "ts,js,mjs,cjs,json"
+  }
 }

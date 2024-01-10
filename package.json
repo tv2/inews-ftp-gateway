@@ -52,9 +52,9 @@
     "reset": "git clean -dfx && git reset --hard && yarn",
     "ci": "yarn test",
     "validate:dependencies": "yarn audit --groups dependencies",
-    "validate": "yarn audit --level moderate --groups dependencies --recursive",
-    "validate-license": "license-checker --production --onlyAllow MIT;MIT/X11;BSD;BSD-3-Clause;BSD-2-Clause;ISC;Apache;Apache-2.0;Unlicense",
-    "validate-summary": "license-checker --summary --production --onlyAllow MIT;MIT/X11;BSD;BSD-3-Clause;BSD-2-Clause;ISC;Apache;Apache-2.0;Unlicense",
+    "validate": "yarn validate-dependencies && yarn validate-licenses",
+    "validate-dependencies": "yarn audit --groups dependencies",
+    "validate-licenses": "license-checker --production --onlyAllow MIT;MIT/X11;BSD;BSD-3-Clause;BSD-2-Clause;ISC;Apache;Apache-2.0;Unlicense",
     "unlinkall": "yarn unlink @sofie-automation/server-core-integration && yarn --check-files"
   },
   "scripts-info": {

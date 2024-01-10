@@ -36,7 +36,7 @@
     "unit": "jest --coverage",
     "test": "yarn lint && yarn unit",
     "test:integration": "yarn lint && jest --config=jest-integration.config.js",
-    "watch": "NODE_ENV=development npx nodemon .",
+    "watch": "cross-env NODE_ENV=development nodemon .",
     "test-watch": "jest --watch",
     "cov": "jest; open-cli coverage/lcov-report/index.html",
     "cov-open": "open-cli coverage/lcov-report/index.html",

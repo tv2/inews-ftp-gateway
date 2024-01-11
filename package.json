@@ -73,9 +73,9 @@
     "reset": "Delete all untracked files and reset the repo to the last commit",
     "release": "Clean, build, test, publish docs, and prepare release (a one-step publish process)",
     "ci": "Test script for running by the CI (CircleCI)",
-    "validate:dependencies": "Scan dependencies for vulnerabilities and check licenses",
-    "validate": "Test if license of any package in use complies to be one of MIT;MIT/X11;BSD;BSD-3-Clause;BSD-2-Clause;ISC;Apache;Apache-2.0;Unlicense",
-    "validate-summary": "Performs license validation and outputs summary of the license usage."
+    "validate": "Performs license validation and scan dependencies for vulnerabilities",
+    "validate-dependencies": "Scan dependencies for vulnerabilities and check licenses",
+    "validate-licenses": "Test if license of any package in use complies to be one of MIT;MIT/X11;BSD;BSD-3-Clause;BSD-2-Clause;ISC;Apache;Apache-2.0;Unlicense"
   },
   "license": "MIT",
   "dependencies": {

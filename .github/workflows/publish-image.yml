@@ -18,11 +18,6 @@ jobs:
       - name: 'Retrieve repository files'
         uses: 'actions/checkout@v4'
 
-      - name: 'Setup Node environment'
-        uses: 'actions/setup-node@v4'
-        with:
-          node-version: '16'
-
       - name: 'Log in to Docker Hub'
         uses: 'docker/login-action@v3'
         with:

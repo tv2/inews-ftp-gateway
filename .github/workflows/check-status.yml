@@ -1,0 +1,44 @@
+name: 'Check status'
+
+run-name: 'Test, build, lint and validate'
+
+on:
+  pull_request:
+
+env:
+  node-version: '16'
+  node-package-manager: 'yarn'
+
+jobs:
+  test:
+    runs-on: 'ubuntu-latest'
+    name: 'Checking code and dependencies'
+    steps:
+      - uses: 'actions/checkout@v3'
+
+      - name: 'Get Yarn cache directory path'
+        id: 'yarn-cache-directory-path'
+        run: 'echo "directory=$(yarn cache dir)" >> $GITHUB_OUTPUT'
+
+      - name: 'Cache Yarn cache directory'
+        uses: 'actions/cache@v3'
+        with:
+          path: ${{ steps.yarn-cache-directory-path.outputs.directory }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: 'Install dependencies'
+        run: 'yarn install'
+
+      - name: 'Build'
+        run: 'yarn build'
+
+      - name: 'Test'
+        run: 'yarn test'
+
+      - name: 'Lint'
+        run: 'yarn lint'
+
+      - name: 'Validate dependencies'
+        run: 'yarn validate'

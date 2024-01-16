@@ -5,16 +5,18 @@ run-name: 'Test, build, lint and validate'
 on:
   pull_request:
 
-env:
-  node-version: '16'
-  node-package-manager: 'yarn'
-
 jobs:
   test:
     runs-on: 'ubuntu-latest'
     name: 'Checking code and dependencies'
     steps:
-      - uses: 'actions/checkout@v3'
+      - name: 'Retrieve repository files'
+        uses: 'actions/checkout@v4'
+
+      - name: 'Setup Node environment'
+        uses: 'actions/setup-node@v4'
+        with:
+          node-version: '16'
 
       - name: 'Get Yarn cache directory path'
         id: 'yarn-cache-directory-path'

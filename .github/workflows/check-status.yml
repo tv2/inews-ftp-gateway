@@ -1,0 +1,36 @@
+name: 'Check status'
+
+run-name: 'Test, build, lint and validate'
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: 'ubuntu-latest'
+    name: 'Checking code and dependencies'
+    steps:
+      - name: 'Retrieve repository files'
+        uses: 'actions/checkout@v4'
+
+      - name: 'Setup Node environment'
+        uses: 'actions/setup-node@v4'
+        with:
+          node-version: '16'
+          cache: 'yarn'
+          cache-dependency-path: 'yarn.lock'
+
+      - name: 'Install dependencies'
+        run: 'yarn install'
+
+      - name: 'Build'
+        run: 'yarn build'
+
+      - name: 'Test'
+        run: 'yarn test'
+
+      - name: 'Lint'
+        run: 'yarn lint'
+
+      - name: 'Validate dependencies'
+        run: 'yarn validate'

@@ -33,10 +33,10 @@
     "build:main": "tsc -p tsconfig.json",
     "lint": "prettier --check .",
     "lint-fix": "prettier --write .",
-    "unit": "jest --coverage",
-    "test": "yarn lint && yarn unit",
-    "test:integration": "yarn lint && jest --config=jest-integration.config.js",
-    "watch": "jest --watch",
+    "test": "jest --coverage",
+    "test:integration": "jest --config=jest-integration.config.js",
+    "watch": "cross-env NODE_ENV=development nodemon .",
+    "test-watch": "jest --watch",
     "cov": "jest; open-cli coverage/lcov-report/index.html",
     "cov-open": "open-cli coverage/lcov-report/index.html",
     "send-coverage": "jest && codecov",
@@ -47,19 +47,22 @@
     "changelog": "standard-version",
     "inspect": "node --inspect dist/index.js",
     "release": "yarn reset && yarn test && yarn changelog",
+    "clean": "trash dist",
     "reset": "git clean -dfx && git reset --hard && yarn",
     "ci": "yarn test",
     "validate:dependencies": "yarn audit --groups dependencies",
-    "license-validate": "node-license-validator -p -d --allow-licenses MIT MIT/X11 BSD BSD-3-Clause BSD-2-Clause ISC Apache Apache-2.0 Unlicense --allow-packages cycle",
+    "validate": "yarn validate-dependencies && yarn validate-licenses",
+    "validate-dependencies": "yarn audit --groups dependencies",
+    "validate-licenses": "license-checker --production --onlyAllow \"MIT;MIT/X11;BSD;BSD-3-Clause;BSD-2-Clause;ISC;Apache;Apache-2.0;Unlicense\"",
     "unlinkall": "yarn unlink @sofie-automation/server-core-integration && yarn --check-files"
   },
   "scripts-info": {
     "info": "Display information about the scripts",
     "build": "(Trash and re)build the library",
     "lint": "Lint all typescript source files",
-    "unit": "Build the library and run unit tests",
-    "test": "Lint, build, and test the library",
-    "watch": "Watch source files, rebuild library on changes, rerun relevant tests",
+    "test": "Build the library and run unit tests",
+    "watch": "Watch source files, rebuild library on changes",
+    "test-watch": "Watch spec files, re-run tests on changes",
     "cov": "Run tests, generate the HTML coverage report, and open it in a browser",
     "docs": "Generate HTML API documentation and open it in a browser",
     "docs:publish": "Generate HTML API documentation and push it to GitHub Pages",
@@ -68,7 +71,9 @@
     "reset": "Delete all untracked files and reset the repo to the last commit",
     "release": "Clean, build, test, publish docs, and prepare release (a one-step publish process)",
     "ci": "Test script for running by the CI (CircleCI)",
-    "validate:dependencies": "Scan dependencies for vulnerabilities and check licenses"
+    "validate": "Performs license validation and scan dependencies for vulnerabilities",
+    "validate-dependencies": "Scan dependencies for vulnerabilities and check licenses",
+    "validate-licenses": "Test if license of any package in use complies to be one of MIT;MIT/X11;BSD;BSD-3-Clause;BSD-2-Clause;ISC;Apache;Apache-2.0;Unlicense"
   },
   "license": "MIT",
   "dependencies": {
@@ -97,7 +102,7 @@
     "minimist": "^1.2.3",
     "set-value": "^4.0.1",
     "ansi-regex": "^5.0.1",
-		"http-cache-semantics": ">=4.1.1"
+    "http-cache-semantics": ">=4.1.1"
   },
   "devDependencies": {
     "@types/jest": "^24.0.11",
@@ -111,13 +116,15 @@
     "jest": "^24.5.0",
     "jest-haste-map": "^24.5.0",
     "jest-resolve": "^24.5.0",
-    "node-license-validator": "^1.3.0",
+    "license-checker": "^25.0.1",
+    "nodemon": "^3.0.2",
     "npm-scripts-info": "^0.3.9",
     "open-cli": "^6.0.1",
     "prettier": "2.1.2",
     "standard-version": "^9.0.0",
     "trash-cli": "^5.0.0",
     "ts-jest": "^26.4.1",
+    "ts-node": "^10.9.2",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.1.0",
@@ -128,5 +135,11 @@
   "standard-version": {
     "message": "chore(release): %s [skip ci]",
     "tagPrefix": ""
+  },
+  "nodemonConfig": {
+    "execMap": {
+      "ts": "ts-node"
+    },
+    "ext": "ts,js,mjs,cjs,json"
   }
 }

@@ -1,14 +1,17 @@
 import * as _ from 'underscore'
 import { CoreHandler } from './coreHandler'
 import { RundownWatcher, RundownMap, ReducedRundown, ReducedSegment } from './classes/RundownWatcher'
-import * as inews from '@tv2media/inews'
 import { literal } from './helpers'
 import { RundownSegment } from './classes/datastructures/Segment'
 import { VERSION } from './version'
 import { ILogger as Logger } from '@tv2media/logger'
 import { StatusCode } from '@sofie-automation/shared-lib/dist/lib/status'
 import { PeripheralDeviceAPIMethods } from '@sofie-automation/shared-lib/dist/peripheralDevice/methodsAPI'
-import { PeripheralDeviceForDevice, PeripheralDevicePubSubCollectionsNames } from '@sofie-automation/server-core-integration'
+import {
+	PeripheralDeviceForDevice,
+	PeripheralDevicePubSubCollectionsNames,
+} from '@sofie-automation/server-core-integration'
+import { HttpInewsClient } from './proxy/HttpInewsClient'
 
 export interface INewsDeviceSettings {
 	hosts?: Array<string>
@@ -19,23 +22,24 @@ export interface INewsDeviceSettings {
 }
 
 export class InewsFTPHandler {
-	public iNewsConnection?: inews.INewsClient
+	// public iNewsConnection?: inews.INewsClient
 	public userName?: string
 	public passWord?: string
 	public debugLogging: boolean = false
 
 	public iNewsWatcher?: RundownWatcher
 
+	private _httpClient: HttpInewsClient | undefined
 	private _logger: Logger
 	private _disposed: boolean = false
 	private _settings?: INewsDeviceSettings
 	private _coreHandler: CoreHandler
 	private _isConnected: boolean = false
-	private _reconnectAttempts: number = 0
 
 	constructor(logger: Logger, coreHandler: CoreHandler) {
 		this._logger = logger.tag(this.constructor.name)
 		this._coreHandler = coreHandler
+		// this._httpClient will be initialized later
 	}
 
 	get isConnected(): boolean {
@@ -65,7 +69,9 @@ export class InewsFTPHandler {
 	 * Find this peripheral device in peripheralDevices collection.
 	 */
 	private getThisPeripheralDevice(): PeripheralDeviceForDevice | undefined {
-		let peripheralDevices = this._coreHandler.core.getCollection(PeripheralDevicePubSubCollectionsNames.peripheralDeviceForDevice)
+		let peripheralDevices = this._coreHandler.core.getCollection(
+			PeripheralDevicePubSubCollectionsNames.peripheralDeviceForDevice
+		)
 		return peripheralDevices.findOne(this._coreHandler.core.deviceId)
 	}
 
@@ -77,39 +83,11 @@ export class InewsFTPHandler {
 		if (!this._settings) return
 		if (!this._settings.hosts) throw new Error('No hosts available')
 		if (!this._settings.queues) throw new Error('No queues set')
-		this.iNewsConnection = new inews.INewsClient({
-			hosts: this._settings.hosts ?? [],
-			user: this._settings.user,
-			password: this._settings.password,
-			timeout: 60000, // 60s, as originally in the node-inews library
-			operationTimeout: 60000, // 60s, this is new in node-inews after the TS rewrite; setting it too low may result in never getting any data if the server/connection is slow
-		})
 
-		this.iNewsConnection.on('status', async (status) => {
-			if (status.name === 'disconnected') {
-				if (this._isConnected) {
-					this._isConnected = false
-					this._reconnectAttempts = 0
-					await this._coreHandler.setStatus(StatusCode.WARNING_MAJOR, ['Attempting to reconnect'])
-					this._logger.warn(`Disconnected from iNews at ${status.host}`)
-				} else {
-					this._reconnectAttempts++
-					if (this._reconnectAttempts >= (this._settings?.hosts ?? []).length) {
-						await this._coreHandler.setStatus(StatusCode.BAD, ['No servers available'])
-						this._logger.warn(`Cannot connect to any of the iNews hosts`)
-					}
-				}
-			} else if (status.name === 'connected') {
-				this._isConnected = true
-				this._logger.info(`Connected to iNews at ${status.host}`)
-			} else if (status.name === 'connecting') {
-				this._logger.info(`Connecting to iNews at ${status.host}`)
-			}
-		})
+		// Instantiate the HTTP client for the proxy
+		this._httpClient = new HttpInewsClient(this._settings)
 
-		this.iNewsConnection.on('error', (error) => {
-			this._logger.error(`FTP error: ${error.message}`)
-		})
+		// Connection status will be checked as part of rundown polling
 
 		if (!this.iNewsWatcher) {
 			let peripheralDevice = this.getThisPeripheralDevice()
@@ -118,7 +96,7 @@ export class InewsFTPHandler {
 				const queues = (this._settings.queues ?? []).filter((q) => !!q)
 				this.iNewsWatcher = new RundownWatcher(
 					this._logger,
-					this.iNewsConnection,
+					this._httpClient, // Pass the HTTP client
 					this._coreHandler,
 					this._settings.queues,
 					VERSION,
@@ -229,5 +207,28 @@ export class InewsFTPHandler {
 	restartWatcher(): void {
 		this._logger.info(`Restarting watchers`)
 		this.iNewsWatcher?.startWatcher()
+	}
+
+	public async checkHealthAndUpdateStatus(): Promise<boolean> {
+		try {
+			const health = await this._httpClient?.getHealth()
+			console.log('health', health)
+			const wasConnected = this._isConnected
+			this._isConnected = health && health.status === 'ok' && health.inewsConnected === true
+			if (!wasConnected && this._isConnected) {
+				this._logger.info('Connected to iNews HTTP API')
+				await this._coreHandler.setStatus(StatusCode.GOOD, ['Connected to iNews HTTP API'])
+			} else if (wasConnected && !this._isConnected) {
+				this._logger.warn('Disconnected from iNews HTTP API')
+				await this._coreHandler.setStatus(StatusCode.BAD, ['No servers available'])
+			}
+		} catch (err) {
+			if (this._isConnected) {
+				this._logger.warn('Lost connection to iNews HTTP API', err as any)
+				await this._coreHandler.setStatus(StatusCode.BAD, ['No servers available'])
+			}
+			this._isConnected = false
+		}
+		return this._isConnected
 	}
 }

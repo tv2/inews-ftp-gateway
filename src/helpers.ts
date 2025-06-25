@@ -1,6 +1,6 @@
-import { INewsStory } from '@tv2media/inews'
 import { IngestSegment } from '@sofie-automation/blueprints-integration'
 import { ISegment } from './classes/datastructures/Segment'
+import { INewsStory } from '@tv2media/inews'
 
 export function literal<T>(o: T) {
 	return o
@@ -15,6 +15,7 @@ function isValidDate(d: Date) {
 }
 
 export function parseModifiedDateFromInewsStoryWithFallbackToNow(story: INewsStory): Date {
+	// TODO: Replace 'any' with interface matching HTTP API
 	if (story?.fields?.modifyDate?.value) {
 		const modifyDate = new Date(story?.fields?.modifyDate.value)
 		if (isValidDate(modifyDate)) {
@@ -43,6 +44,9 @@ export function ReflectPromise<T>(
 ): Promise<{ value: T; status: 'fulfilled' } | { e: any; status: 'rejected' }> {
 	return ps.then(
 		(value) => ({ value, status: 'fulfilled' }),
-		(e) => ({ e, status: 'rejected' })
+		(e) => {
+			console.error('Promise rejected:', e, JSON.stringify(e))
+			return { e, status: 'rejected' }
+		}
 	)
 }

@@ -5,6 +5,7 @@ on:
       - master
       - develop
       - EAV-*
+      - http
     tags:
       - "**"
   workflow_dispatch:
@@ -19,14 +20,14 @@ jobs:
   run-yarn-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: "**/node_modules"
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
@@ -59,7 +60,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
         with:
@@ -69,7 +70,7 @@ jobs:
         id: ecrrepo
         run: |
           # check if a release branch, or master, or a tag
-          if [[ "${{ github.ref }}" == "refs/heads/develop" || "${{ github.ref }}" == "refs/heads/master" || "${{ github.ref }}" == refs/tags/* || "${{ github.ref }}" == refs/heads/EAV-* ]]
+          if [[ "${{ github.ref }}" == "refs/heads/develop" || "${{ github.ref }}" == "refs/heads/master" || "${{ github.ref }}" == refs/tags/* || "${{ github.ref }}" == refs/heads/http || "${{ github.ref }}" == refs/heads/EAV-* ]]
           then
               ECRREPO_PUBLISH="1"
           else
@@ -80,7 +81,7 @@ jobs:
           echo "ecrrepo-publish=$ECRREPO_PUBLISH" >> $GITHUB_OUTPUT
       - name: Configure AWS Credentials
         if: steps.ecrrepo.outputs.ecrrepo-publish == '1'
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -88,12 +89,12 @@ jobs:
       - name: Login to Amazon ECR
         if: steps.ecrrepo.outputs.ecrrepo-publish == '1'      
         id: login-aws-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Docker meta
         id: meta
         if: steps.ecrrepo.outputs.ecrrepo-publish == '1'
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: ${{ steps.login-aws-ecr.outputs.registry }}/${{ github.event.repository.name }}
           tags: |
@@ -103,7 +104,7 @@ jobs:
             
       - name: Build and push docker image tags
         if: steps.ecrrepo.outputs.ecrrepo-publish == '1'
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true
@@ -120,7 +121,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       
       - uses: actions/download-artifact@v4
         with:
@@ -128,24 +129,24 @@ jobs:
           path: dist
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-aws-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v3
       
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
           images: ${{ steps.login-aws-ecr.outputs.registry }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=tag  
       - name: Build and push docker image tags
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: true

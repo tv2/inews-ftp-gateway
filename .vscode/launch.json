@@ -11,7 +11,9 @@
 			"name": "Debug Program",
 			"program": "${workspaceFolder}/src/index.ts",
 			"preLaunchTask": "build",
-			"outFiles": ["${workspaceFolder}/dist/**/*.js"]
+			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
+			"console": "integratedTerminal",
+			"internalConsoleOptions": "neverOpen"
 		},
 		{
 			"type": "node",

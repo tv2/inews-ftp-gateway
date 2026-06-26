@@ -33,9 +33,8 @@ Going back to the Sofie Rundowns view, your queues will appear as rundowns.
 
 ## Installation for dev
 
-yarn
-
-yarn build
+1. `yarn`
+2. `yarn build`
 
 ### Dev dependencies
 

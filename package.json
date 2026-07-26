@@ -112,7 +112,7 @@
     "@types/uuid": "^3.4.4",
     "@types/yargs": "^15.0.8",
     "codecov": "^3.6.1",
-    "gh-pages": "^2.0.1",
+    "gh-pages": "^5.0.0",
     "jest": "^24.5.0",
     "jest-haste-map": "^24.5.0",
     "jest-resolve": "^24.5.0",
